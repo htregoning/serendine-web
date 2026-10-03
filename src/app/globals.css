@@ -184,3 +184,11 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 /* Brand */
 .wordmark { font-family: var(--font-display), system-ui, sans-serif; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); }
 .brand-lockup { display: flex; flex-direction: column; align-items: center; gap: 18px; color: var(--accent); }
+
+/* Group chat */
+.lobby-feed { display: flex; flex-direction: column; gap: 12px; min-height: 280px; max-height: 52dvh; overflow-y: auto; padding: 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+.lobby-post { display: flex; gap: 10px; align-items: flex-start; max-width: 88%; }
+.lobby-post.mine { align-self: flex-end; justify-content: flex-end; }
+.lobby-who { border: none; background: transparent; padding: 0; flex-shrink: 0; }
+.lobby-name { border: none; background: transparent; padding: 0; text-align: left; font-weight: 700; font-size: 14px; color: var(--text); }
+img.avatar { display: block; background: var(--line); }

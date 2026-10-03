@@ -18,10 +18,12 @@ export default async function RoomPage({ params }: { params: Promise<{ token: st
 
   const { data: visit } = await supabase
     .from('visits')
-    .select('id, alias, mode, is_open, marketing_opt_in, table_id')
+    .select('id, alias, mode, is_open, marketing_opt_in, table_id, gender')
     .is('ended_at', null)
     .maybeSingle();
   if (!visit || visit.table_id !== venue.table_id) redirect(`/t/${token}`);
+
+  const { data: photo } = await supabase.rpc('visit_photo', { v: visit.id });
 
   const { data: v } = await supabase.from('venues').select('menu_pdf_path').eq('id', venue.venue_id).single();
   const menuUrl = v?.menu_pdf_path
@@ -39,6 +41,8 @@ export default async function RoomPage({ params }: { params: Promise<{ token: st
         mode: visit.mode as ChatMode,
         isOpen: visit.is_open as boolean,
         optedIn: visit.marketing_opt_in as boolean,
+        gender: (visit.gender as string) ?? 'unspecified',
+        hasPhoto: typeof photo === 'string' && photo.length > 0,
       }}
     />
   );

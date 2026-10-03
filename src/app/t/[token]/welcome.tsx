@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createKeyPair, saveKeyPair } from '@/lib/crypto';
-import { MODE_LABELS, type ChatMode, type VenueAtTable } from '@/lib/types';
+import { GENDER_LABELS, MODE_LABELS, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
@@ -103,6 +103,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
   const router = useRouter();
   const [alias, setAlias] = useState('');
   const [mode, setMode] = useState<ChatMode>('friendly');
+  const [gender, setGender] = useState<Gender | null>(null);
   const [adult, setAdult] = useState(false);
   const [optIn, setOptIn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -111,18 +112,22 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
   async function enter(e: React.FormEvent) {
     e.preventDefault();
     if (!alias.trim()) return setError('Add a name or alias so people know who they are talking to.');
+    if (!gender) return setError('Please choose male, female or prefer not to say.');
     if (!adult) return setError('Please confirm you are 18 or over.');
     setBusy(true);
     setError(null);
     try {
       const { pair, publicJwk } = await createKeyPair();
-      const { data: visitId, error } = await supabase.rpc('start_visit', {
+      const args = {
         token,
         p_alias: alias.trim(),
         p_mode: mode,
         p_opt_in: venue.offer_enabled ? optIn : false,
         p_public_key: publicJwk,
-      });
+      };
+      let { data: visitId, error } = await supabase.rpc('start_visit', { ...args, p_gender: gender });
+      // Until the database update that adds gender is installed, check in without it.
+      if (error && error.code === 'PGRST202') ({ data: visitId, error } = await supabase.rpc('start_visit', args));
       if (error || !visitId) throw error ?? new Error('no visit');
       await saveKeyPair(visitId as string, pair);
       router.replace(`/t/${token}/room`);
@@ -145,6 +150,17 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
           value={alias}
           onChange={(e) => setAlias(e.target.value)}
         />
+      </div>
+      <div className="col">
+        <span className="label">I am</span>
+        <div className="chips">
+          {(Object.keys(GENDER_LABELS) as Gender[]).map((g) => (
+            <button key={g} type="button" className="chip" aria-pressed={gender === g} onClick={() => setGender(g)}>
+              {GENDER_LABELS[g]}
+            </button>
+          ))}
+        </div>
+        <span className="small">Shown next to your name so people know who they&apos;re chatting to.</span>
       </div>
       <div className="col">
         <span className="label">I&apos;m here for</span>

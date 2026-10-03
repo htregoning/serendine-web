@@ -7,10 +7,13 @@ import Chat, { type Conv } from './chat';
 import { alertGuest, buzz, chime, setTabCount, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
-import { MODE_LABELS, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
+import Avatar, { forgetPhoto } from '@/components/avatar';
+import { selfieThumbnail } from '@/lib/photo';
+import Lobby from './lobby';
+import { MODE_LABELS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
-type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean };
-type Person = { visit_id: string; alias: string; mode: ChatMode; zone: string; public_key: string | null };
+type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
+type Person = { visit_id: string; alias: string; mode: ChatMode; zone: string; public_key: string | null; gender: string; has_photo: boolean };
 type Req = { id: string; kind: RequestKind; status: RequestStatus };
 
 const REQUESTS: Record<RequestKind, { ask: string; done: string }> = {
@@ -30,7 +33,10 @@ type Props = { token: string; venue: VenueAtTable; visit: Visit; menuUrl: string
 export default function Room({ token, venue, visit, menuUrl }: Props) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
-  const [tab, setTab] = useState<'room' | 'service'>('room');
+  const [tab, setTab] = useState<'people' | 'group' | 'service'>('people');
+  const [hasPhoto, setHasPhoto] = useState(visit.hasPhoto);
+  const [photoVersion, setPhotoVersion] = useState(0);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [isOpen, setIsOpen] = useState(visit.isOpen);
   const [people, setPeople] = useState<Person[]>([]);
   const [requests, setRequests] = useState<Req[]>([]);
@@ -191,6 +197,28 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
     loadRequests();
   }
 
+  async function savePhoto(file: File) {
+    setPhotoBusy(true);
+    try {
+      const data = await selfieThumbnail(file);
+      const { error } = await supabase.rpc('set_my_photo', { p_data: data });
+      if (error) throw error;
+      forgetPhoto(visit.id);
+      setHasPhoto(true);
+      setPhotoVersion((v) => v + 1);
+    } catch {
+      setNote('That photo did not upload. Please try again.');
+    }
+    setPhotoBusy(false);
+  }
+
+  async function removePhoto() {
+    await supabase.rpc('clear_my_photo');
+    forgetPhoto(visit.id);
+    setHasPhoto(false);
+    setPhotoVersion((v) => v + 1);
+  }
+
   async function leave() {
     await supabase.rpc('end_visit', { p_visit: visit.id });
     router.replace(`/t/${token}`);
@@ -232,9 +260,10 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       </div>
 
       <div className="tabs" role="tablist" aria-label="Sections">
-        <button className="tab" role="tab" aria-selected={tab === 'room'} onClick={() => setTab('room')}>
-          The room{tab === 'service' && anyUnread ? ' •' : ''}
+        <button className="tab" role="tab" aria-selected={tab === 'people'} onClick={() => setTab('people')}>
+          People{tab !== 'people' && anyUnread ? ' •' : ''}
         </button>
+        <button className="tab" role="tab" aria-selected={tab === 'group'} onClick={() => setTab('group')}>Group chat</button>
         <button className="tab" role="tab" aria-selected={tab === 'service'} onClick={() => setTab('service')}>Service</button>
       </div>
 
@@ -242,8 +271,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
 
       <NotifyToggle supabase={supabase} who="guest" />
 
-      {tab === 'room' ? (
-        <>
+      {tab !== 'service' && (
           <div className="card row">
             <div className="col grow" style={{ gap: 4 }}>
               <strong>Open to chat</strong>
@@ -254,6 +282,52 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
             <button className="switch" role="switch" aria-checked={isOpen} aria-label="Open to chat" onClick={toggleOpen}>
               <span />
             </button>
+          </div>
+      )}
+
+      {tab === 'group' &&
+        (isOpen ? (
+          <Lobby
+            supabase={supabase}
+            venueId={venue.venue_id}
+            onChatWith={(id) => openChatWith(id)}
+            onNote={(n) => {
+              setNote(n);
+              loadPeople();
+              loadConvs();
+            }}
+          />
+        ) : (
+          <p className="card small">Switch on Open to chat to join the group chat for everyone here.</p>
+        ))}
+
+      {tab === 'people' && (
+        <>
+          <div className="card row">
+            <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={56} version={photoVersion} />
+            <div className="col grow" style={{ gap: 4 }}>
+              <strong>{hasPhoto ? 'Your photo' : 'Add a selfie (optional)'}</strong>
+              <span className="small">Shown only to people open to chat here tonight. Deleted when you leave.</span>
+            </div>
+            <div className="col" style={{ gap: 6 }}>
+              <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>
+                {photoBusy ? 'Saving…' : hasPhoto ? 'Retake' : 'Take selfie'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) savePhoto(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              {hasPhoto && (
+                <button className="link-danger" style={{ minHeight: 32 }} onClick={removePhoto}>Remove</button>
+              )}
+            </div>
           </div>
 
           {venue.offer_enabled && visit.optedIn && (
@@ -272,9 +346,12 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
               <span className="eyebrow">Your chats</span>
               {convs.map((c) => (
                 <button key={c.conversation_id} className="card row" style={{ textAlign: 'left', minHeight: 64 }} onClick={() => openConv(c.conversation_id)}>
-                  <div className="avatar">{c.partner_alias.charAt(0).toUpperCase()}</div>
+                  <Avatar supabase={supabase} visitId={c.partner_visit} alias={c.partner_alias} hasPhoto={c.partner_has_photo} />
                   <div className="col grow" style={{ gap: 4 }}>
-                    <strong>{c.partner_alias}</strong>
+                    <strong>
+                      {c.partner_alias}
+                      {genderTag(c.partner_gender) && <span className="small"> · {genderTag(c.partner_gender)}</span>}
+                    </strong>
                     <span className="small">
                       {unread[c.conversation_id] ? 'New message' : c.i_keep && c.they_keep ? 'Connected' : 'Tap to open'}
                     </span>
@@ -298,10 +375,11 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
                   style={{ textAlign: 'left', minHeight: 72 }}
                   onClick={() => openChatWith(p.visit_id)}
                 >
-                  <div className="avatar">{p.alias.charAt(0).toUpperCase()}</div>
+                  <Avatar supabase={supabase} visitId={p.visit_id} alias={p.alias} hasPhoto={p.has_photo} size={52} />
                   <div className="col grow" style={{ gap: 4 }}>
-                    <div className="row" style={{ gap: 8 }}>
+                    <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                       <strong>{p.alias}</strong>
+                      {genderTag(p.gender) && <span className="small">{genderTag(p.gender)}</span>}
                       <span className={`tag tag-${p.mode}`}>{MODE_LABELS[p.mode]}</span>
                     </div>
                     <span className="small">{p.zone}</span>
@@ -319,7 +397,9 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
             Your connections from other nights
           </a>
         </>
-      ) : (
+      )}
+
+      {tab === 'service' && (
         <>
           {menuUrl ? (
             <a className="card row" href={menuUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', textDecoration: 'none' }}>

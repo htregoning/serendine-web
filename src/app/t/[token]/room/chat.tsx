@@ -5,6 +5,8 @@ import type { createClient } from '@/lib/supabase/client';
 import { createKeyPair, decryptText, encryptText, loadKeyPair, saveKeyPair, sharedKey } from '@/lib/crypto';
 import { MODE_LABELS, type ChatMode } from '@/lib/types';
 import { notify } from '@/lib/push';
+import Avatar from '@/components/avatar';
+import { genderTag } from '@/lib/types';
 
 export type Conv = {
   conversation_id: string;
@@ -18,6 +20,8 @@ export type Conv = {
   i_keep: boolean;
   they_keep: boolean;
   last_at: string;
+  partner_gender?: string;
+  partner_has_photo?: boolean;
 };
 
 type Row = { id: number; sender_visit: string; ciphertext: string; iv: string; created_at: string };
@@ -214,10 +218,12 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
     <main className="chat">
       <header className="row chat-head">
         <button className="icon-btn" onClick={onBack} aria-label={backLabel}>‹</button>
-        <div className="avatar">{conv.partner_alias.charAt(0).toUpperCase()}</div>
+        <Avatar supabase={supabase} visitId={conv.partner_visit} alias={conv.partner_alias} hasPhoto={conv.partner_has_photo} />
         <div className="col grow" style={{ gap: 2 }}>
           <strong>{conv.partner_alias}</strong>
-          <span className="small">{MODE_LABELS[conv.partner_mode]} · {conv.partner_zone}</span>
+          <span className="small">
+            {[genderTag(conv.partner_gender), MODE_LABELS[conv.partner_mode], conv.partner_zone].filter(Boolean).join(' · ')}
+          </span>
         </div>
         <span className="row small" style={{ gap: 4 }} title="End-to-end encrypted">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
