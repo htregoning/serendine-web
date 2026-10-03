@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Manrope } from 'next/font/google';
+import { Jost, Manrope } from 'next/font/google';
 import './globals.css';
 
-const display = Fraunces({ subsets: ['latin'], weight: ['500', '600'], variable: '--font-display' });
+const display = Jost({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-display' });
 const body = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-body' });
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#050A1F',
+  themeColor: '#0B1A3A',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

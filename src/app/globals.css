@@ -1,13 +1,13 @@
 :root {
-  --bg: #050a1f;
-  --card: #0d1433;
-  --line: #1c2554;
-  --line-strong: #283272;
-  --text: #ff3ea5;
-  --text-2: #ff8cc8;
-  --muted: #e07ab4;
-  --faint: #c46a9f;
-  --accent: #ff3ea5;
+  --bg: #0b1a3a;
+  --card: #12244d;
+  --line: #213a70;
+  --line-strong: #2d4a88;
+  --text: #ff2e93;
+  --text-2: #ff7db8;
+  --muted: #e86aa8;
+  --faint: #cc6aa0;
+  --accent: #ff2e93;
   --on-accent: #12030c;
   --good: #7fc8b5;
   --danger: #ffb36b;
@@ -37,7 +37,7 @@ a { color: var(--accent); }
   gap: 18px;
 }
 
-.display { font-family: var(--font-display), Georgia, serif; font-weight: 500; letter-spacing: -0.3px; }
+.display { font-family: var(--font-display), system-ui, sans-serif; font-weight: 500; letter-spacing: 0.2px; }
 h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent); }
 .lede { font-size: 15px; line-height: 1.5; color: var(--text-2); margin: 0; }
 .small { font-size: 13px; line-height: 1.45; color: var(--muted); }
@@ -143,7 +143,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .chat-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); gap: 6px; }
 .bubble { max-width: 78%; padding: 10px 14px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble.mine { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-radius: 18px 18px 4px 18px; }
-.bubble.theirs { align-self: flex-start; background: #16204d; color: var(--text); border-radius: 18px 18px 18px 4px; }
+.bubble.theirs { align-self: flex-start; background: #1a2f5e; color: var(--text); border-radius: 18px 18px 18px 4px; }
 .icon-btn { width: 44px; height: 44px; border: none; background: transparent; font-size: 30px; line-height: 1; margin-left: -8px; }
 .link-danger { border: none; background: transparent; color: var(--danger); font-weight: 600; font-size: 14px; min-height: 44px; padding: 0 10px; }
 
@@ -156,21 +156,21 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .legal b { color: var(--text); }
 
 /* Printable table stickers */
-.stickers-page { min-height: 100dvh; background: #e6e8f5; color: #0b1230; padding: 24px; }
+.stickers-page { min-height: 100dvh; background: #e6e8f5; color: #0b1a3a; padding: 24px; }
 .stickers-head { max-width: 900px; margin: 0 auto 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .stickers-head .small { color: #3b4374; }
 .sheet { display: grid; grid-template-columns: repeat(2, 90mm); gap: 8mm; justify-content: center; }
 .sticker {
   width: 90mm; height: 120mm; box-sizing: border-box; padding: 9mm; background: #f7f6ff; border: 0.4mm dashed #a6acd6;
   display: flex; flex-direction: column; align-items: center; gap: 4mm; break-inside: avoid; page-break-inside: avoid;
-  font-family: var(--font-body), system-ui, sans-serif; color: #0b1230;
+  font-family: var(--font-body), system-ui, sans-serif; color: #0b1a3a;
 }
 .sticker-top { display: flex; align-items: center; gap: 2.5mm; align-self: stretch; }
-.sticker-brand { font-family: var(--font-display), Georgia, serif; font-weight: 600; font-size: 6mm; flex: 1; }
-.sticker-table { font-size: 3mm; font-weight: 700; letter-spacing: 0.3mm; padding: 1.2mm 2mm; border: 0.4mm solid #0b1230; border-radius: 2mm; }
-.sticker-qr { width: 42mm; height: 42mm; padding: 2.5mm; background: #fff; border: 0.4mm solid #0b1230; border-radius: 3mm; }
+.sticker-brand { font-family: var(--font-display), system-ui, sans-serif; font-weight: 500; font-size: 4.6mm; letter-spacing: 0.32em; text-transform: uppercase; flex: 1; color: #ff2e93; }
+.sticker-table { font-size: 3mm; font-weight: 700; letter-spacing: 0.3mm; padding: 1.2mm 2mm; border: 0.4mm solid #0b1a3a; border-radius: 2mm; }
+.sticker-qr { width: 42mm; height: 42mm; padding: 2.5mm; background: #fff; border: 0.4mm solid #0b1a3a; border-radius: 3mm; }
 .sticker-qr svg { width: 100%; height: 100%; display: block; }
-.sticker-line { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: 5.4mm; line-height: 1.2; text-align: center; text-wrap: balance; }
+.sticker-line { margin: 0; font-family: var(--font-display), system-ui, sans-serif; font-weight: 500; font-size: 5.2mm; line-height: 1.2; text-align: center; text-wrap: balance; }
 .sticker-sub { margin: 0; font-size: 3.1mm; line-height: 1.45; color: #3b4374; text-align: center; text-wrap: balance; }
 .sticker-foot { margin: auto 0 0; font-size: 2.8mm; font-weight: 600; color: #3b4374; }
 @page { size: A4; margin: 10mm; }
@@ -180,3 +180,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
   .stickers-page { background: #fff; padding: 0; }
   .sticker { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Brand */
+.wordmark { font-family: var(--font-display), system-ui, sans-serif; font-weight: 500; letter-spacing: 0.32em; text-transform: uppercase; color: var(--accent); }
+.brand-lockup { display: flex; flex-direction: column; align-items: center; gap: 18px; color: var(--accent); }
