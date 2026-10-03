@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import { createKeyPair, decryptText, encryptText, loadKeyPair, saveKeyPair, sharedKey } from '@/lib/crypto';
 import { MODE_LABELS, type ChatMode } from '@/lib/types';
+import { notify } from '@/lib/push';
 
 export type Conv = {
   conversation_id: string;
@@ -147,6 +148,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
       setError(error.message.includes('Slow down') ? 'Slow down a little, then try again.' : 'That did not send. Please try again.');
       return;
     }
+    notify('message', c);
     const m: Msg = { id: (data as Row).id, mine: true, text };
     setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
   }

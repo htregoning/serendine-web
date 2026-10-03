@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { RequestKind, RequestStatus } from '@/lib/types';
 import { chime as play, unlockAudio } from '@/lib/alerts';
+import { notify } from '@/lib/push';
+import NotifyToggle from '@/components/notify-toggle';
 
 const chime = () => play([880, 660, 880]);
 
@@ -115,6 +117,7 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
   async function setStatus(id: string, status: RequestStatus) {
     setRequests((rs) => (status === 'done' ? rs.filter((r) => r.id !== id) : rs.map((r) => (r.id === id ? { ...r, status } : r))));
     const { error } = await supabase.from('service_requests').update({ status }).eq('id', id);
+    if (!error && status === 'seen') notify('request_update', id);
     if (error) {
       setNote('That did not save. Please try again.');
       loadRequests();
@@ -145,6 +148,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
       </header>
 
       {note && <p className="error" role="status">{note}</p>}
+
+      <NotifyToggle supabase={supabase} who="staff" />
 
       <div className="staff-grid">
         <section className="col" style={{ gap: 12 }} aria-label="Table requests">

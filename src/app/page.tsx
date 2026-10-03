@@ -1,6 +1,18 @@
+import { redirect } from 'next/navigation';
 import Logo from '@/components/logo';
+import { createClient } from '@/lib/supabase/server';
 
-export default function Home() {
+// Opening Serendine from the home screen takes a checked-in guest straight back to their room.
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: token } = await supabase.rpc('my_active_table_token');
+    if (typeof token === 'string' && token) redirect(`/t/${token}/room`);
+  }
+
   return (
     <main className="shell" style={{ justifyContent: 'center' }}>
       <div className="brand-lockup" style={{ marginBottom: 12 }}>

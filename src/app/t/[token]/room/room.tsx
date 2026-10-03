@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Chat, { type Conv } from './chat';
 import { alertGuest, buzz, chime, setTabCount, unlockAudio } from '@/lib/alerts';
+import { notify } from '@/lib/push';
+import NotifyToggle from '@/components/notify-toggle';
 import { MODE_LABELS, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean };
@@ -172,14 +174,16 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
 
   async function ask(kind: RequestKind) {
     if (requests.some((r) => r.kind === kind)) return;
-    const { error } = await supabase.from('service_requests').insert({
-      venue_id: venue.venue_id,
-      table_id: venue.table_id,
-      visit_id: visit.id,
-      kind,
-    });
+    const { data, error } = await supabase
+      .from('service_requests')
+      .insert({ venue_id: venue.venue_id, table_id: venue.table_id, visit_id: visit.id, kind })
+      .select('id')
+      .single();
     if (error) setNote('That did not send. Please try again.');
-    else loadRequests();
+    else {
+      notify('new_request', (data as { id: string }).id);
+      loadRequests();
+    }
   }
 
   async function cancel(id: string) {
@@ -235,6 +239,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       </div>
 
       {note && <p className="error" role="status">{note}</p>}
+
+      <NotifyToggle supabase={supabase} who="guest" />
 
       {tab === 'room' ? (
         <>
