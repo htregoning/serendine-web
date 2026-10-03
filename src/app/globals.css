@@ -1,16 +1,16 @@
 :root {
-  --bg: #0b1230;
-  --card: #141d45;
-  --line: #26306a;
-  --line-strong: #34407f;
-  --text: #f5f3ff;
-  --text-2: #d3d6f2;
-  --muted: #a6acd6;
-  --faint: #8c93c4;
+  --bg: #050a1f;
+  --card: #0d1433;
+  --line: #1c2554;
+  --line-strong: #283272;
+  --text: #ff3ea5;
+  --text-2: #ff8cc8;
+  --muted: #e07ab4;
+  --faint: #c46a9f;
   --accent: #ff3ea5;
-  --on-accent: #1a0614;
+  --on-accent: #12030c;
   --good: #7fc8b5;
-  --danger: #ff8a80;
+  --danger: #ffb36b;
 }
 
 * { box-sizing: border-box; }
@@ -143,7 +143,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .chat-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); gap: 6px; }
 .bubble { max-width: 78%; padding: 10px 14px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble.mine { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-radius: 18px 18px 4px 18px; }
-.bubble.theirs { align-self: flex-start; background: #1e2858; color: var(--text); border-radius: 18px 18px 18px 4px; }
+.bubble.theirs { align-self: flex-start; background: #16204d; color: var(--text); border-radius: 18px 18px 18px 4px; }
 .icon-btn { width: 44px; height: 44px; border: none; background: transparent; font-size: 30px; line-height: 1; margin-left: -8px; }
 .link-danger { border: none; background: transparent; color: var(--danger); font-weight: 600; font-size: 14px; min-height: 44px; padding: 0 10px; }
 
