@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Chat, { type Conv } from './chat';
 import { MODE_LABELS, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean };
@@ -32,6 +33,54 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
   const [requests, setRequests] = useState<Req[]>([]);
   const [note, setNote] = useState<string | null>(null);
   const [redeemedCode, setRedeemedCode] = useState<string | null>(null);
+  const [convs, setConvs] = useState<Conv[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [unread, setUnread] = useState<Record<string, boolean>>({});
+  const activeRef = useRef<string | null>(null);
+  activeRef.current = activeId;
+
+  const loadConvs = useCallback(async () => {
+    const { data } = await supabase.rpc('my_conversations', { v: venue.venue_id });
+    const list = (data as Conv[] | null) ?? [];
+    setConvs(list);
+    setActiveId((id) => (id && !list.some((c) => c.conversation_id === id) ? null : id));
+  }, [supabase, venue.venue_id]);
+
+  // Chats: new conversations, flag changes and new messages arrive live.
+  useEffect(() => {
+    loadConvs();
+    const channel = supabase
+      .channel(`convs-${visit.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => loadConvs())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const m = payload.new as { conversation_id: string; sender_visit: string };
+        if (m.sender_visit !== visit.id && m.conversation_id !== activeRef.current) {
+          setUnread((u) => ({ ...u, [m.conversation_id]: true }));
+        }
+        loadConvs();
+      })
+      .subscribe();
+    const poll = setInterval(loadConvs, 20000);
+    return () => {
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, visit.id, loadConvs]);
+
+  async function openChatWith(partnerVisit: string) {
+    const existing = convs.find((c) => c.partner_visit === partnerVisit);
+    if (existing) return openConv(existing.conversation_id);
+    const { data, error } = await supabase.rpc('start_conversation', { theirs: partnerVisit });
+    if (error || !data) return setNote('That person is no longer available to chat.');
+    await loadConvs();
+    openConv(data as string);
+  }
+
+  function openConv(id: string) {
+    setNote(null);
+    setActiveId(id);
+    setUnread((u) => ({ ...u, [id]: false }));
+  }
 
   const loadPeople = useCallback(async () => {
     const { data } = await supabase.rpc('room_presence', { v: venue.venue_id });
@@ -114,6 +163,29 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
   }
 
   const style = { '--accent': venue.accent } as React.CSSProperties;
+  const active = convs.find((c) => c.conversation_id === activeId);
+  const anyUnread = Object.values(unread).some(Boolean);
+
+  if (active) {
+    return (
+      <div style={style}>
+        <Chat
+          supabase={supabase}
+          conv={active}
+          myVisitId={visit.id}
+          myTable={venue.table_label}
+          onBack={() => setActiveId(null)}
+          onChanged={loadConvs}
+          onRemoved={(msg) => {
+            setActiveId(null);
+            setNote(msg);
+            loadConvs();
+            loadPeople();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <main className="shell" style={style}>
@@ -126,7 +198,9 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       </div>
 
       <div className="tabs" role="tablist" aria-label="Sections">
-        <button className="tab" role="tab" aria-selected={tab === 'room'} onClick={() => setTab('room')}>The room</button>
+        <button className="tab" role="tab" aria-selected={tab === 'room'} onClick={() => setTab('room')}>
+          The room{tab === 'service' && anyUnread ? ' •' : ''}
+        </button>
         <button className="tab" role="tab" aria-selected={tab === 'service'} onClick={() => setTab('service')}>Service</button>
       </div>
 
@@ -157,6 +231,24 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
             </div>
           )}
 
+          {convs.length > 0 && (
+            <div className="col" style={{ gap: 10 }}>
+              <span className="eyebrow">Your chats</span>
+              {convs.map((c) => (
+                <button key={c.conversation_id} className="card row" style={{ textAlign: 'left', minHeight: 64 }} onClick={() => openConv(c.conversation_id)}>
+                  <div className="avatar">{c.partner_alias.charAt(0).toUpperCase()}</div>
+                  <div className="col grow" style={{ gap: 4 }}>
+                    <strong>{c.partner_alias}</strong>
+                    <span className="small">
+                      {unread[c.conversation_id] ? 'New message' : c.i_keep && c.they_keep ? 'Connected' : 'Tap to open'}
+                    </span>
+                  </div>
+                  {unread[c.conversation_id] && <span className="dot" style={{ background: 'var(--accent)' }} aria-label="Unread" />}
+                </button>
+              ))}
+            </div>
+          )}
+
           {isOpen ? (
             <div className="col" style={{ gap: 10 }}>
               <span className="eyebrow">Open to chat now · {people.length}</span>
@@ -168,7 +260,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
                   key={p.visit_id}
                   className="card row"
                   style={{ textAlign: 'left', minHeight: 72 }}
-                  onClick={() => setNote('Messaging arrives in the next update.')}
+                  onClick={() => openChatWith(p.visit_id)}
                 >
                   <div className="avatar">{p.alias.charAt(0).toUpperCase()}</div>
                   <div className="col grow" style={{ gap: 4 }}>

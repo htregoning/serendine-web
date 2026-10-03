@@ -14,7 +14,7 @@ welcome offer and a staff screen.
 | QR table page, sign-in (Apple, Google, email link), alias and 18+ check, offer opt-in | Done |
 | The room: open-to-chat switch, who's open | Done |
 | Service tab: call waiter, bill, water, menu PDF link | Done |
-| Encrypted chat, share tables, keep in touch, block and report | Next |
+| Encrypted chat, share tables, keep in touch, block and report | Done |
 | Staff screen (tablet) at /staff: live requests, offer redemption; manager tools: offer, menu PDF, guest list | Done |
 
 ## How it fits together
