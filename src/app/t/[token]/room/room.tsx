@@ -31,6 +31,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
   const [people, setPeople] = useState<Person[]>([]);
   const [requests, setRequests] = useState<Req[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [redeemedCode, setRedeemedCode] = useState<string | null>(null);
 
   const loadPeople = useCallback(async () => {
     const { data } = await supabase.rpc('room_presence', { v: venue.venue_id });
@@ -45,6 +46,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       .in('status', ['sent', 'seen'])
       .order('created_at', { ascending: false });
     setRequests((data as Req[] | null) ?? []);
+    const { data: red } = await supabase.from('offer_redemptions').select('code').eq('visit_id', visit.id).maybeSingle();
+    setRedeemedCode((red as { code: string } | null)?.code ?? null);
   }, [supabase, visit.id]);
 
   // Who's open: refresh every few seconds while this guest is open.
@@ -68,8 +71,15 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
         { event: '*', schema: 'public', table: 'service_requests', filter: `visit_id=eq.${visit.id}` },
         () => loadRequests(),
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'offer_redemptions', filter: `visit_id=eq.${visit.id}` },
+        () => loadRequests(),
+      )
       .subscribe();
+    const poll = setInterval(loadRequests, 15000);
     return () => {
+      clearInterval(poll);
       supabase.removeChannel(channel);
     };
   }, [supabase, visit.id, loadRequests]);
@@ -139,7 +149,11 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           {venue.offer_enabled && visit.optedIn && (
             <div className="card offer col">
               <strong>{venue.offer_text}</strong>
-              <span className="small">Show this screen to your server to redeem.</span>
+              <span className="small">
+                {redeemedCode
+                  ? `Redeemed · ${redeemedCode}. Enjoy!`
+                  : `Show this to your server at Table ${venue.table_label} to redeem.`}
+              </span>
             </div>
           )}
 

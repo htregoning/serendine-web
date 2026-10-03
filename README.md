@@ -15,7 +15,7 @@ welcome offer and a staff screen.
 | The room: open-to-chat switch, who's open | Done |
 | Service tab: call waiter, bill, water, menu PDF link | Done |
 | Encrypted chat, share tables, keep in touch, block and report | Next |
-| Staff screen (tablet) and manager settings | Next |
+| Staff screen (tablet) at /staff: live requests, offer redemption; manager tools: offer, menu PDF, guest list | Done |
 
 ## How it fits together
 
@@ -28,7 +28,7 @@ welcome offer and a staff screen.
 
 ## Setup
 
-1. **Supabase › SQL Editor:** run `supabase/migrations/0001_init.sql`.
+1. **Supabase › SQL Editor:** run each file in `supabase/migrations/` in order.
 2. **Supabase › Authentication › Providers:** turn on Email; add Google and Apple
    when their developer accounts are ready.
 3. **Supabase › Authentication › URL Configuration:** set the Site URL to the
