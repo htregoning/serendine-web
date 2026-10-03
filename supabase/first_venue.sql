@@ -4,7 +4,7 @@
 
 with v as (
   insert into venues (slug, name, accent, offer_text)
-  values ('olive-room', 'The Olive Room', '#E9A23B', '20% off your next drink')
+  values ('olive-room', 'The Olive Room', '#FF3EA5', '20% off your next drink')
   returning id
 ), t as (
   insert into venue_tables (venue_id, label, zone)

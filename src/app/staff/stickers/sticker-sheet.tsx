@@ -11,9 +11,9 @@ function Logo({ accent }: { accent: string }) {
   return (
     <svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">
       <rect width="40" height="40" rx="11" fill={accent} />
-      <circle cx="13" cy="25" r="5.5" fill="#17130F" />
-      <circle cx="27" cy="15" r="5.5" fill="#17130F" />
-      <path d="M16.5 20.5 L23.5 19.5" stroke="#17130F" strokeWidth="2" strokeLinecap="round" strokeDasharray="1.5 3" />
+      <circle cx="13" cy="25" r="5.5" fill="#0B1230" />
+      <circle cx="27" cy="15" r="5.5" fill="#0B1230" />
+      <path d="M16.5 20.5 L23.5 19.5" stroke="#0B1230" strokeWidth="2" strokeLinecap="round" strokeDasharray="1.5 3" />
     </svg>
   );
 }
@@ -35,7 +35,7 @@ export default function StickerSheet({ venueName, accent, tables }: Props) {
           type: 'svg',
           margin: 0,
           errorCorrectionLevel: 'M',
-          color: { dark: '#17130F', light: '#FFFFFF' },
+          color: { dark: '#0B1230', light: '#FFFFFF' },
         });
         return [t.qr_token, svg] as const;
       }),

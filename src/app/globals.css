@@ -1,16 +1,16 @@
 :root {
-  --bg: #17130f;
-  --card: #231d17;
-  --line: #3d3328;
-  --line-strong: #4a3f32;
-  --text: #f4ece0;
-  --text-2: #d6cbbb;
-  --muted: #b9ac9a;
-  --faint: #9f9383;
-  --accent: #e9a23b;
-  --on-accent: #1a1208;
+  --bg: #0b1230;
+  --card: #141d45;
+  --line: #26306a;
+  --line-strong: #34407f;
+  --text: #f5f3ff;
+  --text-2: #d3d6f2;
+  --muted: #a6acd6;
+  --faint: #8c93c4;
+  --accent: #ff3ea5;
+  --on-accent: #1a0614;
   --good: #7fc8b5;
-  --danger: #f2a38f;
+  --danger: #ff8a80;
 }
 
 * { box-sizing: border-box; }
@@ -38,7 +38,7 @@ a { color: var(--accent); }
 }
 
 .display { font-family: var(--font-display), Georgia, serif; font-weight: 500; letter-spacing: -0.3px; }
-h1.display { font-size: 32px; line-height: 1.12; margin: 0; }
+h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent); }
 .lede { font-size: 15px; line-height: 1.5; color: var(--text-2); margin: 0; }
 .small { font-size: 13px; line-height: 1.45; color: var(--muted); }
 .label { font-size: 13px; font-weight: 600; color: var(--text-2); }
@@ -143,7 +143,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; }
 .chat-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); gap: 6px; }
 .bubble { max-width: 78%; padding: 10px 14px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble.mine { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-radius: 18px 18px 4px 18px; }
-.bubble.theirs { align-self: flex-start; background: #2e261e; color: var(--text); border-radius: 18px 18px 18px 4px; }
+.bubble.theirs { align-self: flex-start; background: #1e2858; color: var(--text); border-radius: 18px 18px 18px 4px; }
 .icon-btn { width: 44px; height: 44px; border: none; background: transparent; font-size: 30px; line-height: 1; margin-left: -8px; }
 .link-danger { border: none; background: transparent; color: var(--danger); font-weight: 600; font-size: 14px; min-height: 44px; padding: 0 10px; }
 
@@ -156,23 +156,23 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; }
 .legal b { color: var(--text); }
 
 /* Printable table stickers */
-.stickers-page { min-height: 100dvh; background: #e9e2d6; color: #17130f; padding: 24px; }
+.stickers-page { min-height: 100dvh; background: #e6e8f5; color: #0b1230; padding: 24px; }
 .stickers-head { max-width: 900px; margin: 0 auto 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-.stickers-head .small { color: #4d4338; }
+.stickers-head .small { color: #3b4374; }
 .sheet { display: grid; grid-template-columns: repeat(2, 90mm); gap: 8mm; justify-content: center; }
 .sticker {
-  width: 90mm; height: 120mm; box-sizing: border-box; padding: 9mm; background: #f4ece0; border: 0.4mm dashed #b9ac9a;
+  width: 90mm; height: 120mm; box-sizing: border-box; padding: 9mm; background: #f7f6ff; border: 0.4mm dashed #a6acd6;
   display: flex; flex-direction: column; align-items: center; gap: 4mm; break-inside: avoid; page-break-inside: avoid;
-  font-family: var(--font-body), system-ui, sans-serif; color: #17130f;
+  font-family: var(--font-body), system-ui, sans-serif; color: #0b1230;
 }
 .sticker-top { display: flex; align-items: center; gap: 2.5mm; align-self: stretch; }
 .sticker-brand { font-family: var(--font-display), Georgia, serif; font-weight: 600; font-size: 6mm; flex: 1; }
-.sticker-table { font-size: 3mm; font-weight: 700; letter-spacing: 0.3mm; padding: 1.2mm 2mm; border: 0.4mm solid #17130f; border-radius: 2mm; }
-.sticker-qr { width: 42mm; height: 42mm; padding: 2.5mm; background: #fff; border: 0.4mm solid #17130f; border-radius: 3mm; }
+.sticker-table { font-size: 3mm; font-weight: 700; letter-spacing: 0.3mm; padding: 1.2mm 2mm; border: 0.4mm solid #0b1230; border-radius: 2mm; }
+.sticker-qr { width: 42mm; height: 42mm; padding: 2.5mm; background: #fff; border: 0.4mm solid #0b1230; border-radius: 3mm; }
 .sticker-qr svg { width: 100%; height: 100%; display: block; }
 .sticker-line { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: 5.4mm; line-height: 1.2; text-align: center; text-wrap: balance; }
-.sticker-sub { margin: 0; font-size: 3.1mm; line-height: 1.45; color: #4d4338; text-align: center; text-wrap: balance; }
-.sticker-foot { margin: auto 0 0; font-size: 2.8mm; font-weight: 600; color: #4d4338; }
+.sticker-sub { margin: 0; font-size: 3.1mm; line-height: 1.45; color: #3b4374; text-align: center; text-wrap: balance; }
+.sticker-foot { margin: auto 0 0; font-size: 2.8mm; font-weight: 600; color: #3b4374; }
 @page { size: A4; margin: 10mm; }
 @media print {
   html, body { background: #fff !important; }
