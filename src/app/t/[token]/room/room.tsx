@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Chat, { type Conv } from './chat';
+import { alertGuest, buzz, chime, setTabCount } from '@/lib/alerts';
 import { MODE_LABELS, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean };
@@ -37,6 +38,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [unread, setUnread] = useState<Record<string, boolean>>({});
   const activeRef = useRef<string | null>(null);
+  const statusRef = useRef<Record<string, RequestStatus>>({});
   activeRef.current = activeId;
 
   const loadConvs = useCallback(async () => {
@@ -54,8 +56,10 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => loadConvs())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as { conversation_id: string; sender_visit: string };
-        if (m.sender_visit !== visit.id && m.conversation_id !== activeRef.current) {
-          setUnread((u) => ({ ...u, [m.conversation_id]: true }));
+        if (m.sender_visit !== visit.id) {
+          const elsewhere = m.conversation_id !== activeRef.current;
+          if (elsewhere) setUnread((u) => ({ ...u, [m.conversation_id]: true }));
+          if (elsewhere || document.hidden) alertGuest();
         }
         loadConvs();
       })
@@ -66,6 +70,10 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       supabase.removeChannel(channel);
     };
   }, [supabase, visit.id, loadConvs]);
+
+  useEffect(() => {
+    setTabCount(Object.values(unread).filter(Boolean).length);
+  }, [unread]);
 
   async function openChatWith(partnerVisit: string) {
     const existing = convs.find((c) => c.partner_visit === partnerVisit);
@@ -94,7 +102,14 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       .eq('visit_id', visit.id)
       .in('status', ['sent', 'seen'])
       .order('created_at', { ascending: false });
-    setRequests((data as Req[] | null) ?? []);
+    const list = (data as Req[] | null) ?? [];
+    const before = statusRef.current;
+    if (list.some((r) => r.status === 'seen' && before[r.id] === 'sent')) {
+      chime([880, 660]);
+      buzz(200);
+    }
+    statusRef.current = Object.fromEntries(list.map((r) => [r.id, r.status]));
+    setRequests(list);
     const { data: red } = await supabase.from('offer_redemptions').select('code').eq('visit_id', visit.id).maybeSingle();
     setRedeemedCode((red as { code: string } | null)?.code ?? null);
   }, [supabase, visit.id]);
@@ -279,6 +294,9 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
               <p className="small">Switch on Open to chat to see who else is open. Until then, nobody knows you&apos;re here.</p>
             </div>
           )}
+          <a href="/connections" className="small" style={{ textAlign: 'center' }}>
+            Your connections from other nights
+          </a>
         </>
       ) : (
         <>

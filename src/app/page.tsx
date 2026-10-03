@@ -8,7 +8,7 @@ export default function Home() {
       </p>
       <p className="small">For venues: get in touch to bring Serendine to your tables.</p>
       <p className="small">
-        <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of use</a>
+        <a href="/connections">Your connections</a> · <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of use</a>
       </p>
     </main>
   );

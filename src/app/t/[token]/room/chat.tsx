@@ -30,9 +30,13 @@ type Props = {
   onBack: () => void;
   onChanged: () => void;
   onRemoved: (note: string) => void;
+  // 'connection' = a kept chat reopened after leaving: no table sharing.
+  context?: 'room' | 'connection';
+  backLabel?: string;
 };
 
-export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onChanged, onRemoved }: Props) {
+export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room' }: Props) {
+  const inRoom = context === 'room';
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [keyProblem, setKeyProblem] = useState(false);
   const [keyVersion, setKeyVersion] = useState(0);
@@ -207,7 +211,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
   return (
     <main className="chat">
       <header className="row chat-head">
-        <button className="icon-btn" onClick={onBack} aria-label="Back to the room">‹</button>
+        <button className="icon-btn" onClick={onBack} aria-label={backLabel}>‹</button>
         <div className="avatar">{conv.partner_alias.charAt(0).toUpperCase()}</div>
         <div className="col grow" style={{ gap: 2 }}>
           <strong>{conv.partner_alias}</strong>
@@ -220,15 +224,15 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
       </header>
 
       <div className="col" style={{ gap: 8, padding: '12px 16px 0' }}>
-        {shareStatus && <p className="card small chat-status">{shareStatus}</p>}
+        {inRoom && shareStatus && <p className="card small chat-status">{shareStatus}</p>}
         {keepStatus && <p className="card small chat-status">{keepStatus}</p>}
         <div className="row" style={{ gap: 8 }}>
-          {!conv.i_share && (
+          {inRoom && !conv.i_share && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('share', true)}>
               {conv.they_share ? 'Share tables' : 'Offer to share tables'}
             </button>
           )}
-          {!conv.i_keep && (
+          {inRoom && !conv.i_keep && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('keep', true)}>
               {conv.they_keep ? 'Keep in touch' : 'Ask to keep in touch'}
             </button>
