@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
-import { decryptText, encryptText, loadKeyPair, sharedKey } from '@/lib/crypto';
+import { createKeyPair, decryptText, encryptText, loadKeyPair, saveKeyPair, sharedKey } from '@/lib/crypto';
 import { MODE_LABELS, type ChatMode } from '@/lib/types';
 
 export type Conv = {
@@ -35,6 +35,8 @@ type Props = {
 export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onChanged, onRemoved }: Props) {
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [keyProblem, setKeyProblem] = useState(false);
+  const [keyVersion, setKeyVersion] = useState(0);
+  const [moving, setMoving] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,10 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
         const pair = await loadKeyPair(myVisitId);
         if (!pair || !conv.partner_key) throw new Error('no key');
         const k = await sharedKey(pair, conv.partner_key);
-        if (live) setKey(k);
+        if (live) {
+          setKey(k);
+          setKeyProblem(false);
+        }
       } catch {
         if (live) setKeyProblem(true);
       }
@@ -60,7 +65,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
     return () => {
       live = false;
     };
-  }, [myVisitId, conv.partner_key]);
+  }, [myVisitId, conv.partner_key, keyVersion]);
 
   const decryptRow = useCallback(
     async (r: Row): Promise<Msg> => {
@@ -142,6 +147,23 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
     setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
   }
 
+  // Move chat to this device: make a new key here and publish its public half.
+  // Messages sent before the move stay readable only on the old device.
+  async function useThisDevice() {
+    setMoving(true);
+    try {
+      const { pair, publicJwk } = await createKeyPair();
+      const { error } = await supabase.from('visits').update({ public_key: publicJwk }).eq('id', myVisitId);
+      if (error) throw error;
+      await saveKeyPair(myVisitId, pair);
+      setKeyVersion((v) => v + 1);
+      onChanged();
+    } catch {
+      setError('Could not switch to this device. Please try again.');
+    }
+    setMoving(false);
+  }
+
   async function setFlag(flag: 'share' | 'keep', val: boolean) {
     const { error } = await supabase.rpc('set_conversation_flag', { c, flag, val });
     if (error) setError('That did not save. Please try again.');
@@ -216,9 +238,15 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
 
       <div className="chat-scroll">
         {keyProblem && (
-          <p className="small" style={{ textAlign: 'center' }}>
-            This chat was started on another device, so older messages can&apos;t be read here.
-          </p>
+          <div className="card col" style={{ alignItems: 'center', textAlign: 'center' }}>
+            <span className="small">
+              You checked in on another device, so these messages can only be read there. You can move chat to this
+              device instead: new messages will appear here, and the other device will stop receiving them.
+            </span>
+            <button className="btn btn-primary btn-sm" onClick={useThisDevice} disabled={moving}>
+              {moving ? 'Switching…' : 'Use chat on this device'}
+            </button>
+          </div>
         )}
         {messages.length === 0 && !keyProblem && (
           <p className="small" style={{ textAlign: 'center', margin: 'auto 12px' }}>
