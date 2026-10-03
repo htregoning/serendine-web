@@ -64,8 +64,13 @@ function SignIn({ token }: { token: string }) {
         Say hello to another table, as yourself or by an alias. Nobody sees you until you choose to be seen.
       </p>
       <div style={{ flex: 1 }} />
-      <button className="btn btn-light" onClick={() => oauth('apple')}>Continue with Apple</button>
+      {process.env.NEXT_PUBLIC_APPLE_SIGNIN === 'on' && (
+        <button className="btn btn-light" onClick={() => oauth('apple')}>Continue with Apple</button>
+      )}
       <button className="btn btn-light" onClick={() => oauth('google')}>Continue with Google</button>
+      <p className="small" style={{ textAlign: 'center', margin: 0 }}>
+        Opened from WhatsApp or Instagram? Open this page in Safari or Chrome first, as Google sign-in doesn&apos;t work inside those apps.
+      </p>
       <div className="divider">or</div>
       {sent ? (
         <p className="card small">Check your email for a sign-in link. Open it on this phone.</p>
