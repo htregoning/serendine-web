@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Chat, { type Conv } from './chat';
-import { alertGuest, buzz, chime, setTabCount } from '@/lib/alerts';
+import { alertGuest, buzz, chime, setTabCount, unlockAudio } from '@/lib/alerts';
 import { MODE_LABELS, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean };
@@ -39,11 +39,31 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
   const [unread, setUnread] = useState<Record<string, boolean>>({});
   const activeRef = useRef<string | null>(null);
   const statusRef = useRef<Record<string, RequestStatus>>({});
+  const lastAtRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    unlockAudio();
+  }, []);
   activeRef.current = activeId;
 
   const loadConvs = useCallback(async () => {
     const { data } = await supabase.rpc('my_conversations', { v: venue.venue_id });
     const list = (data as Conv[] | null) ?? [];
+    // A chat whose latest activity moved on while it wasn't open (or the page was
+    // hidden) has a new message from the other person: mark it and alert once.
+    const prev = lastAtRef.current;
+    let fresh = false;
+    const marks: Record<string, boolean> = {};
+    for (const c of list) {
+      const before = prev[c.conversation_id];
+      if (before && c.last_at > before && (c.conversation_id !== activeRef.current || document.hidden)) {
+        fresh = true;
+        if (c.conversation_id !== activeRef.current) marks[c.conversation_id] = true;
+      }
+    }
+    lastAtRef.current = Object.fromEntries(list.map((c) => [c.conversation_id, c.last_at]));
+    if (fresh) alertGuest();
+    if (Object.keys(marks).length) setUnread((u) => ({ ...u, ...marks }));
     setConvs(list);
     setActiveId((id) => (id && !list.some((c) => c.conversation_id === id) ? null : id));
   }, [supabase, venue.venue_id]);
@@ -56,15 +76,10 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => loadConvs())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as { conversation_id: string; sender_visit: string };
-        if (m.sender_visit !== visit.id) {
-          const elsewhere = m.conversation_id !== activeRef.current;
-          if (elsewhere) setUnread((u) => ({ ...u, [m.conversation_id]: true }));
-          if (elsewhere || document.hidden) alertGuest();
-        }
-        loadConvs();
+        if (m.sender_visit !== visit.id) loadConvs();
       })
       .subscribe();
-    const poll = setInterval(loadConvs, 20000);
+    const poll = setInterval(loadConvs, 8000);
     return () => {
       clearInterval(poll);
       supabase.removeChannel(channel);

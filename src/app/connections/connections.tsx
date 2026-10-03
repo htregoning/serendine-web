@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { alertGuest } from '@/lib/alerts';
+import { alertGuest, unlockAudio } from '@/lib/alerts';
 import type { ChatMode } from '@/lib/types';
 import Chat, { type Conv } from '../t/[token]/room/chat';
 
@@ -49,6 +49,10 @@ export default function Connections() {
     mine.current = new Set(rows.map((r) => r.my_visit));
     setList(rows);
   }, [supabase]);
+
+  useEffect(() => {
+    unlockAudio();
+  }, []);
 
   useEffect(() => {
     load();

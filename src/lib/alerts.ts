@@ -30,6 +30,32 @@ export function chime(notes: number[] = [660, 880]) {
   }
 }
 
+// Phones only allow sound once the person has tapped the page. Call this when
+// the screen loads: the first tap anywhere quietly switches sound on for later.
+export function unlockAudio() {
+  const unlock = () => {
+    try {
+      const W = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+      const Ctx = W.AudioContext ?? W.webkitAudioContext;
+      if (!Ctx) return;
+      ctx = ctx ?? new Ctx();
+      if (ctx.state === 'suspended') ctx.resume();
+      const src = ctx.createBufferSource();
+      src.buffer = ctx.createBuffer(1, 1, 22050);
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch {
+      // ignore
+    }
+    window.removeEventListener('pointerdown', unlock);
+    window.removeEventListener('touchend', unlock);
+    window.removeEventListener('keydown', unlock);
+  };
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('touchend', unlock);
+  window.addEventListener('keydown', unlock);
+}
+
 export function buzz(pattern: number | number[] = [120, 60, 120]) {
   try {
     if ('vibrate' in navigator) navigator.vibrate(pattern);

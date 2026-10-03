@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { RequestKind, RequestStatus } from '@/lib/types';
+import { chime as play, unlockAudio } from '@/lib/alerts';
+
+const chime = () => play([880, 660, 880]);
 
 export type StaffVenue = {
   id: string;
@@ -29,28 +32,6 @@ const LABELS: Record<RequestKind, string> = {
 function ago(iso: string, now: number) {
   const m = Math.floor((now - new Date(iso).getTime()) / 60000);
   return m < 1 ? 'just now' : `${m} min ago`;
-}
-
-// A short two-tone chime so staff notice new requests.
-function chime() {
-  try {
-    const W = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-    const Ctx = W.AudioContext ?? W.webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    [880, 660].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.18);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.3);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.18);
-      osc.stop(ctx.currentTime + i * 0.18 + 0.32);
-    });
-  } catch {
-    // Sound is a nice-to-have.
-  }
 }
 
 export default function StaffScreen({ venue }: { venue: StaffVenue }) {
@@ -121,6 +102,10 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
     const t = setInterval(loadGuests, 10000);
     return () => clearInterval(t);
   }, [loadGuests]);
+
+  useEffect(() => {
+    unlockAudio();
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30000);
