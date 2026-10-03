@@ -10,6 +10,7 @@ import NotifyToggle from '@/components/notify-toggle';
 import Avatar, { forgetPhoto } from '@/components/avatar';
 import { selfieThumbnail } from '@/lib/photo';
 import Lobby from './lobby';
+import { DrinksPanel } from '@/components/drinks';
 import { MODE_LABELS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
@@ -236,6 +237,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           conv={active}
           myVisitId={visit.id}
           myTable={venue.table_label}
+          drinksEnabled={venue.drinks_enabled !== false}
           onBack={() => setActiveId(null)}
           onChanged={loadConvs}
           onRemoved={(msg) => {
@@ -271,6 +273,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
 
       <NotifyToggle supabase={supabase} who="guest" />
 
+      <DrinksPanel supabase={supabase} myVisitId={visit.id} />
+
       {tab !== 'service' && (
           <div className="card row">
             <div className="col grow" style={{ gap: 4 }}>
@@ -290,6 +294,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           <Lobby
             supabase={supabase}
             venueId={venue.venue_id}
+            drinksEnabled={venue.drinks_enabled !== false}
             onChatWith={(id) => openChatWith(id)}
             onNote={(n) => {
               setNote(n);

@@ -15,6 +15,7 @@ export type VenueAtTable = {
   offer_text: string;
   table_id: string;
   table_label: string;
+  drinks_enabled?: boolean;
 };
 
 export type RequestKind = 'waiter' | 'bill' | 'water';

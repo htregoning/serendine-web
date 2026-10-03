@@ -67,7 +67,7 @@ export async function refreshPush(supabase: Client) {
 }
 
 // Ask the server to notify the right people. Fire-and-forget.
-export function notify(kind: 'message' | 'request_update' | 'new_request', id: string) {
+export function notify(kind: 'message' | 'request_update' | 'new_request' | 'drink', id: string) {
   fetch('/api/notify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

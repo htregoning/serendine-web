@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/avatar';
 import { genderTag } from '@/lib/types';
+import { SendDrink } from '@/components/drinks';
 
 type Client = ReturnType<typeof createClient>;
 
@@ -25,6 +26,7 @@ type Props = {
   onChatWith: (visitId: string) => void;
   onNote: (note: string) => void;
   onNewWhileAway?: () => void;
+  drinksEnabled?: boolean;
 };
 
 function time(iso: string) {
@@ -32,7 +34,7 @@ function time(iso: string) {
 }
 
 // The venue's group chat: everyone who is open can read and post.
-export default function Lobby({ supabase, venueId, onChatWith, onNote }: Props) {
+export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEnabled = false }: Props) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +160,19 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote }: Props) 
                 <button className="btn btn-primary btn-sm" onClick={() => { onChatWith(menu.visit_id); setMenu(null); }}>
                   Chat privately
                 </button>
-              ) : (
+              ) : null}
+              {menu.author_open && drinksEnabled && (
+                <SendDrink
+                  supabase={supabase}
+                  toVisit={menu.visit_id}
+                  toAlias={menu.alias}
+                  onDone={(m) => {
+                    onNote(m);
+                    setMenu(null);
+                  }}
+                />
+              )}
+              {!menu.author_open && (
                 <span className="small">{menu.alias} has left or switched off chat.</span>
               )}
               <div className="row" style={{ justifyContent: 'center', gap: 4 }}>

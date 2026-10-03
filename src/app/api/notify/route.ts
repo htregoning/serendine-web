@@ -8,6 +8,7 @@ const FUNCTIONS = {
   message: 'push_for_message',
   request_update: 'push_for_request_update',
   new_request: 'push_for_new_request',
+  drink: 'push_for_drink',
 } as const;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const fn = FUNCTIONS[kind as keyof typeof FUNCTIONS];
-  const arg = kind === 'message' ? { c: id } : { r: id };
+  const arg = kind === 'message' ? { c: id } : kind === 'drink' ? { p_id: id } : { r: id };
   const { data, error } = await supabase.rpc(fn, arg);
   if (error) return NextResponse.json({ sent: 0 });
 

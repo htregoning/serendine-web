@@ -6,6 +6,7 @@ import { createKeyPair, decryptText, encryptText, loadKeyPair, saveKeyPair, shar
 import { MODE_LABELS, type ChatMode } from '@/lib/types';
 import { notify } from '@/lib/push';
 import Avatar from '@/components/avatar';
+import { SendDrink } from '@/components/drinks';
 import { genderTag } from '@/lib/types';
 
 export type Conv = {
@@ -38,9 +39,10 @@ type Props = {
   // 'connection' = a kept chat reopened after leaving: no table sharing.
   context?: 'room' | 'connection';
   backLabel?: string;
+  drinksEnabled?: boolean;
 };
 
-export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room' }: Props) {
+export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room', drinksEnabled = false }: Props) {
   const inRoom = context === 'room';
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [keyProblem, setKeyProblem] = useState(false);
@@ -49,6 +51,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [theirTable, setTheirTable] = useState<string | null>(null);
   const [panel, setPanel] = useState<'none' | 'block' | 'report'>('none');
   const [reason, setReason] = useState('');
@@ -234,11 +237,15 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
       <div className="col" style={{ gap: 8, padding: '12px 16px 0' }}>
         {inRoom && shareStatus && <p className="card small chat-status">{shareStatus}</p>}
         {keepStatus && <p className="card small chat-status">{keepStatus}</p>}
+        {notice && <p className="card small chat-status" role="status">{notice}</p>}
         <div className="row" style={{ gap: 8 }}>
           {inRoom && !conv.i_share && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('share', true)}>
               {conv.they_share ? 'Share tables' : 'Offer to share tables'}
             </button>
+          )}
+          {inRoom && drinksEnabled && (
+            <SendDrink supabase={supabase} toVisit={conv.partner_visit} toAlias={conv.partner_alias} onDone={setNotice} />
           )}
           {inRoom && !conv.i_keep && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('keep', true)}>

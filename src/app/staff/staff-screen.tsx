@@ -17,12 +17,14 @@ export type StaffVenue = {
   accent: string;
   offer_enabled: boolean;
   offer_text: string;
+  drinks_enabled?: boolean;
   menu_pdf_path: string | null;
   menu_updated_at: string | null;
   role: 'manager' | 'staff';
 };
 
 type Req = { id: string; kind: RequestKind; status: RequestStatus; created_at: string; table_id: string };
+type DrinkOrder = { id: string; from_table: string; from_alias: string; to_table: string; to_alias: string; note: string | null; accepted_at: string };
 type OfferGuest = { visit_id: string; table_label: string; alias: string; redeemed: boolean; code: string | null };
 
 const LABELS: Record<RequestKind, string> = {
@@ -63,6 +65,36 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
     first.current = false;
     setRequests(list);
   }, [supabase, venue.id, sound]);
+
+  const [drinks, setDrinks] = useState<DrinkOrder[]>([]);
+  const drinkSeen = useRef<Set<string> | null>(null);
+
+  const loadDrinks = useCallback(async () => {
+    const { data } = await supabase.rpc('staff_drinks', { v: venue.id });
+    const list = (data as DrinkOrder[] | null) ?? [];
+    if (drinkSeen.current && sound && list.some((d) => !drinkSeen.current!.has(d.id))) chime();
+    drinkSeen.current = new Set(list.map((d) => d.id));
+    setDrinks(list);
+  }, [supabase, venue.id, sound]);
+
+  useEffect(() => {
+    loadDrinks();
+    const channel = supabase
+      .channel(`staff-drinks-${venue.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'drink_offers', filter: `venue_id=eq.${venue.id}` }, () => loadDrinks())
+      .subscribe();
+    const poll = setInterval(loadDrinks, 15000);
+    return () => {
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, venue.id, loadDrinks]);
+
+  async function served(id: string) {
+    setDrinks((ds) => ds.filter((d) => d.id !== id));
+    await supabase.rpc('serve_drink', { p_id: id });
+    loadDrinks();
+  }
 
   const loadGuests = useCallback(async () => {
     const { data } = await supabase.rpc('staff_offer_guests', { v: venue.id });
@@ -187,6 +219,23 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
         </section>
 
         <aside className="col" style={{ gap: 16 }}>
+          {drinks.length > 0 && (
+            <div className="card col" style={{ gap: 10, borderColor: 'var(--accent)', borderWidth: 2 }}>
+              <strong>Drinks to send · {drinks.length}</strong>
+              {drinks.map((d) => (
+                <div key={d.id} className="col" style={{ gap: 6, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
+                  <span style={{ fontSize: 17, fontWeight: 700 }}>
+                    Table {d.from_table} → Table {d.to_table}
+                  </span>
+                  <span className="small">
+                    From {d.from_alias} to {d.to_alias}
+                    {d.note ? ` · "${d.note}"` : ''} · add to Table {d.from_table}&apos;s bill
+                  </span>
+                  <button className="btn btn-primary btn-sm" onClick={() => served(d.id)}>Served</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="card col" style={{ gap: 10 }}>
             <strong>Welcome offer</strong>
             <span className="display" style={{ fontSize: 20 }}>
@@ -221,6 +270,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
   const [supabase] = useState(() => createClient());
   const [offerText, setOfferText] = useState(venue.offer_text);
   const [offerOn, setOfferOn] = useState(venue.offer_enabled);
+  const [drinksOn, setDrinksOn] = useState(venue.drinks_enabled !== false);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -228,7 +278,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
     setBusy('offer');
     const { error } = await supabase
       .from('venues')
-      .update({ offer_text: offerText.trim() || venue.offer_text, offer_enabled: offerOn })
+      .update({ offer_text: offerText.trim() || venue.offer_text, offer_enabled: offerOn, drinks_enabled: drinksOn })
       .eq('id', venue.id);
     setBusy(null);
     setMsg(error ? 'The offer did not save.' : 'Offer saved. Guests see it straight away.');
@@ -282,7 +332,11 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
           <input type="checkbox" checked={offerOn} onChange={(e) => setOfferOn(e.target.checked)} />
           <span>Show the offer to guests</span>
         </label>
-        <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save offer</button>
+        <label className="check">
+          <input type="checkbox" checked={drinksOn} onChange={(e) => setDrinksOn(e.target.checked)} />
+          <span>Let guests send each other drinks (added to the sender&apos;s bill)</span>
+        </label>
+        <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save</button>
       </div>
 
       <div className="col">
