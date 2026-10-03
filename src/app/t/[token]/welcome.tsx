@@ -46,7 +46,14 @@ function SignIn({ token }: { token: string }) {
       email: email.trim(),
       options: { emailRedirectTo: redirectTo() },
     });
-    if (error) setError('We could not send the link. Check the address and try again.');
+    if (error) {
+      const limited = error.status === 429 || /rate limit/i.test(error.message);
+      setError(
+        limited
+          ? 'Too many sign-in emails just now. Try Google, or wait a few minutes.'
+          : 'We could not send the link. Check the address and try again.',
+      );
+    }
     else setSent(true);
   }
 
@@ -78,7 +85,10 @@ function SignIn({ token }: { token: string }) {
         </form>
       )}
       {error && <p className="error">{error}</p>}
-      <p className="small" style={{ textAlign: 'center' }}>18+ only. Your email is never shown to other guests.</p>
+      <p className="small" style={{ textAlign: 'center' }}>
+        18+ only. Your email is never shown to other guests. By continuing you agree to the{' '}
+        <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.
+      </p>
     </>
   );
 }
