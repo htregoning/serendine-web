@@ -15,12 +15,14 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   if (!user) return <StaffSignIn />;
 
   const cols = 'id, slug, name, accent, offer_enabled, offer_text, menu_pdf_path, menu_updated_at';
-  let { data: rows, error } = await supabase
+  const first = await supabase
     .from('venue_members')
     .select(`role, venues(${cols}, drinks_enabled)`)
     .eq('user_id', user.id);
   // Before the drinks database update is installed, load without that setting.
-  if (error) ({ data: rows } = await supabase.from('venue_members').select(`role, venues(${cols})`).eq('user_id', user.id));
+  const rows: unknown = first.error
+    ? (await supabase.from('venue_members').select(`role, venues(${cols})`).eq('user_id', user.id)).data
+    : first.data;
 
   type Row = { role: 'manager' | 'staff'; venues: Omit<StaffVenue, 'role'> | null };
   const venues: StaffVenue[] = ((rows ?? []) as unknown as Row[])
