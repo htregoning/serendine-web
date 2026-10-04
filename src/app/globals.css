@@ -261,3 +261,14 @@ img.avatar { display: block; background: var(--line); }
 .site-footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
 .site-footer-links a { color: var(--muted); text-decoration: none; }
 .site-footer-links a:hover, .site-footer-links a:focus-visible { color: var(--text); text-decoration: underline; }
+
+/* Admin directory */
+.dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.dir-title { margin: 0 0 6px; font-size: 18px; color: var(--text); }
+.dir-item { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.dir-item:first-of-type { border-top: 0; }
+.dir-label { color: var(--text); font-weight: 700; }
+.dir-item:hover .dir-label, .dir-item:focus-visible .dir-label { text-decoration: underline; }
+.dir-file { padding: 8px 0; border-top: 1px solid var(--line); }
+.dir-file-name { all: unset; cursor: pointer; color: var(--text); font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.dir-file-name:hover, .dir-file-name:focus-visible { text-decoration: underline; }

@@ -104,6 +104,7 @@ export default function AdminHome({ isAdmin, venues, email }: { isAdmin: boolean
           <span className="wordmark" style={{ fontSize: 16 }}>Serendine</span>
           <span className="small">{isAdmin ? 'Admin' : 'Venue manager'} · {email}</span>
         </div>
+        {isAdmin && <Link className="btn btn-ghost btn-sm" href="/admin/directory" style={{ textDecoration: 'none', color: 'var(--text)' }}>Directory</Link>}
         {isAdmin && <Link className="btn btn-ghost btn-sm" href="/admin/reports" style={{ textDecoration: 'none', color: 'var(--text)' }}>Reports</Link>}
       </header>
 
