@@ -54,6 +54,7 @@ const SECTIONS: { title: string; items: Item[] }[] = [
       { href: 'https://claude.ai/artifact/3BC9sZdBG28nK7T7iV2Lr8', label: 'Pricing slides', note: 'Plans, events and projected income', external: true },
       { href: 'https://claude.ai/artifact/96RfLqNndvtxVXTbcRDW5A', label: 'Design prototype', note: 'Early clickable designs and sticker mock-ups', external: true },
       { href: 'https://claude.ai/artifact/KVRC2MMe8pRDwUT2N7HCWF', label: 'Logo', note: 'The Serendine logo artwork', external: true },
+      { href: 'https://claude.ai/artifact/QvqfTbH4swUtiuJWHCYFNs', label: 'Instagram posts', note: 'Nine 1080 × 1350 posts, ready to export', external: true },
     ],
   },
 ];
