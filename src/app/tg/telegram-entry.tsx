@@ -47,10 +47,11 @@ export default function TelegramEntry({ to }: { to: string | null }) {
 
       // Ask once whether the bot may message them, for notifications.
       let writeAccess = tg.initDataUnsafe?.user?.allows_write_to_pm === true;
-      if (!writeAccess && typeof tg.requestWriteAccess === 'function') {
+      const askWrite = tg.requestWriteAccess;
+      if (!writeAccess && typeof askWrite === 'function') {
         writeAccess = await new Promise<boolean>((resolve) => {
           try {
-            tg.requestWriteAccess((ok: boolean) => resolve(ok));
+            askWrite.call(tg, (ok: boolean) => resolve(ok));
           } catch {
             resolve(false);
           }
@@ -82,11 +83,12 @@ export default function TelegramEntry({ to }: { to: string | null }) {
   }, [router, to]);
 
   function scan() {
-    if (!app?.showScanQrPopup) return;
-    app.showScanQrPopup({ text: 'Scan the Serendine code on your table' }, (text: string) => {
+    const tg = app;
+    if (!tg?.showScanQrPopup) return;
+    tg.showScanQrPopup({ text: 'Scan the Serendine code on your table' }, (text: string) => {
       const token = tableTokenFromText(text);
       if (!token) return false;
-      app.closeScanQrPopup?.();
+      tg.closeScanQrPopup?.();
       router.push(`/t/${token}`);
       return true;
     });
