@@ -363,6 +363,13 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
       </div>
 
       <div className="col">
+        <span className="label">Tables and team</span>
+        <a className="btn btn-ghost btn-sm" href={`/admin/v/${venue.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
+          Manage tables and team
+        </a>
+      </div>
+
+      <div className="col">
         <span className="label">Table stickers</span>
         <a className="btn btn-ghost btn-sm" href={`/staff/stickers?v=${venue.slug}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
           Print QR stickers

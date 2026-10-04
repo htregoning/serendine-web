@@ -14,6 +14,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
 
   if (!user) return <StaffSignIn />;
 
+  await supabase.rpc('claim_my_invites');
   const cols = 'id, slug, name, accent, offer_enabled, offer_text, menu_pdf_path, menu_updated_at';
   const first = await supabase
     .from('venue_members')
