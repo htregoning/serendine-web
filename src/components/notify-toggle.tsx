@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import { enablePush, pushState, refreshPush, sendTestPush, type PushState } from '@/lib/push';
 import { playSound, setSoundOn, soundOn } from '@/lib/alerts';
+import { inTelegram } from '@/lib/telegram';
 
 type Props = { supabase: ReturnType<typeof createClient>; who: 'guest' | 'staff' };
 
 const TEST_RESULT: Record<string, string> = {
   'not configured': 'The server keys for notifications aren’t set up yet (VAPID keys in Vercel).',
   'database update missing': 'The test needs the latest database update (0010).',
-  'no devices': 'This device isn’t registered yet. Turn notifications off and on again in your browser settings, then refresh.',
+  'no devices': 'This device isn’t registered yet. Turn notifications off and on again in your browser settings, then refresh. In Telegram, close Serendine, reopen it and allow messages from the bot.',
   'push service refused': 'Your phone’s push service turned the message down. Try turning notifications off and on again.',
   offline: 'You seem to be offline.',
   error: 'Something went wrong sending the test.',
@@ -22,9 +23,15 @@ export default function NotifyToggle({ supabase, who }: Props) {
   const [busy, setBusy] = useState(false);
   const [sound, setSound] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
+  const [tg, setTg] = useState(false);
 
   useEffect(() => {
     setSound(soundOn());
+    if (inTelegram()) {
+      setTg(true);
+      setState('on');
+      return;
+    }
     pushState().then((s) => {
       setState(s);
       if (s === 'on') refreshPush(supabase);
@@ -63,7 +70,9 @@ export default function NotifyToggle({ supabase, who }: Props) {
     return (
       <div className="col" style={{ gap: 6 }}>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span className="small grow">{state === 'on' ? 'Notifications on' : 'Alerts play while this screen is open'}</span>
+          <span className="small grow">
+            {tg ? 'Alerts arrive as Telegram messages' : state === 'on' ? 'Notifications on' : 'Alerts play while this screen is open'}
+          </span>
           {state === 'on' && (
             <button className="btn btn-ghost btn-sm" disabled={busy} onClick={test}>
               {busy ? 'Sending…' : 'Send test'}

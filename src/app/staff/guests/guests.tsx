@@ -55,6 +55,10 @@ type ExportRow = {
 
 type Filter = 'all' | 'contact' | 'regulars';
 
+// Telegram sign-ins have a placeholder address that can't receive email.
+const isTelegram = (email: string) => email.endsWith('@telegram.serendine.com');
+const contactEmail = (email: string) => (isTelegram(email) ? '' : email);
+
 const day = (s: string) =>
   new Date(s).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 const time = (s: string) => new Date(s).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -120,7 +124,7 @@ function GuestRow({ venueId, guest, onNoteSaved }: { venueId: string; guest: Gue
               <span className="small"> · “{guest.last_alias}”</span>
             )}
           </strong>
-          <span className="small guest-email">{guest.email}</span>
+          <span className="small guest-email">{isTelegram(guest.email) ? 'Signed in with Telegram' : guest.email}</span>
           <span className="small">
             {guest.visits} visit{guest.visits === 1 ? '' : 's'} · last {ago(guest.last_visit)} · table {guest.last_table}
             {guest.last_zone ? ` (${guest.last_zone})` : ''}
@@ -250,7 +254,7 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
         r.table_label,
         r.zone,
         r.name ?? '',
-        r.email,
+        contactEmail(r.email),
         r.alias,
         r.ok_to_contact ? 'Yes' : 'No',
         r.total_visits,
@@ -266,7 +270,7 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
       ['Name', 'Email', 'Alias', 'Visits', 'First visit', 'Last visit', 'Last table', 'Area', 'OK to contact', 'Offers used', 'Notes'],
       list.map((g) => [
         g.name ?? '',
-        g.email,
+        contactEmail(g.email),
         g.last_alias,
         g.visits,
         new Date(g.first_visit).toLocaleDateString(),

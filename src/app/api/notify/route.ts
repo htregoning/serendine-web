@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendNotification, setVapidDetails, type WebPushError } from 'web-push';
 import { createClient } from '@/lib/supabase/server';
+import { sendTelegram } from '@/lib/telegram-server';
 
 type Target = { endpoint: string; p256dh: string; auth: string; title: string; body: string; url: string; tag: string };
 
@@ -20,7 +21,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(request: Request) {
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  if (!publicKey || !privateKey) return NextResponse.json({ sent: 0, reason: 'not configured' });
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if ((!publicKey || !privateKey) && !botToken) return NextResponse.json({ sent: 0, reason: 'not configured' });
 
   let body: { kind?: unknown; id?: unknown } = {};
   try {
@@ -42,12 +44,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ sent: 0, reason: error.code === 'PGRST202' ? 'database update missing' : 'error' });
   }
 
-  setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:serendiners@gmail.com', publicKey, privateKey);
+  if (publicKey && privateKey) {
+    setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:serendiners@gmail.com', publicKey, privateKey);
+  }
 
+  const origin = new URL(request.url).origin;
   const targets = (data as Target[] | null) ?? [];
   let sent = 0;
   await Promise.all(
     targets.map(async (t) => {
+      // Telegram users get a message from the bot instead of a browser notification.
+      if (t.endpoint.startsWith('tg:')) {
+        if (!botToken) return;
+        const status = await sendTelegram(botToken, t.endpoint.slice(3), `${t.title}\n${t.body}`, `${origin}${t.url}`).catch(() => 0);
+        if (status === 200) sent++;
+        else if (status === 403) await supabase.rpc('prune_push_subscription', { p_endpoint: t.endpoint });
+        return;
+      }
+      if (!publicKey || !privateKey) return;
       try {
         await sendNotification(
           { endpoint: t.endpoint, keys: { p256dh: t.p256dh, auth: t.auth } },

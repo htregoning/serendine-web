@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createKeyPair, saveKeyPair } from '@/lib/crypto';
+import { inTelegram, telegramLink } from '@/lib/telegram';
 import { GENDER_LABELS, MODE_LABELS, eventDate, eventWindow, whereLabel, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
@@ -52,7 +53,29 @@ function SignIn({ token }: { token: string }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tg, setTg] = useState(false);
   const redirectTo = () => `${window.location.origin}/auth/callback?next=/t/${token}`;
+  const tgLink = telegramLink(token);
+
+  useEffect(() => {
+    setTg(inTelegram());
+  }, []);
+
+  // Inside Telegram, Google sign-in is blocked; Telegram itself vouches for the person.
+  if (tg) {
+    return (
+      <>
+        <h1 className="display">Someone in this room might be worth meeting.</h1>
+        <div style={{ flex: 1 }} />
+        <a className="btn btn-primary" href={`/tg?to=/t/${token}`} style={{ textDecoration: 'none' }}>
+          Continue with Telegram
+        </a>
+        <p className="small" style={{ textAlign: 'center' }}>
+          18+ only. By continuing you agree to the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.
+        </p>
+      </>
+    );
+  }
 
   async function oauth(provider: 'google' | 'apple') {
     setError(null);
@@ -89,6 +112,11 @@ function SignIn({ token }: { token: string }) {
         <button className="btn btn-light" onClick={() => oauth('apple')}>Continue with Apple</button>
       )}
       <button className="btn btn-light" onClick={() => oauth('google')}>Continue with Google</button>
+      {tgLink && (
+        <a className="btn btn-ghost" href={tgLink} style={{ textDecoration: 'none' }}>
+          Open in Telegram
+        </a>
+      )}
       <p className="small" style={{ textAlign: 'center', margin: 0 }}>
         Opened from WhatsApp or Instagram? Open this page in Safari or Chrome first, as Google sign-in doesn&apos;t work inside those apps.
       </p>

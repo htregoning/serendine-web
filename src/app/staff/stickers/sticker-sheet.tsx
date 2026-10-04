@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toString as qrSvg } from 'qrcode';
 import Logo from '@/components/logo';
 import { createClient } from '@/lib/supabase/client';
+import { TELEGRAM_BOT, telegramLink } from '@/lib/telegram';
 
 export type StickerTable = { label: string; zone: string; qr_token: string };
 
@@ -144,6 +145,10 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
   const [msg, setMsg] = useState<string | null>(null);
   const [editing, setEditing] = useState(true);
   const [showCodes, setShowCodes] = useState(isEvent);
+  const [target, setTarget] = useState<'web' | 'telegram'>('web');
+  const codeUrl = (token: string) => (target === 'telegram' ? telegramLink(token) : `${base}/t/${token}`);
+  const codeName = (label: string) =>
+    `${fileSafe(venueSlug)}-${fileSafe(label)}${target === 'telegram' ? '-telegram' : ''}`;
   const where = (label: string) => (isEvent ? label.toUpperCase() : `TABLE ${label}`);
 
   const dirty = JSON.stringify(d) !== JSON.stringify(saved);
@@ -253,14 +258,25 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
             Each file is just the QR code, ready for a designer to place. Use <b>SVG</b> for print (sharp at any size) or{' '}
             <b>PNG</b> (2000 × 2000 px) for anything else. Print it at least 2.5 cm wide, on a white background.
           </span>
+          {TELEGRAM_BOT && (
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span className="st-label">Codes open in</span>
+              <button className={`st-btn${target === 'web' ? ' st-btn-primary' : ''}`} onClick={() => setTarget('web')}>
+                Any phone browser
+              </button>
+              <button className={`st-btn${target === 'telegram' ? ' st-btn-primary' : ''}`} onClick={() => setTarget('telegram')}>
+                Telegram
+              </button>
+            </div>
+          )}
           <div className="st-codes">
             {tables.map((t) => (
               <div key={t.qr_token} className="st-code-row">
                 <span className="grow" style={{ fontWeight: 600 }}>{isEvent ? t.label : `Table ${t.label}`}</span>
-                <button className="st-btn" onClick={() => downloadCode(`${base}/t/${t.qr_token}`, `${fileSafe(venueSlug)}-${fileSafe(t.label)}`, 'svg', qrDark)}>
+                <button className="st-btn" onClick={() => downloadCode(codeUrl(t.qr_token), codeName(t.label), 'svg', qrDark)}>
                   SVG
                 </button>
-                <button className="st-btn" onClick={() => downloadCode(`${base}/t/${t.qr_token}`, `${fileSafe(venueSlug)}-${fileSafe(t.label)}`, 'png', qrDark)}>
+                <button className="st-btn" onClick={() => downloadCode(codeUrl(t.qr_token), codeName(t.label), 'png', qrDark)}>
                   PNG
                 </button>
               </div>
