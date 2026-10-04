@@ -14,7 +14,7 @@ export default function Privacy() {
         Serendine lets guests in a venue say hello to other tables, ask staff for service and see the menu.
         This policy explains what we collect, why, and the choices you have. Serendine is operated by
         [Company legal name], [registered address], United Arab Emirates (&quot;we&quot;). Contact:
-        [privacy@serendine.com].
+        serendiners@gmail.com.
       </p>
 
       <h2>The short version</h2>
@@ -73,7 +73,7 @@ export default function Privacy() {
         <li>Stay hidden: simply leave &quot;Open to chat&quot; switched off.</li>
         <li>Block or report anyone from inside a chat.</li>
         <li>Withdraw marketing consent at any time by contacting the venue or us.</li>
-        <li>Ask to access, correct or delete your data by emailing [privacy@serendine.com]. We will respond within [30 days].</li>
+        <li>Ask to access, correct or delete your data by emailing serendiners@gmail.com. We will respond within [30 days].</li>
       </ul>
 
       <h2>Age</h2>

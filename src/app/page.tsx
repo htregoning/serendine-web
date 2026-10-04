@@ -23,7 +23,17 @@ export default async function Home() {
       <p className="lede">
         Scan the code on your table to say hello to another table, call a waiter or see the menu.
       </p>
-      <p className="small">For venues: get in touch to bring Serendine to your tables.</p>
+      <div className="home-contact">
+        <span className="small">Run a restaurant or bar? Bring Serendine to your tables.</span>
+        <div className="row" style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a className="btn btn-ghost btn-sm" href="mailto:serendiners@gmail.com?subject=Serendine%20for%20my%20venue">
+            serendiners@gmail.com
+          </a>
+          <a className="btn btn-ghost btn-sm" href="https://instagram.com/serendiners" target="_blank" rel="noopener noreferrer">
+            Instagram @serendiners
+          </a>
+        </div>
+      </div>
       <p className="small">
         <a href="/connections">Your connections</a> · <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of use</a>
       </p>

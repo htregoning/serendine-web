@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ sent: 0, reason: error.code === 'PGRST202' ? 'database update missing' : 'error' });
   }
 
-  setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:hello@serendine.com', publicKey, privateKey);
+  setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:serendiners@gmail.com', publicKey, privateKey);
 
   const targets = (data as Target[] | null) ?? [];
   let sent = 0;

@@ -58,7 +58,7 @@ export default function Terms() {
       </p>
 
       <h2>Ending your use</h2>
-      <p>You can stop using Serendine at any time and ask us to delete your account at [privacy@serendine.com].</p>
+      <p>You can stop using Serendine at any time and ask us to delete your account at serendiners@gmail.com.</p>
 
       <h2>Law</h2>
       <p>These terms are governed by the laws of [the Emirate of Dubai and the federal laws of the UAE].</p>
