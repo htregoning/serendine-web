@@ -228,3 +228,17 @@ img.avatar { display: block; background: var(--line); }
 
 /* Home contact */
 .home-contact { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); text-align: center; }
+
+/* Guests page */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.stat-value { font-family: var(--font-display), system-ui, sans-serif; font-size: 28px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.guest-head { all: unset; cursor: pointer; display: flex; gap: 12px; align-items: flex-start; width: 100%; box-sizing: border-box; }
+.guest-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
+.guest-avatar { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--line); color: var(--text); font-weight: 700; }
+.guest-name { overflow-wrap: anywhere; }
+.guest-email { overflow-wrap: anywhere; }
+.guest-note-preview { padding-left: 52px; }
+.pill { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.pill-ok { border-color: var(--accent); color: var(--accent); }
+.visit-row { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); }

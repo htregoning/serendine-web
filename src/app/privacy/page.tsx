@@ -23,7 +23,8 @@ export default function Privacy() {
         <li>Your messages are end-to-end encrypted on your phone. We cannot read them, and nor can the venue.</li>
         <li>Your table number is only shown to another guest if you both agree.</li>
         <li>Chats are deleted when you leave, unless you and the other person both choose to keep in touch.</li>
-        <li>The venue only receives your email if you tick the box to receive its offers.</li>
+        <li>The venue you check in at sees your name, email address, and when and at which table you visited. It never sees your messages or who you talk to.</li>
+        <li>The venue may only send you offers and marketing if you tick the box to receive them.</li>
       </ul>
 
       <h2>What we collect</h2>
@@ -41,7 +42,8 @@ export default function Privacy() {
       <ul>
         <li>To provide the service you ask for: showing you who is open to chat, delivering messages and passing your requests to staff.</li>
         <li>To keep people safe: enforcing blocks, reviewing reports and removing people who break the house rules.</li>
-        <li>To share your contact details with a venue, only where you have given consent.</li>
+        <li>To give the venue you visit a record of your visit (your name, email, date, time and table), so it can look after returning guests and follow up on your visit.</li>
+        <li>To let the venue send you offers and marketing, only where you have given consent.</li>
         <li>To meet legal obligations.</li>
       </ul>
       <p>We do not sell your personal data, and we do not use your messages for advertising. We cannot read them.</p>
@@ -49,8 +51,11 @@ export default function Privacy() {
       <h2>What the venue sees</h2>
       <p>
         Venue staff see service requests with table numbers, and the name or alias and table of guests who opted in
-        to offers so they can redeem the welcome offer. Venue managers can download the email addresses of guests who
-        opted in to their offers. Venues never see your messages or who you talk to.
+        to offers so they can redeem the welcome offer. Venue managers see a guest list of everyone who checked in
+        there: your name, email address, the name or alias you used, the dates and times of your visits, which table
+        you sat at, whether you used the welcome offer and whether you agreed to receive offers. They can download this
+        list and keep private notes about returning guests. Venues never see your messages, who you talk to, what you are
+        there for (friendly chat, networking or dating), your gender or your photo.
       </p>
 
       <h2>How long we keep it</h2>

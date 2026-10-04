@@ -300,23 +300,6 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
     if (!error) onSaved();
   }
 
-  async function downloadContacts() {
-    setBusy('contacts');
-    const { data, error } = await supabase.rpc('marketing_contacts', { v: venue.id });
-    setBusy(null);
-    if (error) return setMsg('Could not load the guest list.');
-    const rows = (data as { email: string; alias: string; opted_in_at: string }[] | null) ?? [];
-    const esc = (s: string) => `"${String(s ?? '').replace(/"/g, '""')}"`;
-    const csv = ['email,name,opted_in_at', ...rows.map((r) => [esc(r.email), esc(r.alias), esc(r.opted_in_at)].join(','))].join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${venue.slug}-opted-in-guests.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setMsg(`Downloaded ${rows.length} opted-in guest${rows.length === 1 ? '' : 's'}.`);
-  }
-
   return (
     <div className="card col" style={{ gap: 14 }}>
       <strong>Manager</strong>
@@ -372,10 +355,11 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
       </div>
 
       <div className="col">
-        <span className="label">Opted-in guests</span>
-        <button className="btn btn-ghost btn-sm" onClick={downloadContacts} disabled={busy === 'contacts'}>
-          Download list (CSV)
-        </button>
+        <span className="label">Guests</span>
+        <span className="small">Who came in, when and where they sat, your notes, and downloads for follow-up.</span>
+        <a className="btn btn-ghost btn-sm" href={`/staff/guests?v=${venue.slug}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
+          Open guest list
+        </a>
       </div>
 
       {msg && <p className="small" role="status">{msg}</p>}

@@ -189,6 +189,11 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
           </label>
         </div>
       )}
+      <p className="small">
+        {venue.venue_name} will see your name, email and when and where you sat, so they can welcome you back. Your chats
+        stay private: nobody but you and the person you&apos;re talking to can read them.{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+      </p>
       {error && <p className="error">{error}</p>}
       <button className="btn btn-primary" type="submit" disabled={busy}>
         {busy ? 'Entering…' : 'Enter the room'}
