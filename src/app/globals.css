@@ -246,3 +246,12 @@ img.avatar { display: block; background: var(--line); }
 .st-code-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid #e6e8f5; }
 .st-code-row:first-child { border-top: 0; }
 .st-code-row .st-btn { padding: 5px 12px; font-size: 13px; }
+
+/* Messages from the venue */
+.venue-news { display: flex; gap: 12px; align-items: flex-start; border-color: var(--accent); }
+.venue-news-mark { font-size: 24px; line-height: 1.2; }
+.venue-news-body { color: var(--text); overflow-wrap: anywhere; }
+.venue-news-last_orders, .venue-news-happy_hour { background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+.link-quiet { all: unset; cursor: pointer; align-self: flex-start; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.link-quiet:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.venue-news .icon-btn { color: var(--muted); font-size: 24px; width: 36px; height: 36px; margin: -6px -8px 0 0; }

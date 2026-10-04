@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import Chat, { type Conv } from './chat';
 import { alertGuest, playSound, setTabCount, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
+import VenueNews from '@/components/venue-news';
 import NotifyToggle from '@/components/notify-toggle';
 import Avatar, { forgetPhoto } from '@/components/avatar';
 import { selfieThumbnail } from '@/lib/photo';
@@ -273,6 +274,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       {note && <p className="error" role="status">{note}</p>}
 
       <NotifyToggle supabase={supabase} who="guest" />
+
+      <VenueNews supabase={supabase} venueId={venue.venue_id} visitId={visit.id} venueName={venue.venue_name} />
 
       <DrinksPanel supabase={supabase} myVisitId={visit.id} />
 

@@ -11,6 +11,7 @@ const FUNCTIONS = {
   new_request: 'push_for_new_request',
   drink: 'push_for_drink',
   test: 'push_for_test',
+  announcement: 'push_for_announcement',
 } as const;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const fn = FUNCTIONS[kind as keyof typeof FUNCTIONS];
-  const arg = kind === 'test' ? {} : kind === 'message' ? { c: id } : kind === 'drink' ? { p_id: id } : { r: id };
+  const arg = kind === 'test' ? {} : kind === 'message' ? { c: id } : kind === 'drink' || kind === 'announcement' ? { p_id: id } : { r: id };
   const { data, error } = await supabase.rpc(fn, arg);
   if (error) {
     return NextResponse.json({ sent: 0, reason: error.code === 'PGRST202' ? 'database update missing' : 'error' });

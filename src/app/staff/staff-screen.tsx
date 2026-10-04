@@ -7,6 +7,7 @@ import type { RequestKind, RequestStatus } from '@/lib/types';
 import { playSound, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
+import Announce from './announce';
 
 
 export type StaffVenue = {
@@ -45,6 +46,7 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
   const [requests, setRequests] = useState<Req[]>([]);
   const [tables, setTables] = useState<Record<string, string>>({});
   const [guests, setGuests] = useState<OfferGuest[]>([]);
+  const [guestsHere, setGuestsHere] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [note, setNote] = useState<string | null>(null);
   const seen = useRef<Set<string>>(new Set());
@@ -99,6 +101,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
   const loadGuests = useCallback(async () => {
     const { data } = await supabase.rpc('staff_offer_guests', { v: venue.id });
     setGuests((data as OfferGuest[] | null) ?? []);
+    const here = await supabase.rpc('venue_guests_now', { v: venue.id });
+    setGuestsHere(here.error ? null : ((here.data as number | null) ?? 0));
   }, [supabase, venue.id]);
 
   useEffect(() => {
@@ -180,6 +184,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
       {note && <p className="error" role="status">{note}</p>}
 
       <NotifyToggle supabase={supabase} who="staff" />
+
+      <Announce supabase={supabase} venueId={venue.id} guestsHere={guestsHere} />
 
       <div className="staff-grid">
         <section className="col" style={{ gap: 12 }} aria-label="Table requests">

@@ -81,7 +81,7 @@ export async function sendTestPush(): Promise<{ sent: number; reason?: string }>
 }
 
 // Ask the server to notify the right people. Fire-and-forget.
-export function notify(kind: 'message' | 'request_update' | 'new_request' | 'drink', id: string) {
+export function notify(kind: 'message' | 'request_update' | 'new_request' | 'drink' | 'announcement', id: string) {
   fetch('/api/notify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
