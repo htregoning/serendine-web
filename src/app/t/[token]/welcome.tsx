@@ -8,6 +8,7 @@ import { inTelegram, telegramLink } from '@/lib/telegram';
 import { GENDER_LABELS, MODE_LABELS, eventDate, eventWindow, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 import { LangToggle, useLang, useT } from '@/components/lang';
 import { monthNames } from '@/lib/i18n';
+import Buzz from '@/components/buzz';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
@@ -31,6 +32,7 @@ export default function Welcome({ token, venue, signedIn }: Props) {
         </div>
         <LangToggle />
       </div>
+      {eventWindow(venue) === 'open' && <Buzz token={token} />}
       {eventWindow(venue) !== 'open' ? (
         <div className="col" style={{ gap: 12, flex: 1, justifyContent: 'center' }}>
           <h1 className="display">{eventWindow(venue) === 'early' ? t('Not open yet') : t('This event has finished')}</h1>

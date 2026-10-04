@@ -1,5 +1,6 @@
 'use client';
-import { useT } from '@/components/lang';
+import { useLang, useT } from '@/components/lang';
+import { currentIcebreaker } from '@/lib/icebreakers';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
@@ -37,6 +38,13 @@ function time(iso: string) {
 // The venue's group chat: everyone who is open can read and post.
 export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEnabled = false }: Props) {
   const t = useT();
+  const lang = useLang();
+  const [ice, setIce] = useState(() => currentIcebreaker(lang));
+  useEffect(() => {
+    setIce(currentIcebreaker(lang));
+    const id = setInterval(() => setIce(currentIcebreaker(lang)), 60000);
+    return () => clearInterval(id);
+  }, [lang]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -111,14 +119,21 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
   return (
     <div className="col" style={{ gap: 10 }}>
       <p className="small" style={{ margin: 0 }}>
-        Everyone who is open to chat here can read the group. Private chats stay encrypted. Group messages are cleared after
-        the night.
+        {t('Everyone who is open to chat here can read the group. Private chats stay encrypted. Group messages are cleared after the night.')}
       </p>
+
+      <div className="icebreaker">
+        <span className="eyebrow">{t('Tonight’s icebreaker')}</span>
+        <strong>{ice}</strong>
+        <button className="btn btn-ghost btn-sm" onClick={() => setDraft(ice + ' ')} style={{ alignSelf: 'flex-start' }}>
+          {t('Answer in the group')}
+        </button>
+      </div>
 
       <div className="lobby-feed">
         {posts.length === 0 && (
           <p className="small" style={{ textAlign: 'center', margin: 'auto 12px' }}>
-            Nobody has said anything yet. Break the ice: say hello to the room.
+            {t('Nobody has said anything yet. Break the ice: say hello to the room.')}
           </p>
         )}
         {posts.map((p) => {

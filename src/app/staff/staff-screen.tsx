@@ -9,6 +9,7 @@ import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
 import Announce from './announce';
 import GrowthSettings from './growth-settings';
+import StaffScript from './staff-script';
 
 
 export type StaffVenue = {
@@ -267,6 +268,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
               ))
             )}
           </div>
+
+          <StaffScript offer={venue.offer_enabled ? venue.offer_text : null} />
 
           {isManager && <ManagerTools venue={venue} onSaved={() => router.refresh()} />}
           {isManager && venue.weekly_report !== undefined && <GrowthSettings venue={venue} onSaved={() => router.refresh()} />}

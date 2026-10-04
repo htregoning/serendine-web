@@ -7,6 +7,7 @@ import Chat, { type Conv } from './chat';
 import { alertGuest, playSound, setTabCount, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import VenueNews from '@/components/venue-news';
+import Buzz from '@/components/buzz';
 import NotifyToggle from '@/components/notify-toggle';
 import Avatar, { forgetPhoto } from '@/components/avatar';
 import { selfieThumbnail } from '@/lib/photo';
@@ -276,6 +277,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       </div>
 
       {note && <p className="error" role="status">{note}</p>}
+
+      <Buzz token={token} compact />
 
       <NotifyToggle supabase={supabase} who="guest" />
 

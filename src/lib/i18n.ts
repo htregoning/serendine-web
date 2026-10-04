@@ -70,6 +70,13 @@ const AR: Record<string, string> = {
   'Your connections': 'معارفك',
 
   // The room
+  '{here} people here tonight · {open} open to chat': '{here} أشخاص هنا الليلة · {open} متاحون للدردشة',
+  '{here} people here tonight': '{here} أشخاص هنا الليلة',
+  'Tonight’s icebreaker': 'سؤال الليلة لكسر الجليد',
+  'Answer in the group': 'أجب في الدردشة الجماعية',
+  'Everyone who is open to chat here can read the group. Private chats stay encrypted. Group messages are cleared after the night.':
+    'يمكن لكل من هو متاح للدردشة هنا قراءة الدردشة الجماعية. تبقى المحادثات الخاصة مشفّرة، وتُحذف رسائل المجموعة بعد انتهاء الليلة.',
+  'Nobody has said anything yet. Break the ice: say hello to the room.': 'لم يقل أحد شيئاً بعد. اكسر الجليد وألقِ التحية على الجميع.',
   Leave: 'مغادرة',
   People: 'الأشخاص',
   'Group chat': 'الدردشة الجماعية',

@@ -293,3 +293,17 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; }
 .lang-toggle[lang='ar'] { font-family: var(--font-arabic), system-ui, sans-serif; }
 [dir='rtl'] .card.row, [dir='rtl'] button.card { text-align: right !important; }
 [dir='rtl'] .chat-head .icon-btn, [dir='rtl'] .chat-foot button[aria-label='Send'], [dir='rtl'] .lobby-send { transform: scaleX(-1); }
+
+/* Room buzz and icebreakers */
+.buzz { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font-size: 14px; font-weight: 700; }
+.buzz-compact { padding: 6px 12px; font-size: 13px; }
+.buzz-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent); animation: buzz-pulse 2s infinite; flex: none; }
+@keyframes buzz-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .buzz-dot { animation: none; } }
+.icebreaker { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 16px; border: 1px dashed var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+.icebreaker strong { color: var(--text); font-size: 18px; line-height: 1.35; }
+
+.staff-script summary { cursor: pointer; list-style: none; }
+.staff-script summary::-webkit-details-marker { display: none; }
+.staff-script summary::after { content: ' ▾'; color: var(--muted, #888); }
+.staff-script[open] summary::after { content: ' ▴'; }
