@@ -45,6 +45,13 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     );
   }
 
-  const venue = venues.find((x) => x.slug === v) ?? venues[0];
+  const picked = venues.find((x) => x.slug === v) ?? venues[0];
+  // Review, report and birthday settings (after database update 0016).
+  const extra = await supabase
+    .from('venues')
+    .select('google_review_url, instagram_handle, birthday_offer, weekly_report')
+    .eq('id', picked.id)
+    .maybeSingle();
+  const venue: StaffVenue = extra.error || !extra.data ? picked : { ...picked, ...(extra.data as Partial<StaffVenue>) };
   return <StaffScreen venue={venue} />;
 }

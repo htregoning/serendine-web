@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import FeedbackList from './feedback-list';
+import Campaigns from './campaigns';
 
 type Guest = {
   user_id: string;
@@ -17,6 +19,9 @@ type Guest = {
   offers_redeemed: number;
   drinks_bought: number;
   note: string;
+  birth_day?: number | null;
+  birth_month?: number | null;
+  avg_rating?: number | null;
 };
 
 type Visit = {
@@ -53,7 +58,14 @@ type ExportRow = {
   total_visits: number;
 };
 
-type Filter = 'all' | 'contact' | 'regulars';
+type Filter = 'all' | 'contact' | 'regulars' | 'birthdays';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const thisMonth = () => new Date().getMonth() + 1;
+const birthday = (g: Guest) => (g.birth_day && g.birth_month ? `${g.birth_day} ${MONTHS[g.birth_month - 1]}` : '');
+type Extra = { avg_rating: number | null; ratings: number; low_ratings: number; avg_answer_seconds: number | null };
+const answerTime = (s: number | null | undefined) =>
+  s === null || s === undefined ? '–' : s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
 
 // Telegram sign-ins have a placeholder address that can't receive email.
 const isTelegram = (email: string) => email.endsWith('@telegram.serendine.com');
@@ -137,6 +149,7 @@ function GuestRow({ venueId, guest, onNoteSaved }: { venueId: string; guest: Gue
             <span className="pill">No offers</span>
           )}
           {guest.visits > 1 && <span className="pill">Regular</span>}
+          {guest.birth_month === thisMonth() && <span className="pill pill-ok">Birthday {birthday(guest)}</span>}
         </span>
       </button>
 
@@ -148,6 +161,8 @@ function GuestRow({ venueId, guest, onNoteSaved }: { venueId: string; guest: Gue
             <span className="small">First visit {day(guest.first_visit)}</span>
             <span className="small">Offers used: {guest.offers_redeemed}</span>
             <span className="small">Drinks bought for others: {guest.drinks_bought}</span>
+            {guest.avg_rating ? <span className="small">Their rating: {guest.avg_rating} / 5</span> : null}
+            {birthday(guest) && <span className="small">Birthday: {birthday(guest)}</span>}
           </div>
           <div className="col" style={{ gap: 6 }}>
             <label className="label" htmlFor={`note-${guest.user_id}`}>Notes (only your team sees these)</label>
@@ -196,6 +211,7 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
   const [supabase] = useState(() => createClient());
   const [guests, setGuests] = useState<Guest[] | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [extra, setExtra] = useState<Extra | null>(null);
   const [days, setDays] = useState(7);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -224,6 +240,9 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
     supabase.rpc('venue_stats', { v: venue.id, p_days: days }).then(({ data }) => {
       setStats(((data as Stats[] | null) ?? [])[0] ?? null);
     });
+    supabase.rpc('venue_report', { v: venue.id, p_days: days }).then(({ data, error }) => {
+      setExtra(error ? null : (((data as Extra[] | null) ?? [])[0] ?? null));
+    });
   }, [supabase, venue.id, days]);
 
   const shown = useMemo(() => {
@@ -231,6 +250,7 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
     return (guests ?? []).filter((g) => {
       if (filter === 'contact' && !g.ok_to_contact) return false;
       if (filter === 'regulars' && g.visits < 2) return false;
+      if (filter === 'birthdays' && g.birth_month !== thisMonth()) return false;
       if (!term) return true;
       return [g.name, g.email, g.last_alias, g.last_table, g.note].some((x) => (x ?? '').toLowerCase().includes(term));
     });
@@ -267,7 +287,7 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
     const list = shown;
     downloadCsv(
       `${venue.slug}-guests${filter === 'contact' ? '-ok-to-contact' : filter === 'regulars' ? '-regulars' : ''}.csv`,
-      ['Name', 'Email', 'Alias', 'Visits', 'First visit', 'Last visit', 'Last table', 'Area', 'OK to contact', 'Offers used', 'Notes'],
+      ['Name', 'Email', 'Alias', 'Visits', 'First visit', 'Last visit', 'Last table', 'Area', 'OK to contact', 'Offers used', 'Birthday', 'Rating', 'Notes'],
       list.map((g) => [
         g.name ?? '',
         contactEmail(g.email),
@@ -279,6 +299,8 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
         g.last_zone,
         g.ok_to_contact ? 'Yes' : 'No',
         g.offers_redeemed,
+        birthday(g),
+        g.avg_rating ?? '',
         g.note,
       ]),
     );
@@ -293,6 +315,13 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
     ['Opted in to offers', stats?.opted_in],
     ['Drinks sent', stats?.drinks],
   ];
+  const extraTiles: [string, string][] = extra
+    ? [
+        ['Average rating', extra.ratings > 0 && extra.avg_rating !== null ? `${extra.avg_rating} ★` : '–'],
+        ['Ratings', String(extra.ratings)],
+        ['Answer time', answerTime(extra.avg_answer_seconds)],
+      ]
+    : [];
 
   return (
     <main className="admin">
@@ -320,8 +349,17 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
               <span className="small">{label}</span>
             </div>
           ))}
+          {extraTiles.map(([label, value]) => (
+            <div key={label} className="stat">
+              <span className="stat-value">{value}</span>
+              <span className="small">{label}</span>
+            </div>
+          ))}
         </div>
       </section>
+
+      {extra && <FeedbackList venueId={venue.id} days={days} />}
+      {extra && <Campaigns venueId={venue.id} />}
 
       <section className="card col" style={{ gap: 10 }} aria-label="Downloads">
         <strong>Download for follow-up</strong>
@@ -350,6 +388,7 @@ export default function Guests({ venue }: { venue: { id: string; slug: string; n
               ['all', 'Everyone'],
               ['contact', 'OK to contact'],
               ['regulars', 'Regulars'],
+              ['birthdays', 'Birthdays this month'],
             ] as [Filter, string][]
           ).map(([k, label]) => (
             <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>

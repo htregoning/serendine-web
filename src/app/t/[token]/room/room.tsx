@@ -222,7 +222,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
 
   async function leave() {
     await supabase.rpc('end_visit', { p_visit: visit.id });
-    router.replace(`/t/${token}`);
+    router.replace(`/thanks/${visit.id}`);
   }
 
   // Always the Serendine brand colours (venue colours can return with white-labelling).

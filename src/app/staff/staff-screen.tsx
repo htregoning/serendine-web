@@ -8,6 +8,7 @@ import { playSound, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
 import Announce from './announce';
+import GrowthSettings from './growth-settings';
 
 
 export type StaffVenue = {
@@ -20,6 +21,10 @@ export type StaffVenue = {
   drinks_enabled?: boolean;
   requests_enabled?: boolean;
   kind?: 'venue' | 'event';
+  google_review_url?: string | null;
+  instagram_handle?: string | null;
+  birthday_offer?: string | null;
+  weekly_report?: boolean;
   menu_pdf_path: string | null;
   menu_updated_at: string | null;
   role: 'manager' | 'staff';
@@ -264,6 +269,7 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
           </div>
 
           {isManager && <ManagerTools venue={venue} onSaved={() => router.refresh()} />}
+          {isManager && venue.weekly_report !== undefined && <GrowthSettings venue={venue} onSaved={() => router.refresh()} />}
         </aside>
       </div>
     </main>

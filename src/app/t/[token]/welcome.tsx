@@ -155,7 +155,27 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
   const [gender, setGender] = useState<Gender | null>(null);
   const [adult, setAdult] = useState(false);
   const [optIn, setOptIn] = useState(false);
+  const [bDay, setBDay] = useState('');
+  const [bMonth, setBMonth] = useState('');
+  const [bdayOffer, setBdayOffer] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // The venue's birthday treat, and any birthday this guest saved before (after update 0016).
+  useEffect(() => {
+    supabase
+      .from('venues')
+      .select('birthday_offer')
+      .eq('id', venue.venue_id)
+      .maybeSingle()
+      .then(({ data }: { data: { birthday_offer?: string | null } | null }) => setBdayOffer(data?.birthday_offer ?? null));
+    supabase.rpc('my_birthday').then(({ data }: { data: { birth_day: number | null; birth_month: number | null }[] | null }) => {
+      const b = data?.[0];
+      if (b?.birth_day && b?.birth_month) {
+        setBDay(String(b.birth_day));
+        setBMonth(String(b.birth_month));
+      }
+    });
+  }, [supabase, venue.venue_id]);
   const [error, setError] = useState<string | null>(null);
 
   async function enter(e: React.FormEvent) {
@@ -179,6 +199,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
       if (error && error.code === 'PGRST202') ({ data: visitId, error } = await supabase.rpc('start_visit', args));
       if (error || !visitId) throw error ?? new Error('no visit');
       await saveKeyPair(visitId as string, pair);
+      if (optIn && bDay && bMonth) await supabase.rpc('set_my_birthday', { p_day: Number(bDay), p_month: Number(bMonth) });
       router.replace(`/t/${token}/room`);
     } catch (e) {
       const m = (e as { message?: string } | null)?.message ?? '';
@@ -236,6 +257,26 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
             <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
             <span>Yes, send me offers and events from {venue.venue_name}. Optional; chatting works either way.</span>
           </label>
+          {optIn && (
+            <div className="col" style={{ gap: 6 }}>
+              <span className="label">Your birthday (optional)</span>
+              <div className="row" style={{ gap: 8 }}>
+                <select className="input" aria-label="Birthday day" value={bDay} onChange={(e) => setBDay(e.target.value)} style={{ flex: 1 }}>
+                  <option value="">Day</option>
+                  {Array.from({ length: 31 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                  ))}
+                </select>
+                <select className="input" aria-label="Birthday month" value={bMonth} onChange={(e) => setBMonth(e.target.value)} style={{ flex: 2 }}>
+                  <option value="">Month</option>
+                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <span className="small">{bdayOffer ? `${bdayOffer}. ` : ''}No year needed.</span>
+            </div>
+          )}
         </div>
       )}
       <p className="small">

@@ -12,6 +12,9 @@ export default async function Home() {
   if (user) {
     const { data: token } = await supabase.rpc('my_active_table_token');
     if (typeof token === 'string' && token) redirect(`/t/${token}/room`);
+    // Left without rating (or was checked out automatically): ask once.
+    const { data: pending } = await supabase.rpc('pending_feedback');
+    if (typeof pending === 'string' && pending) redirect(`/thanks/${pending}`);
   }
 
   return (

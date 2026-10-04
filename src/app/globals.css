@@ -272,3 +272,13 @@ img.avatar { display: block; background: var(--line); }
 .dir-file { padding: 8px 0; border-top: 1px solid var(--line); }
 .dir-file-name { all: unset; cursor: pointer; color: var(--text); font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
 .dir-file-name:hover, .dir-file-name:focus-visible { text-decoration: underline; }
+
+/* After-visit rating */
+.stars { display: flex; gap: 6px; justify-content: center; }
+.star { border: none; background: transparent; padding: 4px; min-width: 52px; min-height: 52px; cursor: pointer; }
+.star svg path { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; transition: fill 0.12s; }
+.star[data-on='true'] svg path { fill: var(--accent); }
+.star:hover svg path, .star:focus-visible svg path { fill: color-mix(in srgb, var(--accent) 45%, transparent); }
+.star:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.rating-low { color: var(--danger); letter-spacing: 1px; }
+.rating-good { color: var(--accent); letter-spacing: 1px; }
