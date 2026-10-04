@@ -162,7 +162,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
     loadGuests();
   }
 
-  const style = { '--accent': venue.accent } as React.CSSProperties;
+  // Always the Serendine brand colours (venue colours can return with white-labelling).
+  const style = {} as React.CSSProperties;
 
   return (
     <main className="staff" style={style}>

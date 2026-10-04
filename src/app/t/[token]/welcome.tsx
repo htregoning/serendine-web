@@ -9,7 +9,8 @@ import { GENDER_LABELS, MODE_LABELS, type ChatMode, type Gender, type VenueAtTab
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
 export default function Welcome({ token, venue, signedIn }: Props) {
-  const style = { '--accent': venue.accent } as React.CSSProperties;
+  // Always the Serendine brand colours (venue colours can return with white-labelling).
+  const style = {} as React.CSSProperties;
   return (
     <main className="shell" style={style}>
       <div className="row">

@@ -225,7 +225,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
     router.replace(`/t/${token}`);
   }
 
-  const style = { '--accent': venue.accent } as React.CSSProperties;
+  // Always the Serendine brand colours (venue colours can return with white-labelling).
+  const style = {} as React.CSSProperties;
   const active = convs.find((c) => c.conversation_id === activeId);
   const anyUnread = Object.values(unread).some(Boolean);
 
