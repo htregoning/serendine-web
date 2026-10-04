@@ -8,7 +8,7 @@ export default function Privacy() {
     <main className="legal">
       <Link href="/" className="small">← Serendine</Link>
       <h1 className="display">Privacy policy</h1>
-      <p className="small">Last updated 4 October 2026</p>
+      <p className="small">Last updated 5 October 2026</p>
 
       <p>
         Serendine lets guests in a venue say hello to other tables, ask staff for service and see the menu.
@@ -31,6 +31,8 @@ export default function Privacy() {
       <ul>
         <li><b>Account details</b> from the sign-in you choose (Google, email link, or Telegram): your name, email address, profile picture where the provider supplies one, and a unique account ID. We never receive your password.</li>
         <li><b>Optional details you add</b>: whether you identify as male, female or prefer not to say, and an optional selfie, shown only to other guests open to chat at the same venue and deleted when you leave.</li>
+        <li><b>Ratings and comments</b> you give after a visit. They go to that venue&apos;s managers with your name and table.</li>
+        <li><b>Your birthday</b> (day and month only), if you add it. It is shared only with venues whose offers you agreed to receive.</li>
         <li><b>Notification details</b>: if you turn notifications on, the address your browser or Telegram gives us for sending them.</li>
         <li><b>Visit details</b>: the venue and table you scanned, the name or alias you enter, what you&apos;re there for (friendly chat, networking or dating), whether you are open to chat, and when you arrived and left.</li>
         <li><b>Messages</b>: stored only in encrypted form. The keys to read them are created and kept on your device.</li>
@@ -67,7 +69,7 @@ export default function Privacy() {
       <ul>
         <li><b>The venue you check in at</b>, as described in the next section.</li>
         <li><b>Other guests</b>, only what you choose to show: your name or alias, what you&apos;re there for, gender if you chose one, and your selfie, and only while you are open to chat.</li>
-        <li><b>Service providers</b> who run the service for us: Supabase (database and sign-in), Vercel (website hosting), Google, Apple and Telegram (sign-in and notifications) and browser push services. They may only use it to provide their service to us.</li>
+        <li><b>Service providers</b> who run the service for us: Supabase (database and sign-in), Vercel (website hosting), Resend (email delivery), Google, Apple and Telegram (sign-in and notifications) and browser push services. They may only use it to provide their service to us.</li>
         <li><b>Authorities</b>, where the law requires it.</li>
       </ul>
 
@@ -102,7 +104,7 @@ export default function Privacy() {
       <ul>
         <li>Stay hidden: simply leave &quot;Open to chat&quot; switched off.</li>
         <li>Block or report anyone from inside a chat.</li>
-        <li>Withdraw marketing consent at any time by contacting the venue or us.</li>
+        <li>Withdraw marketing consent at any time with the unsubscribe link in any venue email, or by contacting the venue or us.</li>
         <li>Ask to access, correct or delete your data by emailing serendiners@gmail.com. We will respond within 30 days.</li>
         <li>Delete your account and the data linked to it by emailing serendiners@gmail.com from the address you signed in with.</li>
       </ul>
