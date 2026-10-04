@@ -1,5 +1,7 @@
 'use client';
 
+import { useT } from '@/components/lang';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/avatar';
@@ -32,6 +34,7 @@ function Glasses() {
 
 // A small "Send a drink" button that opens a one-line note form.
 export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Client; toVisit: string; toAlias: string; onDone: (msg: string) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -44,39 +47,39 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
     setBusy(false);
     if (error) {
       const m = error.message;
-      setError(/already|plenty|switched off|not available|Open to chat/.test(m) ? m : 'That did not send. Please try again.');
+      setError(/already|plenty|switched off|not available|Open to chat/.test(m) ? m : t('That did not send. Please try again.'));
       return;
     }
     notify('drink', data as string);
     setOpen(false);
     setNote('');
-    onDone(`Drink offered to ${toAlias}. If they accept, staff will bring it over and add it to your bill.`);
+    onDone(t('Drink offered to {name}. If they accept, staff will bring it over and add it to your bill.', { name: toAlias }));
   }
 
   if (!open) {
     return (
       <button className="btn btn-ghost btn-sm grow" onClick={() => setOpen(true)}>
-        <Glasses /> Send a drink
+        <Glasses /> {t('Send a drink')}
       </button>
     );
   }
   return (
     <div className="card col" style={{ gap: 8, width: '100%' }}>
-      <strong>Send {toAlias} a drink</strong>
-      <span className="small">They can accept or say no thanks. If they accept, it&apos;s added to your bill.</span>
-      <label className="label" htmlFor={`drink-${toVisit}`}>Note for the staff (optional)</label>
+      <strong>{t('Send {name} a drink', { name: toAlias })}</strong>
+      <span className="small">{t("They can accept or say no thanks. If they accept, it's added to your bill.")}</span>
+      <label className="label" htmlFor={`drink-${toVisit}`}>{t('Note for the staff (optional)')}</label>
       <input
         id={`drink-${toVisit}`}
         className="input"
         maxLength={80}
-        placeholder="e.g. whatever they're drinking"
+        placeholder={t("e.g. whatever they're drinking")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
       {error && <p className="error">{error}</p>}
       <div className="row" style={{ gap: 8 }}>
-        <button className="btn btn-ghost btn-sm grow" onClick={() => setOpen(false)}>Cancel</button>
-        <button className="btn btn-primary btn-sm grow" onClick={send} disabled={busy}>{busy ? 'Sending…' : 'Offer drink'}</button>
+        <button className="btn btn-ghost btn-sm grow" onClick={() => setOpen(false)}>{t('Cancel')}</button>
+        <button className="btn btn-primary btn-sm grow" onClick={send} disabled={busy}>{busy ? t('Sending…') : t('Offer drink')}</button>
       </div>
     </div>
   );
@@ -92,6 +95,7 @@ const STATUS_OUT: Record<Drink['status'], string> = {
 
 // Drinks offered to me (accept / no thanks) and the ones I sent.
 export function DrinksPanel({ supabase, myVisitId }: { supabase: Client; myVisitId: string }) {
+  const t = useT();
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const seen = useRef<Set<string> | null>(null);
 
@@ -138,34 +142,34 @@ export function DrinksPanel({ supabase, myVisitId }: { supabase: Client; myVisit
             <div className="row">
               <Avatar supabase={supabase} visitId={d.other_visit} alias={d.other_alias} hasPhoto={d.other_has_photo} />
               <div className="col grow" style={{ gap: 2 }}>
-                <strong>{d.other_alias} would like to buy you a drink</strong>
+                <strong>{t('{name} would like to buy you a drink', { name: d.other_alias })}</strong>
                 {d.note && <span className="small">&ldquo;{d.note}&rdquo;</span>}
               </div>
             </div>
             <div className="row" style={{ gap: 8 }}>
-              <button className="btn btn-ghost btn-sm grow" onClick={() => respond(d.id, false)}>No thanks</button>
-              <button className="btn btn-primary btn-sm grow" onClick={() => respond(d.id, true)}>Accept</button>
+              <button className="btn btn-ghost btn-sm grow" onClick={() => respond(d.id, false)}>{t('No thanks')}</button>
+              <button className="btn btn-primary btn-sm grow" onClick={() => respond(d.id, true)}>{t('Accept')}</button>
             </div>
           </div>
         ) : (
           <div key={d.id} className="card row" style={{ gap: 12 }}>
             <Glasses />
             <div className="col grow" style={{ gap: 2 }}>
-              <strong>{d.incoming ? `Drink from ${d.other_alias}` : `Drink for ${d.other_alias}`}</strong>
+              <strong>{d.incoming ? t('Drink from {name}', { name: d.other_alias }) : t('Drink for {name}', { name: d.other_alias })}</strong>
               <span className="small">
                 {d.incoming
                   ? d.status === 'accepted'
-                    ? 'Accepted · on its way'
+                    ? t('Accepted · on its way')
                     : d.status === 'served'
-                      ? 'Delivered. Cheers!'
+                      ? t('Delivered. Cheers!')
                       : d.status === 'declined'
-                        ? 'You said no thanks'
-                        : 'Withdrawn'
-                  : STATUS_OUT[d.status]}
+                        ? t('You said no thanks')
+                        : t('Withdrawn')
+                  : t(STATUS_OUT[d.status])}
               </span>
             </div>
             {!d.incoming && d.status === 'offered' && (
-              <button className="btn btn-ghost btn-sm" onClick={() => withdraw(d.id)}>Withdraw</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => withdraw(d.id)}>{t('Withdraw')}</button>
             )}
           </div>
         ),

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/components/lang';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
@@ -35,6 +36,7 @@ function time(iso: string) {
 
 // The venue's group chat: everyone who is open can read and post.
 export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEnabled = false }: Props) {
+  const t = useT();
   const [posts, setPosts] = useState<Post[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
     const { error } = await supabase.rpc('post_to_lobby', { p_body: text });
     if (error) {
       setDraft(text);
-      setError(error.message.includes('Slow down') ? 'Slow down a little, then try again.' : 'That did not send. Please try again.');
+      setError(error.message.includes('Slow down') ? t('Slow down a little, then try again.') : t('That did not send. Please try again.'));
       return;
     }
     load();
@@ -94,7 +96,7 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
       p_reason: report ? reason.trim() || null : null,
       p_message: report ? menu.id : null,
     });
-    if (error) return setError('That did not work. Please try again.');
+    if (error) return setError(t('That did not work. Please try again.'));
     onNote(
       report
         ? `${menu.alias} is blocked and reported. Thank you for telling us.`
@@ -152,7 +154,7 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
               <strong>{menu.alias}</strong>
               {genderTag(menu.gender) && <span className="small">{genderTag(menu.gender)}</span>}
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={() => { setMenu(null); setReporting(false); }}>Close</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setMenu(null); setReporting(false); }}>{t('Close')}</button>
           </div>
           {!reporting ? (
             <>
@@ -176,17 +178,17 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
                 <span className="small">{menu.alias} has left or switched off chat.</span>
               )}
               <div className="row" style={{ justifyContent: 'center', gap: 4 }}>
-                <button className="link-danger" onClick={() => block(false)}>Block</button>
+                <button className="link-danger" onClick={() => block(false)}>{t('Block')}</button>
                 <span className="small">·</span>
-                <button className="link-danger" onClick={() => setReporting(true)}>Report</button>
+                <button className="link-danger" onClick={() => setReporting(true)}>{t('Report')}</button>
               </div>
             </>
           ) : (
             <>
-              <span className="small">We&apos;ll block them for you and send this message with your report.</span>
-              <label className="label" htmlFor="lobby-reason">What happened? (optional)</label>
+              <span className="small">{t("We'll block them for you and send this message with your report.")}</span>
+              <label className="label" htmlFor="lobby-reason">{t('What happened? (optional)')}</label>
               <textarea id="lobby-reason" className="input" style={{ height: 72, paddingTop: 10 }} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
-              <button className="btn btn-primary btn-sm" onClick={() => block(true)}>Block &amp; report</button>
+              <button className="btn btn-primary btn-sm" onClick={() => block(true)}>{t('Block & report')}</button>
             </>
           )}
         </div>
@@ -194,18 +196,18 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
 
       {error && <p className="error" role="status">{error}</p>}
       <form className="row" style={{ gap: 10 }} onSubmit={post}>
-        <label htmlFor="lobby-draft" style={{ position: 'absolute', left: -9999 }}>Message the room</label>
+        <label htmlFor="lobby-draft" style={{ position: 'absolute', left: -9999 }}>{t('Message the room')}</label>
         <input
           id="lobby-draft"
           className="input grow"
           style={{ borderRadius: 24, height: 48 }}
-          placeholder="Say something to the room…"
+          placeholder={t('Say something to the room…')}
           maxLength={500}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           autoComplete="off"
         />
-        <button className="btn btn-primary" style={{ width: 48, height: 48, padding: 0 }} type="submit" aria-label="Send">›</button>
+        <button className="btn btn-primary" style={{ width: 48, height: 48, padding: 0 }} type="submit" aria-label={t('Send')}>›</button>
       </form>
     </div>
   );

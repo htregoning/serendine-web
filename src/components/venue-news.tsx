@@ -1,5 +1,7 @@
 'use client';
 
+import { useT } from '@/components/lang';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import { playSound } from '@/lib/alerts';
@@ -32,6 +34,7 @@ const ago = (iso: string) => {
 
 // Messages from the venue to everyone checked in: last orders, specials and so on.
 export default function VenueNews({ supabase, venueId, visitId, venueName }: { supabase: Client; venueId: string; visitId: string; venueName: string }) {
+  const t = useT();
   const [items, setItems] = useState<Announcement[]>([]);
   const [muted, setMuted] = useState(false);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -86,22 +89,26 @@ export default function VenueNews({ supabase, venueId, visitId, venueName }: { s
   }
 
   const shown = items.filter((a) => !hidden.has(a.id));
+  const agoT = (iso: string) => {
+    const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    return m < 1 ? t('just now') : m < 60 ? t('{n} min ago', { n: m }) : ago(iso);
+  };
   if (shown.length === 0) return null;
 
   return (
-    <section className="col" style={{ gap: 8 }} aria-label={`Messages from ${venueName}`}>
+    <section className="col" style={{ gap: 8 }} aria-label={t('From {venue}', { venue: venueName })}>
       {shown.map((a) => (
         <div key={a.id} className={`card venue-news venue-news-${a.kind}`} role="status">
           <span className="venue-news-mark" aria-hidden="true">{KIND_MARK[a.kind] ?? '📣'}</span>
           <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
-            <span className="eyebrow">{KIND_LABELS[a.kind] ?? 'From the venue'} · {ago(a.created_at)}</span>
+            <span className="eyebrow">{t(KIND_LABELS[a.kind] ?? 'From the venue')} · {agoT(a.created_at)}</span>
             <strong className="venue-news-body">{a.body}</strong>
           </div>
-          <button className="icon-btn" aria-label="Dismiss" onClick={() => setHidden((h) => new Set(h).add(a.id))}>×</button>
+          <button className="icon-btn" aria-label={t('Dismiss')} onClick={() => setHidden((h) => new Set(h).add(a.id))}>×</button>
         </div>
       ))}
       <button className="link-quiet small" onClick={toggleMute}>
-        {muted ? `Turn ${venueName}'s notifications back on` : `Mute notifications from ${venueName}`}
+        {muted ? t("Turn {venue}'s notifications back on", { venue: venueName }) : t('Mute notifications from {venue}', { venue: venueName })}
       </button>
     </section>
   );

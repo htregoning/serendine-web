@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import { createKeyPair, decryptText, encryptText, loadKeyPair, saveKeyPair, sharedKey } from '@/lib/crypto';
+import { useT } from '@/components/lang';
 import { MODE_LABELS, type ChatMode } from '@/lib/types';
 import { notify } from '@/lib/push';
 import Avatar from '@/components/avatar';
@@ -45,6 +46,9 @@ type Props = {
 
 export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = false, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room', drinksEnabled = false }: Props) {
   const inRoom = context === 'room';
+  const t = useT();
+  const tRef = useRef(t);
+  tRef.current = t;
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [keyProblem, setKeyProblem] = useState(false);
   const [keyVersion, setKeyVersion] = useState(0);
@@ -82,7 +86,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
 
   const decryptRow = useCallback(
     async (r: Row): Promise<Msg> => {
-      let text = "This message can't be read on this device.";
+      let text = tRef.current("This message can't be read on this device.");
       if (key) {
         try {
           text = await decryptText(key, r.ciphertext, r.iv);
@@ -153,7 +157,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
       .single();
     if (error) {
       setDraft(text);
-      setError(error.message.includes('Slow down') ? 'Slow down a little, then try again.' : 'That did not send. Please try again.');
+      setError(error.message.includes('Slow down') ? t('Slow down a little, then try again.') : t('That did not send. Please try again.'));
       return;
     }
     notify('message', c);
@@ -180,7 +184,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
 
   async function setFlag(flag: 'share' | 'keep', val: boolean) {
     const { error } = await supabase.rpc('set_conversation_flag', { c, flag, val });
-    if (error) setError('That did not save. Please try again.');
+    if (error) setError(t('That did not work. Please try again.'));
     onChanged();
   }
 
@@ -192,7 +196,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
       p_reason: report ? reason.trim() || null : null,
       p_evidence: evidence,
     });
-    if (error) return setError('That did not work. Please try again.');
+    if (error) return setError(t('That did not work. Please try again.'));
     onRemoved(
       report
         ? `${conv.partner_alias} is blocked and reported. Thank you for telling us.`
@@ -203,37 +207,41 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
   const shareStatus =
     conv.i_share && conv.they_share
       ? isEvent
-        ? `Locations shared. ${conv.partner_alias} is in ${theirTable ?? '…'}. You're in ${myTable}.`
-        : `Tables shared. ${conv.partner_alias} is at Table ${theirTable ?? '…'}. You're at Table ${myTable}.`
+        ? t("Locations shared. {name} is in {their}. You're in {mine}.", { name: conv.partner_alias, their: theirTable ?? '…', mine: myTable })
+        : t("Tables shared. {name} is at Table {their}. You're at Table {mine}.", { name: conv.partner_alias, their: theirTable ?? '…', mine: myTable })
       : conv.i_share
-        ? `You offered to share ${isEvent ? 'where you are' : 'tables'}. Nothing is revealed until ${conv.partner_alias} agrees.`
+        ? isEvent
+          ? t('You offered to share where you are. Nothing is revealed until {name} agrees.', { name: conv.partner_alias })
+          : t('You offered to share tables. Nothing is revealed until {name} agrees.', { name: conv.partner_alias })
         : conv.they_share
-          ? `${conv.partner_alias} would like to share ${isEvent ? 'where you both are' : 'tables'}.`
+          ? isEvent
+            ? t('{name} would like to share where you both are.', { name: conv.partner_alias })
+            : t('{name} would like to share tables.', { name: conv.partner_alias })
           : null;
 
   const keepStatus =
     conv.i_keep && conv.they_keep
-      ? 'Connected. This chat stays after you both leave.'
+      ? t('Connected. This chat stays after you both leave.')
       : conv.i_keep
-        ? `You asked to keep in touch. Waiting for ${conv.partner_alias}.`
+        ? t('You asked to keep in touch. Waiting for {name}.', { name: conv.partner_alias })
         : conv.they_keep
-          ? `${conv.partner_alias} would like to keep in touch after tonight.`
+          ? t('{name} would like to keep in touch after tonight.', { name: conv.partner_alias })
           : null;
 
   return (
     <main className="chat">
       <header className="row chat-head">
-        <button className="icon-btn" onClick={onBack} aria-label={backLabel}>‹</button>
+        <button className="icon-btn" onClick={onBack} aria-label={t(backLabel)}>‹</button>
         <Avatar supabase={supabase} visitId={conv.partner_visit} alias={conv.partner_alias} hasPhoto={conv.partner_has_photo} />
         <div className="col grow" style={{ gap: 2 }}>
           <strong>{conv.partner_alias}</strong>
           <span className="small">
-            {[genderTag(conv.partner_gender), MODE_LABELS[conv.partner_mode], conv.partner_zone].filter(Boolean).join(' · ')}
+            {[t(genderTag(conv.partner_gender) ?? ''), t(MODE_LABELS[conv.partner_mode]), conv.partner_zone].filter(Boolean).join(' · ')}
           </span>
         </div>
-        <span className="row small" style={{ gap: 4 }} title="End-to-end encrypted">
+        <span className="row small" style={{ gap: 4 }} title={t('End-to-end encrypted')}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-          Encrypted
+          {t('Encrypted')}
         </span>
       </header>
 
@@ -245,8 +253,8 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
           {inRoom && !conv.i_share && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('share', true)}>
               {isEvent
-                ? conv.they_share ? 'Share where I am' : 'Offer to share where we are'
-                : conv.they_share ? 'Share tables' : 'Offer to share tables'}
+                ? conv.they_share ? t('Share where I am') : t('Offer to share where we are')
+                : conv.they_share ? t('Share tables') : t('Offer to share tables')}
             </button>
           )}
           {inRoom && drinksEnabled && (
@@ -254,7 +262,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
           )}
           {inRoom && !conv.i_keep && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('keep', true)}>
-              {conv.they_keep ? 'Keep in touch' : 'Ask to keep in touch'}
+              {conv.they_keep ? t('Keep in touch') : t('Ask to keep in touch')}
             </button>
           )}
         </div>
@@ -264,18 +272,16 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
         {keyProblem && (
           <div className="card col" style={{ alignItems: 'center', textAlign: 'center' }}>
             <span className="small">
-              You checked in on another device, so these messages can only be read there. You can move chat to this
-              device instead: new messages will appear here, and the other device will stop receiving them.
+              {t('You checked in on another device, so these messages can only be read there. You can move chat to this device instead: new messages will appear here, and the other device will stop receiving them.')}
             </span>
             <button className="btn btn-primary btn-sm" onClick={useThisDevice} disabled={moving}>
-              {moving ? 'Switching…' : 'Use chat on this device'}
+              {moving ? t('Switching…') : t('Use chat on this device')}
             </button>
           </div>
         )}
         {messages.length === 0 && !keyProblem && (
           <p className="small" style={{ textAlign: 'center', margin: 'auto 12px' }}>
-            Start with something easy: ask about their order, or what brings them here tonight.
-            Messages are encrypted; only the two of you can read them.
+            {t('Start with something easy: ask about their order, or what brings them here tonight. Messages are encrypted; only the two of you can read them.')}
           </p>
         )}
         {messages.map((m) => (
@@ -289,50 +295,50 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
         {panel === 'none' && (
           <>
             <form className="row" style={{ gap: 10 }} onSubmit={send}>
-              <label htmlFor="draft" style={{ position: 'absolute', left: -9999 }}>Message</label>
+              <label htmlFor="draft" style={{ position: 'absolute', left: -9999 }}>{t('Message')}</label>
               <input
                 id="draft"
                 className="input grow"
                 style={{ borderRadius: 24, height: 48 }}
-                placeholder="Say hello…"
+                placeholder={t('Say hello…')}
                 maxLength={1000}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 disabled={!key}
                 autoComplete="off"
               />
-              <button className="btn btn-primary" style={{ width: 48, height: 48, padding: 0 }} type="submit" aria-label="Send" disabled={!key}>
+              <button className="btn btn-primary" style={{ width: 48, height: 48, padding: 0 }} type="submit" aria-label={t('Send')} disabled={!key}>
                 ›
               </button>
             </form>
             <div className="row" style={{ justifyContent: 'center', gap: 4 }}>
-              <button className="link-danger" onClick={() => setPanel('block')}>Ignore &amp; block</button>
+              <button className="link-danger" onClick={() => setPanel('block')}>{t('Ignore & block')}</button>
               <span className="small">·</span>
-              <button className="link-danger" onClick={() => setPanel('report')}>Report</button>
+              <button className="link-danger" onClick={() => setPanel('report')}>{t('Report')}</button>
             </div>
           </>
         )}
         {panel === 'block' && (
           <div className="card col">
-            <strong>Block {conv.partner_alias}?</strong>
-            <span className="small">They won&apos;t be able to see or message you again, and they won&apos;t be told.</span>
+            <strong>{t('Block {name}?', { name: conv.partner_alias })}</strong>
+            <span className="small">{t("They won't be able to see or message you again, and they won't be told.")}</span>
             <div className="row" style={{ gap: 8 }}>
-              <button className="btn btn-ghost btn-sm grow" onClick={() => setPanel('none')}>Cancel</button>
-              <button className="btn btn-primary btn-sm grow" onClick={() => block(false)}>Block</button>
+              <button className="btn btn-ghost btn-sm grow" onClick={() => setPanel('none')}>{t('Cancel')}</button>
+              <button className="btn btn-primary btn-sm grow" onClick={() => block(false)}>{t('Block')}</button>
             </div>
           </div>
         )}
         {panel === 'report' && (
           <div className="card col">
-            <strong>Report {conv.partner_alias}</strong>
+            <strong>{t('Report {name}', { name: conv.partner_alias })}</strong>
             <span className="small">
-              We&apos;ll block them for you. Your recent messages in this chat are sent with the report so we can review it.
+              {t("We'll block them for you. Your recent messages in this chat are sent with the report so we can review it.")}
             </span>
-            <label className="label" htmlFor="reason">What happened? (optional)</label>
+            <label className="label" htmlFor="reason">{t('What happened? (optional)')}</label>
             <textarea id="reason" className="input" style={{ height: 80, paddingTop: 10 }} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
             <div className="row" style={{ gap: 8 }}>
-              <button className="btn btn-ghost btn-sm grow" onClick={() => setPanel('none')}>Cancel</button>
-              <button className="btn btn-primary btn-sm grow" onClick={() => block(true)}>Block &amp; report</button>
+              <button className="btn btn-ghost btn-sm grow" onClick={() => setPanel('none')}>{t('Cancel')}</button>
+              <button className="btn btn-primary btn-sm grow" onClick={() => block(true)}>{t('Block & report')}</button>
             </div>
           </div>
         )}

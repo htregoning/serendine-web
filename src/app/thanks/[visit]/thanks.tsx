@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/logo';
+import { LangToggle, useT } from '@/components/lang';
 
 export type FeedbackInfo = {
   venue_name: string;
@@ -25,6 +26,8 @@ export default function Thanks({ visitId, info }: { visitId: string; info: Feedb
   const [stage, setStage] = useState<'rate' | 'comment' | 'done'>(info.rated && info.rating ? 'done' : 'rate');
   const [busy, setBusy] = useState(false);
   const isEvent = info.kind === 'event';
+  const t = useT();
+  const venue = info.venue_name;
 
   async function save(r: number | null, c?: string) {
     setBusy(true);
@@ -56,13 +59,14 @@ export default function Thanks({ visitId, info }: { visitId: string; info: Feedb
     <main className="shell" style={{ justifyContent: 'center', gap: 22 }}>
       <div className="row" style={{ gap: 12 }}>
         <Logo size={44} />
-        <span className="small">{info.venue_name}</span>
+        <span className="small grow">{info.venue_name}</span>
+        <LangToggle />
       </div>
 
       {stage === 'rate' && (
         <>
-          <h1 className="display">How was {isEvent ? 'it' : 'tonight'}?</h1>
-          <p className="lede">One tap. It helps {info.venue_name} look after you next time.</p>
+          <h1 className="display">{isEvent ? t('How was it?') : t('How was tonight?')}</h1>
+          <p className="lede">{t('One tap. It helps {venue} look after you next time.', { venue })}</p>
           <div className="stars" role="radiogroup" aria-label="Your rating">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
@@ -81,64 +85,64 @@ export default function Thanks({ visitId, info }: { visitId: string; info: Feedb
               </button>
             ))}
           </div>
-          <button className="link-quiet small" onClick={skip} disabled={busy}>Skip</button>
+          <button className="link-quiet small" onClick={skip} disabled={busy}>{t('Skip')}</button>
         </>
       )}
 
       {stage === 'comment' && (
         <>
-          <h1 className="display">{happy ? 'So glad you enjoyed it.' : 'Thanks for being honest.'}</h1>
+          <h1 className="display">{happy ? t('So glad you enjoyed it.') : t('Thanks for being honest.')}</h1>
           {happy && google && (
             <div className="card col" style={{ gap: 10 }}>
-              <strong>Would you share that on Google?</strong>
-              <span className="small">Reviews make a real difference to {info.venue_name}. It takes a minute.</span>
+              <strong>{t('Would you share that on Google?')}</strong>
+              <span className="small">{t('Reviews make a real difference to {venue}. It takes a minute.', { venue })}</span>
               <a className="btn btn-primary" href={google} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                Leave a Google review
+                {t('Leave a Google review')}
               </a>
             </div>
           )}
           <div className="col" style={{ gap: 8 }}>
             <label className="label" htmlFor="fb-comment">
-              {happy ? 'Anything you’d like the team to know? (optional)' : `What could ${info.venue_name} do better?`}
+              {happy ? t('Anything you’d like the team to know? (optional)') : t('What could {venue} do better?', { venue })}
             </label>
             <textarea
               id="fb-comment"
               className="input"
               rows={4}
               maxLength={1000}
-              placeholder={happy ? 'Shout out a great server, a favourite dish…' : 'Only the manager sees this.'}
+              placeholder={happy ? t('Shout out a great server, a favourite dish…') : t('Only the manager sees this.')}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
-            <span className="small">Goes privately to the manager with your name and table.</span>
+            <span className="small">{t('Goes privately to the manager with your name and table.')}</span>
           </div>
           <button className="btn btn-primary" onClick={sendComment} disabled={busy}>
-            {comment.trim() ? 'Send to the manager' : 'Done'}
+            {comment.trim() ? t('Send to the manager') : t('Done')}
           </button>
           {!happy && google && (
-            <a className="small" href={google} target="_blank" rel="noopener noreferrer">Or leave a public review on Google</a>
+            <a className="small" href={google} target="_blank" rel="noopener noreferrer">{t('Or leave a public review on Google')}</a>
           )}
         </>
       )}
 
       {stage === 'done' && (
         <>
-          <h1 className="display">Thank you.</h1>
-          <p className="lede">{info.venue_name} will see your feedback. Hope to see you again soon.</p>
+          <h1 className="display">{t('Thank you.')}</h1>
+          <p className="lede">{t('{venue} will see your feedback. Hope to see you again soon.', { venue })}</p>
           {insta && (
             <div className="card col" style={{ gap: 8 }}>
-              <strong>Posting tonight?</strong>
-              <span className="small">Tag @{insta} and @serendiners in your story.</span>
+              <strong>{t('Posting tonight?')}</strong>
+              <span className="small">{t('Tag @{insta} and @serendiners in your story.', { insta })}</span>
               <a className="btn btn-ghost btn-sm" href={`https://instagram.com/${insta}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                Open @{insta} on Instagram
+                {t('Open @{insta} on Instagram', { insta })}
               </a>
             </div>
           )}
           {google && happy && (
-            <a className="small" href={google} target="_blank" rel="noopener noreferrer">Leave a Google review</a>
+            <a className="small" href={google} target="_blank" rel="noopener noreferrer">{t('Leave a Google review')}</a>
           )}
-          <a className="btn btn-ghost" href="/connections" style={{ textDecoration: 'none' }}>Your connections</a>
-          <a className="small" href="/">Back to Serendine</a>
+          <a className="btn btn-ghost" href="/connections" style={{ textDecoration: 'none' }}>{t('Your connections')}</a>
+          <a className="small" href="/">{t('Back to Serendine')}</a>
         </>
       )}
     </main>

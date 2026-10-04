@@ -5,38 +5,42 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createKeyPair, saveKeyPair } from '@/lib/crypto';
 import { inTelegram, telegramLink } from '@/lib/telegram';
-import { GENDER_LABELS, MODE_LABELS, eventDate, eventWindow, whereLabel, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
+import { GENDER_LABELS, MODE_LABELS, eventDate, eventWindow, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
+import { LangToggle, useLang, useT } from '@/components/lang';
+import { monthNames } from '@/lib/i18n';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
 export default function Welcome({ token, venue, signedIn }: Props) {
   // Always the Serendine brand colours (venue colours can return with white-labelling).
   const style = {} as React.CSSProperties;
+  const t = useT();
   return (
     <main className="shell" style={style}>
       <div className="row">
         <div className="avatar" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
           {venue.venue_name.trim().charAt(0).toUpperCase()}
         </div>
-        <div className="col" style={{ gap: 2 }}>
+        <div className="col grow" style={{ gap: 2 }}>
           <strong>{venue.venue_name}</strong>
           <span className="small">
             {venue.kind === 'event'
               ? [venue.table_label, venue.place, eventDate(venue.starts_at)].filter(Boolean).join(' · ')
-              : `Checked in at ${whereLabel(venue)}`}
+              : t('Checked in at {where}', { where: `${t('Table')} ${venue.table_label}` })}
           </span>
         </div>
+        <LangToggle />
       </div>
       {eventWindow(venue) !== 'open' ? (
         <div className="col" style={{ gap: 12, flex: 1, justifyContent: 'center' }}>
-          <h1 className="display">{eventWindow(venue) === 'early' ? 'Not open yet' : 'This event has finished'}</h1>
+          <h1 className="display">{eventWindow(venue) === 'early' ? t('Not open yet') : t('This event has finished')}</h1>
           <p className="lede">
             {eventWindow(venue) === 'early'
               ? `Check-in for ${venue.venue_name} opens 3 hours before it starts (${eventDate(venue.starts_at)}). Come back then.`
               : `Thanks for coming to ${venue.venue_name}. Your kept connections are still in Serendine.`}
           </p>
           {eventWindow(venue) === 'over' && (
-            <a className="btn btn-ghost" href="/connections" style={{ textDecoration: 'none' }}>Your connections</a>
+            <a className="btn btn-ghost" href="/connections" style={{ textDecoration: 'none' }}>{t('Your connections')}</a>
           )}
         </div>
       ) : signedIn ? (
@@ -54,6 +58,7 @@ function SignIn({ token }: { token: string }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tg, setTg] = useState(false);
+  const t = useT();
   const redirectTo = () => `${window.location.origin}/auth/callback?next=/t/${token}`;
   const tgLink = telegramLink(token);
 
@@ -65,13 +70,13 @@ function SignIn({ token }: { token: string }) {
   if (tg) {
     return (
       <>
-        <h1 className="display">Someone in this room might be worth meeting.</h1>
+        <h1 className="display">{t('Someone in this room might be worth meeting.')}</h1>
         <div style={{ flex: 1 }} />
         <a className="btn btn-primary" href={`/tg?to=/t/${token}`} style={{ textDecoration: 'none' }}>
-          Continue with Telegram
+          {t('Continue with Telegram')}
         </a>
         <p className="small" style={{ textAlign: 'center' }}>
-          18+ only. By continuing you agree to the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.
+          {t('18+ only. By continuing you agree to the')} <a href="/terms">{t('terms')}</a> {t('and')} <a href="/privacy">{t('privacy policy')}</a>.
         </p>
       </>
     );
@@ -80,7 +85,7 @@ function SignIn({ token }: { token: string }) {
   async function oauth(provider: 'google' | 'apple') {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: redirectTo() } });
-    if (error) setError('Sign-in did not work. Please try again.');
+    if (error) setError(t('Sign-in did not work. Please try again.'));
   }
 
   async function emailLink(e: React.FormEvent) {
@@ -94,8 +99,8 @@ function SignIn({ token }: { token: string }) {
       const limited = error.status === 429 || /rate limit/i.test(error.message);
       setError(
         limited
-          ? 'Too many sign-in emails just now. Try Google, or wait a few minutes.'
-          : 'We could not send the link. Check the address and try again.',
+          ? t('Too many sign-in emails just now. Try Google, or wait a few minutes.')
+          : t('We could not send the link. Check the address and try again.'),
       );
     }
     else setSent(true);
@@ -103,26 +108,26 @@ function SignIn({ token }: { token: string }) {
 
   return (
     <>
-      <h1 className="display">Someone in this room might be worth meeting.</h1>
+      <h1 className="display">{t('Someone in this room might be worth meeting.')}</h1>
       <p className="lede">
-        Say hello to another table, as yourself or by an alias. Nobody sees you until you choose to be seen.
+        {t('Say hello to another table, as yourself or by an alias. Nobody sees you until you choose to be seen.')}
       </p>
       <div style={{ flex: 1 }} />
       {process.env.NEXT_PUBLIC_APPLE_SIGNIN === 'on' && (
-        <button className="btn btn-light" onClick={() => oauth('apple')}>Continue with Apple</button>
+        <button className="btn btn-light" onClick={() => oauth('apple')}>{t('Continue with Apple')}</button>
       )}
-      <button className="btn btn-light" onClick={() => oauth('google')}>Continue with Google</button>
+      <button className="btn btn-light" onClick={() => oauth('google')}>{t('Continue with Google')}</button>
       {tgLink && (
         <a className="btn btn-ghost" href={tgLink} style={{ textDecoration: 'none' }}>
-          Open in Telegram
+          {t('Open in Telegram')}
         </a>
       )}
       <p className="small" style={{ textAlign: 'center', margin: 0 }}>
-        Opened from WhatsApp or Instagram? Open this page in Safari or Chrome first, as Google sign-in doesn&apos;t work inside those apps.
+        {t("Opened from WhatsApp or Instagram? Open this page in Safari or Chrome first, as Google sign-in doesn't work inside those apps.")}
       </p>
-      <div className="divider">or</div>
+      <div className="divider">{t('or')}</div>
       {sent ? (
-        <p className="card small">Check your email for a sign-in link. Open it on this phone.</p>
+        <p className="card small">{t('Check your email for a sign-in link. Open it on this phone.')}</p>
       ) : (
         <form className="row" onSubmit={emailLink}>
           <label htmlFor="email" className="sr-only" style={{ position: 'absolute', left: -9999 }}>Email</label>
@@ -131,17 +136,17 @@ function SignIn({ token }: { token: string }) {
             className="input grow"
             type="email"
             required
-            placeholder="Use email instead"
+            placeholder={t('Use email instead')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <button className="btn btn-ghost" type="submit">Send link</button>
+          <button className="btn btn-ghost" type="submit">{t('Send link')}</button>
         </form>
       )}
       {error && <p className="error">{error}</p>}
       <p className="small" style={{ textAlign: 'center' }}>
-        18+ only. Your email is never shown to other guests. By continuing you agree to the{' '}
-        <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.
+        {t('18+ only. Your email is never shown to other guests. By continuing you agree to the')}{' '}
+        <a href="/terms">{t('terms')}</a> {t('and')} <a href="/privacy">{t('privacy policy')}</a>.
       </p>
     </>
   );
@@ -155,6 +160,8 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
   const [gender, setGender] = useState<Gender | null>(null);
   const [adult, setAdult] = useState(false);
   const [optIn, setOptIn] = useState(false);
+  const t = useT();
+  const lang = useLang();
   const [bDay, setBDay] = useState('');
   const [bMonth, setBMonth] = useState('');
   const [bdayOffer, setBdayOffer] = useState<string | null>(null);
@@ -180,9 +187,9 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
 
   async function enter(e: React.FormEvent) {
     e.preventDefault();
-    if (!alias.trim()) return setError('Add a name or alias so people know who they are talking to.');
-    if (!gender) return setError('Please choose male, female or prefer not to say.');
-    if (!adult) return setError('Please confirm you are 18 or over.');
+    if (!alias.trim()) return setError(t('Add a name or alias so people know who they are talking to.'));
+    if (!gender) return setError(t('Please choose male, female or prefer not to say.'));
+    if (!adult) return setError(t('Please confirm you are 18 or over.'));
     setBusy(true);
     setError(null);
     try {
@@ -203,90 +210,91 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
       router.replace(`/t/${token}/room`);
     } catch (e) {
       const m = (e as { message?: string } | null)?.message ?? '';
-      setError(/not opened yet|has finished|no longer use/.test(m) ? m + '.' : 'Something went wrong. Please try again.');
+      setError(/not opened yet|has finished|no longer use/.test(m) ? m + '.' : t('Something went wrong. Please try again.'));
       setBusy(false);
     }
   }
 
   return (
     <form className="col" style={{ gap: 20, flex: 1 }} onSubmit={enter}>
-      <h1 className="display">How should people know you {venue.kind === 'event' ? 'today' : 'tonight'}?</h1>
+      <h1 className="display">{venue.kind === 'event' ? t('How should people know you today?') : t('How should people know you tonight?')}</h1>
       <div className="col">
-        <label className="label" htmlFor="alias">Name or alias</label>
+        <label className="label" htmlFor="alias">{t('Name or alias')}</label>
         <input
           id="alias"
           className="input"
           maxLength={30}
-          placeholder="e.g. Harry, or Blue Jumper"
+          placeholder={t('e.g. Harry, or Blue Jumper')}
           value={alias}
           onChange={(e) => setAlias(e.target.value)}
         />
       </div>
       <div className="col">
-        <span className="label">I am</span>
+        <span className="label">{t('I am')}</span>
         <div className="chips">
           {(Object.keys(GENDER_LABELS) as Gender[]).map((g) => (
             <button key={g} type="button" className="chip" aria-pressed={gender === g} onClick={() => setGender(g)}>
-              {GENDER_LABELS[g]}
+              {t(GENDER_LABELS[g])}
             </button>
           ))}
         </div>
-        <span className="small">Shown next to your name so people know who they&apos;re chatting to.</span>
+        <span className="small">{t("Shown next to your name so people know who they're chatting to.")}</span>
       </div>
       <div className="col">
-        <span className="label">I&apos;m here for</span>
+        <span className="label">{t("I'm here for")}</span>
         <div className="chips">
           {(Object.keys(MODE_LABELS) as ChatMode[]).map((m) => (
             <button key={m} type="button" className="chip" aria-pressed={mode === m} onClick={() => setMode(m)}>
-              {MODE_LABELS[m]}
+              {t(MODE_LABELS[m])}
             </button>
           ))}
         </div>
-        <span className="small">Shown next to your name so nobody misreads your intent.</span>
+        <span className="small">{t('Shown next to your name so nobody misreads your intent.')}</span>
       </div>
       <label className="check">
         <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
-        <span>I am 18 or over and agree to the house rules: be kind, take no for an answer.</span>
+        <span>{t('I am 18 or over and agree to the house rules: be kind, take no for an answer.')}</span>
       </label>
       <div style={{ flex: 1 }} />
       {venue.offer_enabled && (
         <div className="card offer col">
-          <span className="eyebrow" style={{ color: 'var(--accent)' }}>Tonight&apos;s welcome offer</span>
+          <span className="eyebrow" style={{ color: 'var(--accent)' }}>{t("Tonight's welcome offer")}</span>
           <span className="display" style={{ fontSize: 22 }}>{venue.offer_text}</span>
           <label className="check">
             <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
-            <span>Yes, send me offers and events from {venue.venue_name}. Optional; chatting works either way.</span>
+            <span>{t('Yes, send me offers and events from {venue}. Optional; chatting works either way.', { venue: venue.venue_name })}</span>
           </label>
           {optIn && (
             <div className="col" style={{ gap: 6 }}>
-              <span className="label">Your birthday (optional)</span>
+              <span className="label">{t('Your birthday (optional)')}</span>
               <div className="row" style={{ gap: 8 }}>
                 <select className="input" aria-label="Birthday day" value={bDay} onChange={(e) => setBDay(e.target.value)} style={{ flex: 1 }}>
-                  <option value="">Day</option>
+                  <option value="">{t('Day')}</option>
                   {Array.from({ length: 31 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>{i + 1}</option>
                   ))}
                 </select>
                 <select className="input" aria-label="Birthday month" value={bMonth} onChange={(e) => setBMonth(e.target.value)} style={{ flex: 2 }}>
-                  <option value="">Month</option>
-                  {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+                  <option value="">{t('Month')}</option>
+                  {monthNames(lang).map((m, i) => (
                     <option key={m} value={i + 1}>{m}</option>
                   ))}
                 </select>
               </div>
-              <span className="small">{bdayOffer ? `${bdayOffer}. ` : ''}No year needed.</span>
+              <span className="small">{bdayOffer ? `${bdayOffer}. ` : ''}{t('No year needed.')}</span>
             </div>
           )}
         </div>
       )}
       <p className="small">
-        {venue.venue_name} will see your name, email and when you {venue.kind === 'event' ? 'checked in and which area you were in' : 'visited and where you sat'}, so they can welcome you back. Your chats
-        stay private: nobody but you and the person you&apos;re talking to can read them.{' '}
-        <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+        {venue.kind === 'event'
+          ? t("{venue} will see your name, email and when you checked in and which area you were in, so they can welcome you back. Your chats stay private: nobody but you and the person you're talking to can read them.", { venue: venue.venue_name })
+          : t("{venue} will see your name, email and when you visited and where you sat, so they can welcome you back. Your chats stay private: nobody but you and the person you're talking to can read them.", { venue: venue.venue_name })}{' '}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">{t('Privacy policy')}</a>
       </p>
       {error && <p className="error">{error}</p>}
       <button className="btn btn-primary" type="submit" disabled={busy}>
-        {busy ? 'Entering…' : 'Enter the room'}
+        {busy ? t('Entering…') : t('Enter the room')}
       </button>
     </form>
   );

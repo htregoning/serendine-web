@@ -12,7 +12,8 @@ import Avatar, { forgetPhoto } from '@/components/avatar';
 import { selfieThumbnail } from '@/lib/photo';
 import Lobby from './lobby';
 import { DrinksPanel } from '@/components/drinks';
-import { MODE_LABELS, genderTag, whereLabel, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
+import { LangToggle, useT } from '@/components/lang';
+import { MODE_LABELS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
 type Person = { visit_id: string; alias: string; mode: ChatMode; zone: string; public_key: string | null; gender: string; has_photo: boolean };
@@ -35,6 +36,8 @@ type Props = { token: string; venue: VenueAtTable; visit: Visit; menuUrl: string
 export default function Room({ token, venue, visit, menuUrl }: Props) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
+  const t = useT();
+  const where = venue.kind === 'event' ? venue.table_label : `${t('Table')} ${venue.table_label}`;
   const [tab, setTab] = useState<'people' | 'group' | 'service'>('people');
   const [hasPhoto, setHasPhoto] = useState(visit.hasPhoto);
   const [photoVersion, setPhotoVersion] = useState(0);
@@ -186,7 +189,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       .insert({ venue_id: venue.venue_id, table_id: venue.table_id, visit_id: visit.id, kind })
       .select('id')
       .single();
-    if (error) setNote('That did not send. Please try again.');
+    if (error) setNote(t('That did not send. Please try again.'));
     else {
       notify('new_request', (data as { id: string }).id);
       loadRequests();
@@ -208,7 +211,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       setHasPhoto(true);
       setPhotoVersion((v) => v + 1);
     } catch {
-      setNote('That photo did not upload. Please try again.');
+      setNote(t('That photo did not upload. Please try again.'));
     }
     setPhotoBusy(false);
   }
@@ -258,17 +261,18 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       <div className="row">
         <div className="col grow" style={{ gap: 2 }}>
           <span className="display" style={{ fontSize: 26 }}>{venue.venue_name}</span>
-          <span className="small">{whereLabel(venue)} · {visit.alias}</span>
+          <span className="small">{where} · {visit.alias}</span>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={leave}>Leave</button>
+        <LangToggle />
+        <button className="btn btn-ghost btn-sm" onClick={leave}>{t('Leave')}</button>
       </div>
 
       <div className="tabs" role="tablist" aria-label="Sections">
         <button className="tab" role="tab" aria-selected={tab === 'people'} onClick={() => setTab('people')}>
-          People{tab !== 'people' && anyUnread ? ' •' : ''}
+          {t('People')}{tab !== 'people' && anyUnread ? ' •' : ''}
         </button>
-        <button className="tab" role="tab" aria-selected={tab === 'group'} onClick={() => setTab('group')}>Group chat</button>
-        <button className="tab" role="tab" aria-selected={tab === 'service'} onClick={() => setTab('service')}>{venue.kind === 'event' ? 'Info' : 'Service'}</button>
+        <button className="tab" role="tab" aria-selected={tab === 'group'} onClick={() => setTab('group')}>{t('Group chat')}</button>
+        <button className="tab" role="tab" aria-selected={tab === 'service'} onClick={() => setTab('service')}>{venue.kind === 'event' ? t('Info') : t('Service')}</button>
       </div>
 
       {note && <p className="error" role="status">{note}</p>}
@@ -282,12 +286,12 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       {tab !== 'service' && (
           <div className="card row">
             <div className="col grow" style={{ gap: 4 }}>
-              <strong>Open to chat</strong>
+              <strong>{t('Open to chat')}</strong>
               <span className="small">
-                {isOpen ? `Visible as ${visit.alias} · ${MODE_LABELS[visit.mode]}` : "You're hidden. Nobody can message you."}
+                {isOpen ? t('Visible as {name} · {mode}', { name: visit.alias, mode: t(MODE_LABELS[visit.mode]) }) : t("You're hidden. Nobody can message you.")}
               </span>
             </div>
-            <button className="switch" role="switch" aria-checked={isOpen} aria-label="Open to chat" onClick={toggleOpen}>
+            <button className="switch" role="switch" aria-checked={isOpen} aria-label={t('Open to chat')} onClick={toggleOpen}>
               <span />
             </button>
           </div>
@@ -307,7 +311,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
             }}
           />
         ) : (
-          <p className="card small">Switch on Open to chat to join the group chat for everyone here.</p>
+          <p className="card small">{t('Switch on Open to chat to join the group chat for everyone here.')}</p>
         ))}
 
       {tab === 'people' && (
@@ -315,12 +319,12 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           <div className="card row">
             <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={56} version={photoVersion} />
             <div className="col grow" style={{ gap: 4 }}>
-              <strong>{hasPhoto ? 'Your photo' : 'Add a selfie (optional)'}</strong>
-              <span className="small">Shown only to people open to chat here tonight. Deleted when you leave.</span>
+              <strong>{hasPhoto ? t('Your photo') : t('Add a selfie (optional)')}</strong>
+              <span className="small">{t('Shown only to people open to chat here tonight. Deleted when you leave.')}</span>
             </div>
             <div className="col" style={{ gap: 6 }}>
               <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>
-                {photoBusy ? 'Saving…' : hasPhoto ? 'Retake' : 'Take selfie'}
+                {photoBusy ? t('Saving…') : hasPhoto ? t('Retake') : t('Take selfie')}
                 <input
                   type="file"
                   accept="image/*"
@@ -334,7 +338,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
                 />
               </label>
               {hasPhoto && (
-                <button className="link-danger" style={{ minHeight: 32 }} onClick={removePhoto}>Remove</button>
+                <button className="link-danger" style={{ minHeight: 32 }} onClick={removePhoto}>{t('Remove')}</button>
               )}
             </div>
           </div>
@@ -344,25 +348,25 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
               <strong>{venue.offer_text}</strong>
               <span className="small">
                 {redeemedCode
-                  ? `Redeemed · ${redeemedCode}. Enjoy!`
-                  : `Show this to your server at ${whereLabel(venue)} to redeem.`}
+                  ? t('Redeemed · {code}. Enjoy!', { code: redeemedCode })
+                  : t('Show this to your server at {where} to redeem.', { where })}
               </span>
             </div>
           )}
 
           {convs.length > 0 && (
             <div className="col" style={{ gap: 10 }}>
-              <span className="eyebrow">Your chats</span>
+              <span className="eyebrow">{t('Your chats')}</span>
               {convs.map((c) => (
-                <button key={c.conversation_id} className="card row" style={{ textAlign: 'left', minHeight: 64 }} onClick={() => openConv(c.conversation_id)}>
+                <button key={c.conversation_id} className="card row" style={{ textAlign: 'start', minHeight: 64 }} onClick={() => openConv(c.conversation_id)}>
                   <Avatar supabase={supabase} visitId={c.partner_visit} alias={c.partner_alias} hasPhoto={c.partner_has_photo} />
                   <div className="col grow" style={{ gap: 4 }}>
                     <strong>
                       {c.partner_alias}
-                      {genderTag(c.partner_gender) && <span className="small"> · {genderTag(c.partner_gender)}</span>}
+                      {genderTag(c.partner_gender) && <span className="small"> · {t(genderTag(c.partner_gender) ?? '')}</span>}
                     </strong>
                     <span className="small">
-                      {unread[c.conversation_id] ? 'New message' : c.i_keep && c.they_keep ? 'Connected' : 'Tap to open'}
+                      {unread[c.conversation_id] ? t('New message') : c.i_keep && c.they_keep ? t('Connected') : t('Tap to open')}
                     </span>
                   </div>
                   {unread[c.conversation_id] && <span className="dot" style={{ background: 'var(--accent)' }} aria-label="Unread" />}
@@ -373,23 +377,23 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
 
           {isOpen ? (
             <div className="col" style={{ gap: 10 }}>
-              <span className="eyebrow">Open to chat now · {people.length}</span>
+              <span className="eyebrow">{t('Open to chat now · {n}', { n: people.length })}</span>
               {people.length === 0 && (
-                <p className="small">Nobody else is open yet. We&apos;ll show them here as soon as they switch on.</p>
+                <p className="small">{t("Nobody else is open yet. We'll show them here as soon as they switch on.")}</p>
               )}
               {people.map((p) => (
                 <button
                   key={p.visit_id}
                   className="card row"
-                  style={{ textAlign: 'left', minHeight: 72 }}
+                  style={{ textAlign: 'start', minHeight: 72 }}
                   onClick={() => openChatWith(p.visit_id)}
                 >
                   <Avatar supabase={supabase} visitId={p.visit_id} alias={p.alias} hasPhoto={p.has_photo} size={52} />
                   <div className="col grow" style={{ gap: 4 }}>
                     <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                       <strong>{p.alias}</strong>
-                      {genderTag(p.gender) && <span className="small">{genderTag(p.gender)}</span>}
-                      <span className={`tag tag-${p.mode}`}>{MODE_LABELS[p.mode]}</span>
+                      {genderTag(p.gender) && <span className="small">{t(genderTag(p.gender) ?? '')}</span>}
+                      <span className={`tag tag-${p.mode}`}>{t(MODE_LABELS[p.mode])}</span>
                     </div>
                     <span className="small">{p.zone}</span>
                   </div>
@@ -398,12 +402,12 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
             </div>
           ) : (
             <div className="col" style={{ alignItems: 'center', textAlign: 'center', padding: '48px 12px' }}>
-              <span className="display" style={{ fontSize: 22 }}>It works both ways</span>
-              <p className="small">Switch on Open to chat to see who else is open. Until then, nobody knows you&apos;re here.</p>
+              <span className="display" style={{ fontSize: 22 }}>{t('It works both ways')}</span>
+              <p className="small">{t("Switch on Open to chat to see who else is open. Until then, nobody knows you're here.")}</p>
             </div>
           )}
           <a href="/connections" className="small" style={{ textAlign: 'center' }}>
-            Your connections from other nights
+            {t('Your connections from other nights')}
           </a>
         </>
       )}
@@ -413,28 +417,28 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           {menuUrl ? (
             <a className="card row" href={menuUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', textDecoration: 'none' }}>
               <div className="col grow" style={{ gap: 3 }}>
-                <strong>{venue.kind === 'event' ? 'See the programme' : 'See the menu'}</strong>
+                <strong>{venue.kind === 'event' ? t('See the programme') : t('See the menu')}</strong>
                 <span className="small">
-                  {venue.kind === 'event' ? `From ${venue.venue_name}` : `Tonight’s menu from ${venue.venue_name}`}
+                  {venue.kind === 'event' ? t('From {venue}', { venue: venue.venue_name }) : t('Tonight’s menu from {venue}', { venue: venue.venue_name })}
                 </span>
               </div>
               <span aria-hidden>›</span>
             </a>
           ) : (
             <p className="card small">
-              {venue.kind === 'event' ? 'The programme isn’t online yet.' : 'The menu isn’t online yet. Ask your server.'}
+              {venue.kind === 'event' ? t('The programme isn’t online yet.') : t('The menu isn’t online yet. Ask your server.')}
             </p>
           )}
 
           {venue.requests_enabled !== false && (
           <>
-          <span className="eyebrow">Ask the staff</span>
+          <span className="eyebrow">{t('Ask the staff')}</span>
           <div className="grid3">
             {(Object.keys(REQUESTS) as RequestKind[]).map((k) => {
               const active = requests.some((r) => r.kind === k);
               return (
-                <button key={k} className="service-btn" data-active={active} onClick={() => ask(k)} aria-label={REQUESTS[k].ask}>
-                  {active ? REQUESTS[k].done : REQUESTS[k].ask}
+                <button key={k} className="service-btn" data-active={active} onClick={() => ask(k)} aria-label={t(REQUESTS[k].ask)}>
+                  {active ? t(REQUESTS[k].done) : t(REQUESTS[k].ask)}
                 </button>
               );
             })}
@@ -442,22 +446,22 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
 
           {requests.length > 0 && (
             <div className="col" style={{ gap: 10 }}>
-              <span className="eyebrow">Your requests</span>
+              <span className="eyebrow">{t('Your requests')}</span>
               {requests.map((r) => (
                 <div key={r.id} className="card row" role="status">
                   <span className="dot" style={{ background: r.status === 'seen' ? 'var(--accent)' : 'var(--faint)' }} />
                   <div className="col grow" style={{ gap: 2 }}>
-                    <strong>{REQUESTS[r.kind].done}</strong>
-                    <span className="small">{STATUS_TEXT[r.status]}</span>
+                    <strong>{t(REQUESTS[r.kind].done)}</strong>
+                    <span className="small">{t(STATUS_TEXT[r.status])}</span>
                   </div>
                   {r.status === 'sent' && (
-                    <button className="btn btn-ghost btn-sm" onClick={() => cancel(r.id)}>Cancel</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => cancel(r.id)}>{t('Cancel')}</button>
                   )}
                 </div>
               ))}
             </div>
           )}
-          <p className="small">Requests go straight to the staff screen with your table number. Pay with your server as usual.</p>
+          <p className="small">{t('Requests go straight to the staff screen with your table number. Pay with your server as usual.')}</p>
           </>
           )}
         </>

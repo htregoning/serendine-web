@@ -1,5 +1,7 @@
 'use client';
 
+import { useT } from '@/components/lang';
+
 import { useEffect, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import { enablePush, pushState, refreshPush, sendTestPush, type PushState } from '@/lib/push';
@@ -19,6 +21,7 @@ const TEST_RESULT: Record<string, string> = {
 
 // Notifications and sound settings, with honest help for iPhone and blocked cases.
 export default function NotifyToggle({ supabase, who }: Props) {
+  const t = useT();
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
   const [sound, setSound] = useState(true);
@@ -61,7 +64,7 @@ export default function NotifyToggle({ supabase, who }: Props) {
 
   const soundButton = (
     <button className="btn btn-ghost btn-sm" onClick={toggleSound} aria-pressed={sound}>
-      {sound ? 'Sound on' : 'Sound off'}
+      {sound ? t('Sound on') : t('Sound off')}
     </button>
   );
 
@@ -71,11 +74,11 @@ export default function NotifyToggle({ supabase, who }: Props) {
       <div className="col" style={{ gap: 6 }}>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span className="small grow">
-            {tg ? 'Alerts arrive as Telegram messages' : state === 'on' ? 'Notifications on' : 'Alerts play while this screen is open'}
+            {tg ? 'Alerts arrive as Telegram messages' : state === 'on' ? t('Notifications on') : t('Alerts play while this screen is open')}
           </span>
           {state === 'on' && (
             <button className="btn btn-ghost btn-sm" disabled={busy} onClick={test}>
-              {busy ? 'Sending…' : 'Send test'}
+              {busy ? t('Sending…') : t('Send test')}
             </button>
           )}
           {soundButton}
@@ -87,13 +90,13 @@ export default function NotifyToggle({ supabase, who }: Props) {
 
   const what =
     who === 'guest'
-      ? 'Get a notification when someone messages you, sends you a drink, or staff are on their way, even with your phone locked.'
+      ? t('Get a notification when someone messages you, sends you a drink, or staff are on their way, even with your phone locked.')
       : 'Get a notification for every new table request and drink order, even when this screen is in the background.';
 
   return (
     <div className="card col" style={{ gap: 10 }}>
       <div className="row" style={{ gap: 8, alignItems: 'center' }}>
-        <strong className="grow">Turn on notifications</strong>
+        <strong className="grow">{t('Turn on notifications')}</strong>
         {soundButton}
       </div>
       {state === 'off' && (
@@ -110,7 +113,7 @@ export default function NotifyToggle({ supabase, who }: Props) {
               if (s === 'on') test();
             }}
           >
-            {busy ? 'Turning on…' : 'Turn on notifications'}
+            {busy ? t('Turning on…') : t('Turn on notifications')}
           </button>
         </>
       )}
