@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import StaffSignIn from '../sign-in';
-import StickerSheet, { type StickerTable } from './sticker-sheet';
+import StickerSheet, { DEFAULT_DESIGN, type StickerDesign, type StickerTable } from './sticker-sheet';
 
 export const metadata = { title: 'Table stickers · Serendine' };
 
@@ -42,6 +42,13 @@ export default async function StickersPage({ searchParams }: { searchParams: Pro
     );
   }
 
+  // The venue's saved design (falls back to the Serendine style before the 0010 update).
+  const { data: design, error: designError } = await supabase.rpc('venue_sticker', { v: venue.id });
+  const saved = ((design as StickerDesign[] | null) ?? [])[0];
+  const initial: StickerDesign = saved ? { ...DEFAULT_DESIGN, ...saved, sub: saved.sub ?? '' } : DEFAULT_DESIGN;
+
   const sorted = list.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
-  return <StickerSheet venueName={venue.name} accent={venue.accent} tables={sorted} />;
+  return (
+    <StickerSheet venueId={venue.id} venueName={venue.name} tables={sorted} initial={initial} canSave={!designError} />
+  );
 }

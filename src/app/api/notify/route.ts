@@ -9,6 +9,7 @@ const FUNCTIONS = {
   request_update: 'push_for_request_update',
   new_request: 'push_for_new_request',
   drink: 'push_for_drink',
+  test: 'push_for_test',
 } as const;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,15 +30,17 @@ export async function POST(request: Request) {
   }
   const kind = String(body.kind ?? '');
   const id = String(body.id ?? '');
-  if (!(kind in FUNCTIONS) || !UUID.test(id)) {
+  if (!(kind in FUNCTIONS) || (kind !== 'test' && !UUID.test(id))) {
     return NextResponse.json({ error: 'bad request' }, { status: 400 });
   }
 
   const supabase = await createClient();
   const fn = FUNCTIONS[kind as keyof typeof FUNCTIONS];
-  const arg = kind === 'message' ? { c: id } : kind === 'drink' ? { p_id: id } : { r: id };
+  const arg = kind === 'test' ? {} : kind === 'message' ? { c: id } : kind === 'drink' ? { p_id: id } : { r: id };
   const { data, error } = await supabase.rpc(fn, arg);
-  if (error) return NextResponse.json({ sent: 0 });
+  if (error) {
+    return NextResponse.json({ sent: 0, reason: error.code === 'PGRST202' ? 'database update missing' : 'error' });
+  }
 
   setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:hello@serendine.com', publicKey, privateKey);
 
@@ -60,5 +63,6 @@ export async function POST(request: Request) {
       }
     }),
   );
-  return NextResponse.json({ sent });
+  if (kind === 'test' && targets.length === 0) return NextResponse.json({ sent: 0, reason: 'no devices' });
+  return NextResponse.json({ sent, reason: sent === 0 && targets.length > 0 ? 'push service refused' : undefined });
 }

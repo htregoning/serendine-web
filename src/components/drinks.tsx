@@ -99,7 +99,7 @@ export function DrinksPanel({ supabase, myVisitId }: { supabase: Client; myVisit
     const { data } = await supabase.rpc('my_drinks');
     const list = (data as Drink[] | null) ?? [];
     const incomingOffers = list.filter((d) => d.incoming && d.status === 'offered').map((d) => d.id);
-    if (seen.current && incomingOffers.some((id) => !seen.current!.has(id))) alertGuest();
+    if (seen.current && incomingOffers.some((id) => !seen.current!.has(id))) alertGuest('drink');
     seen.current = new Set(incomingOffers);
     setDrinks(list);
   }, [supabase]);

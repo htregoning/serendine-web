@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Chat, { type Conv } from './chat';
-import { alertGuest, buzz, chime, setTabCount, unlockAudio } from '@/lib/alerts';
+import { alertGuest, playSound, setTabCount, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
 import Avatar, { forgetPhoto } from '@/components/avatar';
@@ -129,8 +129,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
     const list = (data as Req[] | null) ?? [];
     const before = statusRef.current;
     if (list.some((r) => r.status === 'seen' && before[r.id] === 'sent')) {
-      chime([880, 660]);
-      buzz(200);
+      playSound('update');
     }
     statusRef.current = Object.fromEntries(list.map((r) => [r.id, r.status]));
     setRequests(list);

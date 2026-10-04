@@ -10,13 +10,22 @@ self.addEventListener('push', (event) => {
     data = { body: event.data ? event.data.text() : '' };
   }
   const title = data.title || 'Serendine';
+  const tag = data.tag || '';
+  // Staff alerts (table requests, drinks to send) stay on screen until someone taps them.
+  const forStaff = tag.startsWith('staff-') || tag.startsWith('drink-staff-');
+  const isDrink = tag.startsWith('drink-');
+  const vibrate = forStaff ? [250, 100, 250, 100, 250] : isDrink ? [60, 40, 60, 40, 160] : [120, 60, 120];
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',
       icon: '/icon.png',
       badge: '/icon.png',
-      tag: data.tag || undefined,
-      renotify: Boolean(data.tag),
+      tag: tag || undefined,
+      renotify: Boolean(tag),
+      requireInteraction: forStaff,
+      silent: false,
+      vibrate,
+      timestamp: Date.now(),
       data: { url: data.url || '/' },
     }),
   );

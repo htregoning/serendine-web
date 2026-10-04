@@ -66,6 +66,20 @@ export async function refreshPush(supabase: Client) {
   }
 }
 
+// Send a notification to this person's own devices, to check everything works.
+export async function sendTestPush(): Promise<{ sent: number; reason?: string }> {
+  try {
+    const res = await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'test' }),
+    });
+    return (await res.json()) as { sent: number; reason?: string };
+  } catch {
+    return { sent: 0, reason: 'offline' };
+  }
+}
+
 // Ask the server to notify the right people. Fire-and-forget.
 export function notify(kind: 'message' | 'request_update' | 'new_request' | 'drink', id: string) {
   fetch('/api/notify', {

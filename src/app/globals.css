@@ -161,18 +161,37 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .stickers-head .small { color: #3b4374; }
 .sheet { display: grid; grid-template-columns: repeat(2, 90mm); gap: 8mm; justify-content: center; }
 .sticker {
-  width: 90mm; height: 120mm; box-sizing: border-box; padding: 9mm; background: #f7f6ff; border: 0.4mm dashed #a6acd6;
+  width: 90mm; height: 120mm; box-sizing: border-box; padding: 9mm; background: var(--st-bg, #f7f6ff); border: 0.4mm dashed #a6acd6;
   display: flex; flex-direction: column; align-items: center; gap: 4mm; break-inside: avoid; page-break-inside: avoid;
-  font-family: var(--font-body), system-ui, sans-serif; color: #0b1a3a;
+  font-family: var(--font-body), system-ui, sans-serif; color: var(--st-fg, #0b1a3a);
 }
-.sticker-top { display: flex; align-items: center; gap: 2.5mm; align-self: stretch; }
-.sticker-brand { font-family: var(--font-display), system-ui, sans-serif; font-weight: 600; font-size: 4.6mm; letter-spacing: 0.22em; text-transform: uppercase; flex: 1; color: #ff2e93; }
-.sticker-table { font-size: 3mm; font-weight: 700; letter-spacing: 0.3mm; padding: 1.2mm 2mm; border: 0.4mm solid #0b1a3a; border-radius: 2mm; }
-.sticker-qr { width: 42mm; height: 42mm; padding: 2.5mm; background: #fff; border: 0.4mm solid #0b1a3a; border-radius: 3mm; }
+.sticker-top { display: flex; align-items: center; gap: 2.5mm; align-self: stretch; min-height: 10mm; }
+.sticker-logo { flex: 1; min-width: 0; max-height: 12mm; max-width: 52mm; object-fit: contain; object-position: left center; }
+.sticker-brand { font-family: var(--font-display), system-ui, sans-serif; font-weight: 600; font-size: 4.6mm; letter-spacing: 0.22em; text-transform: uppercase; flex: 1; color: var(--st-accent, #ff2e93); }
+.sticker-table { margin-left: auto; font-size: 3mm; font-weight: 700; letter-spacing: 0.3mm; padding: 1.2mm 2mm; border: 0.4mm solid var(--st-accent, #0b1a3a); color: var(--st-fg, #0b1a3a); border-radius: 2mm; white-space: nowrap; }
+.sticker-qr { width: 42mm; height: 42mm; padding: 2.5mm; background: #fff; border: 0.6mm solid var(--st-accent, #0b1a3a); border-radius: 3mm; }
 .sticker-qr svg { width: 100%; height: 100%; display: block; }
 .sticker-line { margin: 0; font-family: var(--font-display), system-ui, sans-serif; font-weight: 500; font-size: 5.2mm; line-height: 1.2; text-align: center; text-wrap: balance; }
-.sticker-sub { margin: 0; font-size: 3.1mm; line-height: 1.45; color: #3b4374; text-align: center; text-wrap: balance; }
-.sticker-foot { margin: auto 0 0; font-size: 2.8mm; font-weight: 600; color: #3b4374; }
+.sticker-sub { margin: 0; font-size: 3.1mm; line-height: 1.45; opacity: 0.78; text-align: center; text-wrap: balance; }
+.sticker-foot { margin: auto 0 0; font-size: 2.8mm; font-weight: 600; opacity: 0.8; display: flex; flex-direction: column; align-items: center; gap: 0.8mm; }
+.sticker-powered { font-size: 2.3mm; font-weight: 500; letter-spacing: 0.08em; color: var(--st-accent, #ff2e93); }
+
+/* Sticker designer (screen only) */
+.st-editor { max-width: 900px; margin: 0 auto 24px; background: #fff; border: 1px solid #cfd3ec; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; color: #0b1a3a; }
+.st-field { display: flex; flex-direction: column; gap: 6px; }
+.st-label { font-size: 13px; font-weight: 700; }
+.st-hint { margin: 0; font-size: 13px; color: #3b4374; }
+.st-warn { margin: 0; font-size: 13px; color: #b3261e; font-weight: 600; }
+.st-input { font: inherit; font-size: 15px; padding: 9px 11px; border: 1px solid #b9bfe0; border-radius: 9px; background: #fff; color: #0b1a3a; resize: vertical; }
+.st-hex { width: 96px; font-family: ui-monospace, monospace; }
+.st-colours { display: flex; gap: 16px; flex-wrap: wrap; }
+.st-colour { display: flex; flex-direction: column; gap: 6px; }
+.st-colour input[type='color'] { width: 42px; height: 38px; padding: 0; border: 1px solid #b9bfe0; border-radius: 8px; background: none; cursor: pointer; }
+.st-btn { font: inherit; font-size: 14px; font-weight: 600; padding: 9px 14px; border-radius: 999px; border: 1px solid #0b1a3a; background: #fff; color: #0b1a3a; cursor: pointer; display: inline-flex; align-items: center; }
+.st-btn:disabled { opacity: 0.5; cursor: default; }
+.st-btn-primary { background: #ff2e93; border-color: #ff2e93; color: #fff; }
+.st-preset { font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border: 1px solid #cfd3ec; border-radius: 999px; background: #fff; color: #0b1a3a; cursor: pointer; }
+.st-preset span { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
 @page { size: A4; margin: 10mm; }
 @media print {
   html, body { background: #fff !important; }

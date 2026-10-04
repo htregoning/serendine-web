@@ -4,11 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { RequestKind, RequestStatus } from '@/lib/types';
-import { chime as play, unlockAudio } from '@/lib/alerts';
+import { playSound, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
 
-const chime = () => play([880, 660, 880]);
 
 export type StaffVenue = {
   id: string;
@@ -45,7 +44,6 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
   const [tables, setTables] = useState<Record<string, string>>({});
   const [guests, setGuests] = useState<OfferGuest[]>([]);
   const [now, setNow] = useState(() => Date.now());
-  const [sound, setSound] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const seen = useRef<Set<string>>(new Set());
   const first = useRef(true);
@@ -61,10 +59,10 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
     const list = (data as Req[] | null) ?? [];
     const fresh = list.filter((r) => !seen.current.has(r.id));
     fresh.forEach((r) => seen.current.add(r.id));
-    if (!first.current && fresh.length > 0 && sound) chime();
+    if (!first.current && fresh.length > 0) playSound('staff');
     first.current = false;
     setRequests(list);
-  }, [supabase, venue.id, sound]);
+  }, [supabase, venue.id]);
 
   const [drinks, setDrinks] = useState<DrinkOrder[]>([]);
   const drinkSeen = useRef<Set<string> | null>(null);
@@ -72,10 +70,10 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
   const loadDrinks = useCallback(async () => {
     const { data } = await supabase.rpc('staff_drinks', { v: venue.id });
     const list = (data as DrinkOrder[] | null) ?? [];
-    if (drinkSeen.current && sound && list.some((d) => !drinkSeen.current!.has(d.id))) chime();
+    if (drinkSeen.current && list.some((d) => !drinkSeen.current!.has(d.id))) playSound('drink');
     drinkSeen.current = new Set(list.map((d) => d.id));
     setDrinks(list);
-  }, [supabase, venue.id, sound]);
+  }, [supabase, venue.id]);
 
   useEffect(() => {
     loadDrinks();
@@ -175,9 +173,6 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
           <span className="display" style={{ fontSize: 26 }}>{venue.name}</span>
           <span className="small">Staff screen · Serendine{isManager ? ' · Manager' : ''}</span>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
-          {sound ? 'Sound on' : 'Turn sound on'}
-        </button>
       </header>
 
       {note && <p className="error" role="status">{note}</p>}
