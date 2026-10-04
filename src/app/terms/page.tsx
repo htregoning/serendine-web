@@ -2,17 +2,17 @@ import Link from 'next/link';
 
 export const metadata = { title: 'Terms and Conditions · Serendine' };
 
-// DRAFT for legal review. Items in [brackets] must be completed before launch.
+// To be reviewed by a lawyer before wider launch (company details to add once incorporated).
 export default function Terms() {
   return (
     <main className="legal">
       <Link href="/" className="small">← Serendine</Link>
       <h1 className="display">Terms and Conditions</h1>
-      <p className="small">Draft for legal review · Last updated 3 October 2026</p>
+      <p className="small">Last updated 4 October 2026</p>
 
       <p>
-        These terms apply when you use Serendine, operated by [Company legal name], [registered address], United Arab
-        Emirates (&quot;we&quot;). By signing in, you agree to them and to our <Link href="/privacy">privacy policy</Link>.
+        These terms apply when you use Serendine, run from Dubai, United Arab
+        Emirates (&quot;we&quot;). Questions: serendiners@gmail.com. By signing in, you agree to them and to our <Link href="/privacy">privacy policy</Link>.
       </p>
 
       <h2>Who can use Serendine</h2>
@@ -61,7 +61,7 @@ export default function Terms() {
       <p>You can stop using Serendine at any time and ask us to delete your account at serendiners@gmail.com.</p>
 
       <h2>Law</h2>
-      <p>These terms are governed by the laws of [the Emirate of Dubai and the federal laws of the UAE].</p>
+      <p>These terms are governed by the laws of the Emirate of Dubai and the federal laws of the UAE.</p>
     </main>
   );
 }

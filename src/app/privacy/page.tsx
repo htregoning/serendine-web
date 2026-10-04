@@ -2,19 +2,19 @@ import Link from 'next/link';
 
 export const metadata = { title: 'Privacy policy · Serendine' };
 
-// DRAFT for legal review. Items in [brackets] must be completed before launch.
+// To be reviewed by a lawyer before wider launch (company details to add once incorporated).
 export default function Privacy() {
   return (
     <main className="legal">
       <Link href="/" className="small">← Serendine</Link>
       <h1 className="display">Privacy policy</h1>
-      <p className="small">Draft for legal review · Last updated 3 October 2026</p>
+      <p className="small">Last updated 4 October 2026</p>
 
       <p>
         Serendine lets guests in a venue say hello to other tables, ask staff for service and see the menu.
-        This policy explains what we collect, why, and the choices you have. Serendine is operated by
-        [Company legal name], [registered address], United Arab Emirates (&quot;we&quot;). Contact:
-        serendiners@gmail.com.
+        This policy explains what personal data we collect, why, who it is shared with, how long we keep it and the
+        choices you have. Serendine is run from Dubai, United Arab Emirates (&quot;Serendine&quot;, &quot;we&quot;). If you
+        have any question about your data, email us at serendiners@gmail.com.
       </p>
 
       <h2>The short version</h2>
@@ -29,7 +29,9 @@ export default function Privacy() {
 
       <h2>What we collect</h2>
       <ul>
-        <li><b>Account details</b> from the sign-in you choose (Google, Apple or email): your email address and a unique account ID. We do not receive your password.</li>
+        <li><b>Account details</b> from the sign-in you choose (Google, email link, or Telegram): your name, email address, profile picture where the provider supplies one, and a unique account ID. We never receive your password.</li>
+        <li><b>Optional details you add</b>: whether you identify as male, female or prefer not to say, and an optional selfie, shown only to other guests open to chat at the same venue and deleted when you leave.</li>
+        <li><b>Notification details</b>: if you turn notifications on, the address your browser or Telegram gives us for sending them.</li>
         <li><b>Visit details</b>: the venue and table you scanned, the name or alias you enter, what you&apos;re there for (friendly chat, networking or dating), whether you are open to chat, and when you arrived and left.</li>
         <li><b>Messages</b>: stored only in encrypted form. The keys to read them are created and kept on your device.</li>
         <li><b>Service requests</b> such as &quot;bring the bill&quot;, with your table number, sent to the venue&apos;s staff.</li>
@@ -48,6 +50,27 @@ export default function Privacy() {
       </ul>
       <p>We do not sell your personal data, and we do not use your messages for advertising. We cannot read them.</p>
 
+      <h2>Information we receive from Google</h2>
+      <p>
+        If you sign in with Google, Google shares your name, email address and profile picture with us, and nothing
+        else. We do not ask for access to your Gmail, contacts, calendar, Drive or any other Google data. We use this
+        information only to create and secure your Serendine account, to show the venue you visit who checked in, and to
+        contact you about your account. We do not sell it, use it for advertising, or transfer it to anyone except the
+        service providers listed below who help us run Serendine, and the venue you check in at as described in this
+        policy. Serendine&apos;s use of information received from Google APIs adheres to the{' '}
+        <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+        including the Limited Use requirements. You can remove Serendine&apos;s access at any time in your Google Account
+        under Security › Third-party apps and services, and ask us to delete your data as described below.
+      </p>
+
+      <h2>Who we share it with</h2>
+      <ul>
+        <li><b>The venue you check in at</b>, as described in the next section.</li>
+        <li><b>Other guests</b>, only what you choose to show: your name or alias, what you&apos;re there for, gender if you chose one, and your selfie, and only while you are open to chat.</li>
+        <li><b>Service providers</b> who run the service for us: Supabase (database and sign-in), Vercel (website hosting), Google, Apple and Telegram (sign-in and notifications) and browser push services. They may only use it to provide their service to us.</li>
+        <li><b>Authorities</b>, where the law requires it.</li>
+      </ul>
+
       <h2>What the venue sees</h2>
       <p>
         Venue staff see service requests with table numbers, and the name or alias and table of guests who opted in
@@ -61,16 +84,18 @@ export default function Privacy() {
       <h2>How long we keep it</h2>
       <ul>
         <li>Chats are deleted when either of you leaves, unless you both chose &quot;Keep in touch&quot;. Kept chats are deleted when either of you removes the connection or deletes their account.</li>
-        <li>Visit and service-request records are kept for [12 months] for safety and service reporting, then deleted or anonymised.</li>
+        <li>Visit and service-request records are kept for 12 months for safety and service reporting, then deleted or anonymised.</li>
         <li>Marketing consent is kept until you withdraw it, plus a record of the consent as required by law.</li>
-        <li>Reports and blocks are kept for as long as needed to keep the community safe, and at most [24 months] after the account concerned is closed.</li>
+        <li>Selfies are deleted when your visit ends. Your account details are kept until you ask us to delete your account.</li>
+        <li>Reports and blocks are kept for as long as needed to keep the community safe, and at most 24 months after the account concerned is closed.</li>
       </ul>
 
       <h2>Where your data is stored</h2>
       <p>
         Our database is hosted by Supabase in Singapore, and the website by Vercel. These providers process data for
-        us under contract. Because this involves transfer outside the UAE, we rely on [the appropriate safeguard under
-        UAE Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data, to be confirmed].
+        us under contract. Because this involves transfer outside the UAE, we protect it with the contractual safeguards
+        that UAE Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data requires. All data is encrypted
+        in transit, and messages between guests are end-to-end encrypted.
       </p>
 
       <h2>Your choices and rights</h2>
@@ -78,7 +103,8 @@ export default function Privacy() {
         <li>Stay hidden: simply leave &quot;Open to chat&quot; switched off.</li>
         <li>Block or report anyone from inside a chat.</li>
         <li>Withdraw marketing consent at any time by contacting the venue or us.</li>
-        <li>Ask to access, correct or delete your data by emailing serendiners@gmail.com. We will respond within [30 days].</li>
+        <li>Ask to access, correct or delete your data by emailing serendiners@gmail.com. We will respond within 30 days.</li>
+        <li>Delete your account and the data linked to it by emailing serendiners@gmail.com from the address you signed in with.</li>
       </ul>
 
       <h2>Age</h2>
