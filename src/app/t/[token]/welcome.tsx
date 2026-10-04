@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createKeyPair, saveKeyPair } from '@/lib/crypto';
-import { GENDER_LABELS, MODE_LABELS, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
+import { GENDER_LABELS, MODE_LABELS, eventDate, eventWindow, whereLabel, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
@@ -19,10 +19,30 @@ export default function Welcome({ token, venue, signedIn }: Props) {
         </div>
         <div className="col" style={{ gap: 2 }}>
           <strong>{venue.venue_name}</strong>
-          <span className="small">Checked in at Table {venue.table_label}</span>
+          <span className="small">
+            {venue.kind === 'event'
+              ? [venue.table_label, venue.place, eventDate(venue.starts_at)].filter(Boolean).join(' · ')
+              : `Checked in at ${whereLabel(venue)}`}
+          </span>
         </div>
       </div>
-      {signedIn ? <Profile token={token} venue={venue} /> : <SignIn token={token} />}
+      {eventWindow(venue) !== 'open' ? (
+        <div className="col" style={{ gap: 12, flex: 1, justifyContent: 'center' }}>
+          <h1 className="display">{eventWindow(venue) === 'early' ? 'Not open yet' : 'This event has finished'}</h1>
+          <p className="lede">
+            {eventWindow(venue) === 'early'
+              ? `Check-in for ${venue.venue_name} opens 3 hours before it starts (${eventDate(venue.starts_at)}). Come back then.`
+              : `Thanks for coming to ${venue.venue_name}. Your kept connections are still in Serendine.`}
+          </p>
+          {eventWindow(venue) === 'over' && (
+            <a className="btn btn-ghost" href="/connections" style={{ textDecoration: 'none' }}>Your connections</a>
+          )}
+        </div>
+      ) : signedIn ? (
+        <Profile token={token} venue={venue} />
+      ) : (
+        <SignIn token={token} />
+      )}
     </main>
   );
 }
@@ -132,15 +152,16 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
       if (error || !visitId) throw error ?? new Error('no visit');
       await saveKeyPair(visitId as string, pair);
       router.replace(`/t/${token}/room`);
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (e) {
+      const m = (e as { message?: string } | null)?.message ?? '';
+      setError(/not opened yet|has finished|no longer use/.test(m) ? m + '.' : 'Something went wrong. Please try again.');
       setBusy(false);
     }
   }
 
   return (
     <form className="col" style={{ gap: 20, flex: 1 }} onSubmit={enter}>
-      <h1 className="display">How should people know you tonight?</h1>
+      <h1 className="display">How should people know you {venue.kind === 'event' ? 'today' : 'tonight'}?</h1>
       <div className="col">
         <label className="label" htmlFor="alias">Name or alias</label>
         <input
@@ -190,7 +211,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
         </div>
       )}
       <p className="small">
-        {venue.venue_name} will see your name, email and when and where you sat, so they can welcome you back. Your chats
+        {venue.venue_name} will see your name, email and when you {venue.kind === 'event' ? 'checked in and which area you were in' : 'visited and where you sat'}, so they can welcome you back. Your chats
         stay private: nobody but you and the person you&apos;re talking to can read them.{' '}
         <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
       </p>

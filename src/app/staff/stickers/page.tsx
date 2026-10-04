@@ -47,8 +47,19 @@ export default async function StickersPage({ searchParams }: { searchParams: Pro
   const saved = ((design as StickerDesign[] | null) ?? [])[0];
   const initial: StickerDesign = saved ? { ...DEFAULT_DESIGN, ...saved, sub: saved.sub ?? '' } : DEFAULT_DESIGN;
 
+  const { data: kindRow } = await supabase.from('venues').select('kind').eq('id', venue.id).maybeSingle();
+  const isEvent = (kindRow as { kind?: string } | null)?.kind === 'event';
+
   const sorted = list.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
   return (
-    <StickerSheet venueId={venue.id} venueName={venue.name} tables={sorted} initial={initial} canSave={!designError} />
+    <StickerSheet
+      venueId={venue.id}
+      venueName={venue.name}
+      venueSlug={venue.slug}
+      tables={sorted}
+      initial={initial}
+      canSave={!designError}
+      isEvent={isEvent}
+    />
   );
 }

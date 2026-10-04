@@ -7,7 +7,31 @@ import { createClient } from '@/lib/supabase/client';
 type Table = { id: string; label: string; zone: string; qr_token: string; guests_now: number };
 type Member = { user_id: string | null; invite_id: string | null; email: string; role: 'manager' | 'staff'; pending: boolean };
 
-export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: string; name: string }; me: string }) {
+export type AdminVenueInfo = {
+  id: string;
+  slug: string;
+  name: string;
+  kind?: 'venue' | 'event';
+  starts_at?: string | null;
+  ends_at?: string | null;
+  place?: string | null;
+};
+
+function localInput(iso: string | null | undefined) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+export default function VenueAdmin({ venue, me }: { venue: AdminVenueInfo; me: string }) {
+  const isEvent = venue.kind === 'event';
+  const Word = isEvent ? 'Area' : 'Table';
+  const word = isEvent ? 'area' : 'table';
+  const [starts, setStarts] = useState(localInput(venue.starts_at));
+  const [ends, setEnds] = useState(localInput(venue.ends_at));
+  const [place, setPlace] = useState(venue.place ?? '');
+  const [newAreas, setNewAreas] = useState('');
   const [supabase] = useState(() => createClient());
   const [name, setName] = useState(venue.name);
   const [tables, setTables] = useState<Table[]>([]);
@@ -53,7 +77,10 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
         <Link href="/admin" className="small">← All venues</Link>
         <div className="grow" />
         <Link className="btn btn-ghost btn-sm" href={`/staff?v=${venue.slug}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>Staff screen</Link>
-        <Link className="btn btn-primary btn-sm" href={`/staff/stickers?v=${venue.slug}`} style={{ textDecoration: 'none' }}>Print QR stickers</Link>
+        <Link className="btn btn-ghost btn-sm" href={`/staff/guests?v=${venue.slug}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>Guests</Link>
+        <Link className="btn btn-primary btn-sm" href={`/staff/stickers?v=${venue.slug}`} style={{ textDecoration: 'none' }}>
+          {isEvent ? 'QR codes' : 'Print QR stickers'}
+        </Link>
       </header>
 
       <form
@@ -71,18 +98,59 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
 
       {(msg || err) && <p className={err ? 'error' : 'card small'} role="status">{err ?? msg}</p>}
 
+      {isEvent && (
+        <form
+          className="card col"
+          style={{ gap: 12, maxWidth: 720 }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(
+              supabase.rpc('admin_update_event', {
+                v: venue.id,
+                p_starts: new Date(starts).toISOString(),
+                p_ends: new Date(ends).toISOString(),
+                p_place: place,
+              }),
+              'Event details saved.',
+            );
+          }}
+        >
+          <strong>Event details</strong>
+          <div className="row" style={{ gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div className="col grow">
+              <label className="label" htmlFor="ev-start">Starts</label>
+              <input id="ev-start" className="input" type="datetime-local" required value={starts} onChange={(e) => setStarts(e.target.value)} />
+            </div>
+            <div className="col grow">
+              <label className="label" htmlFor="ev-end">Ends</label>
+              <input id="ev-end" className="input" type="datetime-local" required value={ends} onChange={(e) => setEnds(e.target.value)} />
+            </div>
+          </div>
+          <div className="col">
+            <label className="label" htmlFor="ev-place">Where</label>
+            <input id="ev-place" className="input" maxLength={80} value={place} onChange={(e) => setPlace(e.target.value)} />
+          </div>
+          <span className="small">Check-in opens 3 hours before the start. Everyone is checked out an hour after the end.</span>
+          <button className="btn btn-ghost btn-sm" type="submit">Save event details</button>
+        </form>
+      )}
+
       <div className="admin-two">
         <section className="col" style={{ gap: 12 }}>
           <div className="row" style={{ alignItems: 'baseline' }}>
-            <h2 style={{ margin: 0, fontSize: 20 }}>Tables</h2>
-            <span className="small">{tables.length} tables · {zones.length} area{zones.length === 1 ? '' : 's'}</span>
+            <h2 style={{ margin: 0, fontSize: 20 }}>{Word}s</h2>
+            <span className="small">
+              {isEvent
+                ? `${tables.length} area${tables.length === 1 ? '' : 's'}, each with its own QR code`
+                : `${tables.length} tables · ${zones.length} area${zones.length === 1 ? '' : 's'}`}
+            </span>
           </div>
           <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Table</th>
-                  <th>Area</th>
+                  <th>{Word}</th>
+                  {!isEvent && <th>Area</th>}
                   <th>Here now</th>
                   <th aria-label="Actions" />
                 </tr>
@@ -95,18 +163,28 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
                       {e ? (
                         <>
                           <td>
-                            <input className="input admin-cell" aria-label="Table number" maxLength={20} value={e.label} onChange={(ev) => setEdit({ ...edit, [t.id]: { ...e, label: ev.target.value } })} />
+                            <input
+                              className="input admin-cell"
+                              aria-label={isEvent ? 'Area name' : 'Table number'}
+                              maxLength={40}
+                              value={e.label}
+                              onChange={(ev) =>
+                                setEdit({ ...edit, [t.id]: isEvent ? { label: ev.target.value, zone: '' } : { ...e, label: ev.target.value } })
+                              }
+                            />
                           </td>
-                          <td>
-                            <input className="input admin-cell" aria-label="Area" maxLength={40} list="zones" value={e.zone} onChange={(ev) => setEdit({ ...edit, [t.id]: { ...e, zone: ev.target.value } })} />
-                          </td>
+                          {!isEvent && (
+                            <td>
+                              <input className="input admin-cell" aria-label="Area" maxLength={40} list="zones" value={e.zone} onChange={(ev) => setEdit({ ...edit, [t.id]: { ...e, zone: ev.target.value } })} />
+                            </td>
+                          )}
                           <td>{t.guests_now}</td>
                           <td className="row" style={{ gap: 6, justifyContent: 'flex-end' }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => setEdit(({ [t.id]: _drop, ...rest }) => rest)}>Cancel</button>
                             <button
                               className="btn btn-primary btn-sm"
                               onClick={async () => {
-                                if (await run(supabase.rpc('admin_update_table', { p_table: t.id, p_label: e.label, p_zone: e.zone }), 'Table saved.')) {
+                                if (await run(supabase.rpc('admin_update_table', { p_table: t.id, p_label: e.label, p_zone: e.zone }), `${Word} saved.`)) {
                                   setEdit(({ [t.id]: _drop, ...rest }) => rest);
                                 }
                               }}
@@ -118,16 +196,16 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
                       ) : (
                         <>
                           <td><b>{t.label}</b></td>
-                          <td>{t.zone}</td>
+                          {!isEvent && <td>{t.zone}</td>}
                           <td>{t.guests_now}</td>
                           <td className="row" style={{ gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...edit, [t.id]: { label: t.label, zone: t.zone } })}>Edit</button>
                             <button
                               className="btn btn-ghost btn-sm"
-                              title="Copy this table's check-in link"
+                              title={`Copy this ${word}'s check-in link`}
                               onClick={() => {
                                 navigator.clipboard?.writeText(`${origin}/t/${t.qr_token}`);
-                                setMsg(`Link for table ${t.label} copied.`);
+                                setMsg(`Link for ${word} ${t.label} copied.`);
                               }}
                             >
                               Copy link
@@ -136,8 +214,8 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
                               className="btn btn-ghost btn-sm"
                               title="Make a new QR code; the old sticker stops working"
                               onClick={() => {
-                                if (window.confirm(`New QR code for table ${t.label}? The old sticker will stop working.`)) {
-                                  run(supabase.rpc('admin_new_qr', { p_table: t.id }), `Table ${t.label} has a new QR code. Reprint its sticker.`);
+                                if (window.confirm(`New QR code for ${word} ${t.label}? The old code will stop working.`)) {
+                                  run(supabase.rpc('admin_new_qr', { p_table: t.id }), `${Word} ${t.label} has a new QR code. Reprint it.`);
                                 }
                               }}
                             >
@@ -146,7 +224,7 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
                             <button
                               className="link-danger"
                               onClick={() => {
-                                if (window.confirm(`Delete table ${t.label}?`)) run(supabase.rpc('admin_delete_table', { p_table: t.id }), `Table ${t.label} deleted.`);
+                                if (window.confirm(`Delete ${word} ${t.label}?`)) run(supabase.rpc('admin_delete_table', { p_table: t.id }), `${Word} ${t.label} deleted.`);
                               }}
                             >
                               Delete
@@ -165,6 +243,24 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
               ))}
             </datalist>
           </div>
+          {isEvent ? (
+            <form
+              className="card col"
+              style={{ gap: 10 }}
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const list = newAreas.split('\n').map((a) => a.trim()).filter(Boolean);
+                if (list.length === 0) return;
+                if (await run(supabase.rpc('admin_add_areas', { v: venue.id, p_areas: list }), `${list.length} area${list.length === 1 ? '' : 's'} added.`)) {
+                  setNewAreas('');
+                }
+              }}
+            >
+              <label className="label" htmlFor="add-areas">Add areas, one per line</label>
+              <textarea id="add-areas" className="input" rows={3} placeholder={'Block 112\nVIP Lounge'} value={newAreas} onChange={(e) => setNewAreas(e.target.value)} />
+              <button className="btn btn-primary btn-sm" type="submit">Add areas</button>
+            </form>
+          ) : (
           <form
             className="card row"
             style={{ gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}
@@ -183,10 +279,11 @@ export default function VenueAdmin({ venue, me }: { venue: { id: string; slug: s
             </div>
             <button className="btn btn-primary" type="submit">Add</button>
           </form>
+          )}
         </section>
 
         <section className="col" style={{ gap: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 20 }}>Team</h2>
+          <h2 style={{ margin: 0, fontSize: 20 }}>{isEvent ? 'Organisers' : 'Team'}</h2>
           <div className="card col" style={{ gap: 0, padding: 0 }}>
             {team.length === 0 && <p className="small" style={{ padding: 16 }}>No managers or staff yet.</p>}
             {team.map((m) => (

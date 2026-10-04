@@ -11,7 +11,7 @@ import Avatar, { forgetPhoto } from '@/components/avatar';
 import { selfieThumbnail } from '@/lib/photo';
 import Lobby from './lobby';
 import { DrinksPanel } from '@/components/drinks';
-import { MODE_LABELS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
+import { MODE_LABELS, genderTag, whereLabel, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
 type Person = { visit_id: string; alias: string; mode: ChatMode; zone: string; public_key: string | null; gender: string; has_photo: boolean };
@@ -237,6 +237,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           conv={active}
           myVisitId={visit.id}
           myTable={venue.table_label}
+          isEvent={venue.kind === 'event'}
           drinksEnabled={venue.drinks_enabled !== false}
           onBack={() => setActiveId(null)}
           onChanged={loadConvs}
@@ -256,7 +257,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
       <div className="row">
         <div className="col grow" style={{ gap: 2 }}>
           <span className="display" style={{ fontSize: 26 }}>{venue.venue_name}</span>
-          <span className="small">Table {venue.table_label} · {visit.alias}</span>
+          <span className="small">{whereLabel(venue)} · {visit.alias}</span>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={leave}>Leave</button>
       </div>
@@ -266,7 +267,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           People{tab !== 'people' && anyUnread ? ' •' : ''}
         </button>
         <button className="tab" role="tab" aria-selected={tab === 'group'} onClick={() => setTab('group')}>Group chat</button>
-        <button className="tab" role="tab" aria-selected={tab === 'service'} onClick={() => setTab('service')}>Service</button>
+        <button className="tab" role="tab" aria-selected={tab === 'service'} onClick={() => setTab('service')}>{venue.kind === 'event' ? 'Info' : 'Service'}</button>
       </div>
 
       {note && <p className="error" role="status">{note}</p>}
@@ -341,7 +342,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
               <span className="small">
                 {redeemedCode
                   ? `Redeemed · ${redeemedCode}. Enjoy!`
-                  : `Show this to your server at Table ${venue.table_label} to redeem.`}
+                  : `Show this to your server at ${whereLabel(venue)} to redeem.`}
               </span>
             </div>
           )}
@@ -409,15 +410,21 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
           {menuUrl ? (
             <a className="card row" href={menuUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', textDecoration: 'none' }}>
               <div className="col grow" style={{ gap: 3 }}>
-                <strong>See the menu</strong>
-                <span className="small">Tonight&apos;s menu from {venue.venue_name}</span>
+                <strong>{venue.kind === 'event' ? 'See the programme' : 'See the menu'}</strong>
+                <span className="small">
+                  {venue.kind === 'event' ? `From ${venue.venue_name}` : `Tonight’s menu from ${venue.venue_name}`}
+                </span>
               </div>
               <span aria-hidden>›</span>
             </a>
           ) : (
-            <p className="card small">The menu isn&apos;t online yet. Ask your server.</p>
+            <p className="card small">
+              {venue.kind === 'event' ? 'The programme isn’t online yet.' : 'The menu isn’t online yet. Ask your server.'}
+            </p>
           )}
 
+          {venue.requests_enabled !== false && (
+          <>
           <span className="eyebrow">Ask the staff</span>
           <div className="grid3">
             {(Object.keys(REQUESTS) as RequestKind[]).map((k) => {
@@ -448,6 +455,8 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
             </div>
           )}
           <p className="small">Requests go straight to the staff screen with your table number. Pay with your server as usual.</p>
+          </>
+          )}
         </>
       )}
     </main>

@@ -33,6 +33,7 @@ type Props = {
   conv: Conv;
   myVisitId: string;
   myTable: string;
+  isEvent?: boolean;
   onBack: () => void;
   onChanged: () => void;
   onRemoved: (note: string) => void;
@@ -42,7 +43,7 @@ type Props = {
   drinksEnabled?: boolean;
 };
 
-export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room', drinksEnabled = false }: Props) {
+export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = false, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room', drinksEnabled = false }: Props) {
   const inRoom = context === 'room';
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [keyProblem, setKeyProblem] = useState(false);
@@ -201,11 +202,13 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
 
   const shareStatus =
     conv.i_share && conv.they_share
-      ? `Tables shared. ${conv.partner_alias} is at Table ${theirTable ?? '…'}. You're at Table ${myTable}.`
+      ? isEvent
+        ? `Locations shared. ${conv.partner_alias} is in ${theirTable ?? '…'}. You're in ${myTable}.`
+        : `Tables shared. ${conv.partner_alias} is at Table ${theirTable ?? '…'}. You're at Table ${myTable}.`
       : conv.i_share
-        ? `You offered to share tables. Nothing is revealed until ${conv.partner_alias} agrees.`
+        ? `You offered to share ${isEvent ? 'where you are' : 'tables'}. Nothing is revealed until ${conv.partner_alias} agrees.`
         : conv.they_share
-          ? `${conv.partner_alias} would like to share tables.`
+          ? `${conv.partner_alias} would like to share ${isEvent ? 'where you both are' : 'tables'}.`
           : null;
 
   const keepStatus =
@@ -241,7 +244,9 @@ export default function Chat({ supabase, conv, myVisitId, myTable, onBack, onCha
         <div className="row" style={{ gap: 8 }}>
           {inRoom && !conv.i_share && (
             <button className="btn btn-ghost btn-sm grow" onClick={() => setFlag('share', true)}>
-              {conv.they_share ? 'Share tables' : 'Offer to share tables'}
+              {isEvent
+                ? conv.they_share ? 'Share where I am' : 'Offer to share where we are'
+                : conv.they_share ? 'Share tables' : 'Offer to share tables'}
             </button>
           )}
           {inRoom && drinksEnabled && (

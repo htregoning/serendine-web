@@ -18,12 +18,16 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const cols = 'id, slug, name, accent, offer_enabled, offer_text, menu_pdf_path, menu_updated_at';
   const first = await supabase
     .from('venue_members')
-    .select(`role, venues(${cols}, drinks_enabled)`)
+    .select(`role, venues(${cols}, drinks_enabled, requests_enabled, kind)`)
     .eq('user_id', user.id);
-  // Before the drinks database update is installed, load without that setting.
-  const rows: unknown = first.error
-    ? (await supabase.from('venue_members').select(`role, venues(${cols})`).eq('user_id', user.id)).data
-    : first.data;
+  // Before the latest database updates are installed, load without the newer settings.
+  let rows: unknown = first.data;
+  if (first.error) {
+    const second = await supabase.from('venue_members').select(`role, venues(${cols}, drinks_enabled)`).eq('user_id', user.id);
+    rows = second.error
+      ? (await supabase.from('venue_members').select(`role, venues(${cols})`).eq('user_id', user.id)).data
+      : second.data;
+  }
 
   type Row = { role: 'manager' | 'staff'; venues: Omit<StaffVenue, 'role'> | null };
   const venues: StaffVenue[] = ((rows ?? []) as unknown as Row[])

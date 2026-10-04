@@ -83,12 +83,58 @@ async function shrinkLogo(file: File): Promise<string> {
 type Props = {
   venueId: string;
   venueName: string;
+  venueSlug: string;
   tables: StickerTable[];
   initial: StickerDesign;
   canSave: boolean;
+  isEvent?: boolean;
 };
 
-export default function StickerSheet({ venueId, venueName, tables, initial, canSave }: Props) {
+function fileSafe(s: string) {
+  return s.replace(/[^\w-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'code';
+}
+
+function saveBlob(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// A print-quality code on its own, for designers to place in a programme, poster or menu.
+async function downloadCode(url: string, name: string, format: 'svg' | 'png', dark: string) {
+  const svg = await qrSvg(url, {
+    type: 'svg',
+    margin: 2,
+    errorCorrectionLevel: 'Q',
+    width: format === 'png' ? 2000 : undefined,
+    color: { dark, light: '#FFFFFF' },
+  });
+  if (format === 'svg') return saveBlob(new Blob([svg], { type: 'image/svg+xml' }), `${name}.svg`);
+  const img = new Image();
+  const src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Could not draw the code'));
+    img.src = src;
+  });
+  const size = 2000;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const g = canvas.getContext('2d');
+  if (!g) return;
+  g.imageSmoothingEnabled = false;
+  g.fillStyle = '#FFFFFF';
+  g.fillRect(0, 0, size, size);
+  g.drawImage(img, 0, 0, size, size);
+  URL.revokeObjectURL(src);
+  canvas.toBlob((b) => b && saveBlob(b, `${name}.png`), 'image/png');
+}
+
+export default function StickerSheet({ venueId, venueName, venueSlug, tables, initial, canSave, isEvent = false }: Props) {
   const [supabase] = useState(() => createClient());
   const [base, setBase] = useState('');
   const [codes, setCodes] = useState<Record<string, string>>({});
@@ -97,6 +143,8 @@ export default function StickerSheet({ venueId, venueName, tables, initial, canS
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [editing, setEditing] = useState(true);
+  const [showCodes, setShowCodes] = useState(isEvent);
+  const where = (label: string) => (isEvent ? label.toUpperCase() : `TABLE ${label}`);
 
   const dirty = JSON.stringify(d) !== JSON.stringify(saved);
   const valid = HEX.test(d.bg) && HEX.test(d.fg) && HEX.test(d.accent);
@@ -184,17 +232,42 @@ export default function StickerSheet({ venueId, venueName, tables, initial, canS
     <div className="stickers-page">
       <header className="no-print stickers-head">
         <div className="col" style={{ gap: 4 }}>
-          <strong style={{ fontSize: 20 }}>Table stickers · {venueName}</strong>
+          <strong style={{ fontSize: 20 }}>{isEvent ? 'QR codes' : 'Table stickers'} · {venueName}</strong>
           <span className="small">
-            {tables.length} tables. Prints four stickers per A4 page at 90 × 120 mm. Each code opens that table&apos;s check-in.
+            {tables.length} {isEvent ? 'areas' : 'tables'}. Prints four stickers per A4 page at 90 × 120 mm. Each code opens that{' '}
+            {isEvent ? 'area' : 'table'}&apos;s check-in.
           </span>
           <span className="small">Codes point to {base || '…'}. Reprint after connecting your own domain.</span>
         </div>
         <div className="row" style={{ gap: 8 }}>
+          <button className="st-btn" onClick={() => setShowCodes((s) => !s)}>{showCodes ? 'Hide downloads' : 'Download codes'}</button>
           <button className="st-btn" onClick={() => setEditing((e) => !e)}>{editing ? 'Hide design' : 'Edit design'}</button>
           <button className="st-btn st-btn-primary" onClick={() => window.print()}>Print stickers</button>
         </div>
       </header>
+
+      {showCodes && (
+        <section className="no-print st-editor" aria-label="Download codes">
+          <strong>Codes for programmes, posters and menus</strong>
+          <span className="st-hint">
+            Each file is just the QR code, ready for a designer to place. Use <b>SVG</b> for print (sharp at any size) or{' '}
+            <b>PNG</b> (2000 × 2000 px) for anything else. Print it at least 2.5 cm wide, on a white background.
+          </span>
+          <div className="st-codes">
+            {tables.map((t) => (
+              <div key={t.qr_token} className="st-code-row">
+                <span className="grow" style={{ fontWeight: 600 }}>{isEvent ? t.label : `Table ${t.label}`}</span>
+                <button className="st-btn" onClick={() => downloadCode(`${base}/t/${t.qr_token}`, `${fileSafe(venueSlug)}-${fileSafe(t.label)}`, 'svg', qrDark)}>
+                  SVG
+                </button>
+                <button className="st-btn" onClick={() => downloadCode(`${base}/t/${t.qr_token}`, `${fileSafe(venueSlug)}-${fileSafe(t.label)}`, 'png', qrDark)}>
+                  PNG
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {editing && (
         <section className="no-print st-editor" aria-label="Sticker design">
@@ -307,7 +380,7 @@ export default function StickerSheet({ venueId, venueName, tables, initial, canS
                   <span className="sticker-brand">Serendine</span>
                 </>
               )}
-              <span className="sticker-table">TABLE {t.label}</span>
+              <span className="sticker-table">{where(t.label)}</span>
             </div>
             <div className="sticker-qr" dangerouslySetInnerHTML={{ __html: codes[t.qr_token] ?? '' }} />
             <p className="sticker-line">{d.headline || DEFAULT_DESIGN.headline}</p>

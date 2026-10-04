@@ -17,6 +17,8 @@ export type StaffVenue = {
   offer_enabled: boolean;
   offer_text: string;
   drinks_enabled?: boolean;
+  requests_enabled?: boolean;
+  kind?: 'venue' | 'event';
   menu_pdf_path: string | null;
   menu_updated_at: string | null;
   role: 'manager' | 'staff';
@@ -267,6 +269,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
   const [offerText, setOfferText] = useState(venue.offer_text);
   const [offerOn, setOfferOn] = useState(venue.offer_enabled);
   const [drinksOn, setDrinksOn] = useState(venue.drinks_enabled !== false);
+  const [requestsOn, setRequestsOn] = useState(venue.requests_enabled !== false);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -274,10 +277,16 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
     setBusy('offer');
     const { error } = await supabase
       .from('venues')
-      .update({ offer_text: offerText.trim() || venue.offer_text, offer_enabled: offerOn, drinks_enabled: drinksOn })
+      .update({
+        offer_text: offerText.trim() || venue.offer_text,
+        offer_enabled: offerOn,
+        drinks_enabled: drinksOn,
+        // Only sent once the events database update (0012) has added this setting.
+        ...(venue.requests_enabled === undefined ? {} : { requests_enabled: requestsOn }),
+      })
       .eq('id', venue.id);
     setBusy(null);
-    setMsg(error ? 'The offer did not save.' : 'Offer saved. Guests see it straight away.');
+    setMsg(error ? 'The settings did not save.' : 'Saved. Guests see it straight away.');
     if (!error) onSaved();
   }
 
@@ -315,6 +324,12 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
           <input type="checkbox" checked={drinksOn} onChange={(e) => setDrinksOn(e.target.checked)} />
           <span>Let guests send each other drinks (added to the sender&apos;s bill)</span>
         </label>
+        {venue.requests_enabled !== undefined && (
+          <label className="check">
+            <input type="checkbox" checked={requestsOn} onChange={(e) => setRequestsOn(e.target.checked)} />
+            <span>Let guests call a waiter, ask for the bill or water</span>
+          </label>
+        )}
         <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save</button>
       </div>
 

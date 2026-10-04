@@ -16,7 +16,33 @@ export type VenueAtTable = {
   table_id: string;
   table_label: string;
   drinks_enabled?: boolean;
+  kind?: 'venue' | 'event';
+  starts_at?: string | null;
+  ends_at?: string | null;
+  place?: string | null;
+  requests_enabled?: boolean;
+  zone?: string;
 };
+
+// "Table 12" at a restaurant, "North Stand" at an event.
+export function whereLabel(v: Pick<VenueAtTable, 'kind' | 'table_label'>) {
+  return v.kind === 'event' ? v.table_label : `Table ${v.table_label}`;
+}
+
+// Whether an event is open for check-in right now (3 hours either side).
+export function eventWindow(v: Pick<VenueAtTable, 'kind' | 'starts_at' | 'ends_at'>): 'open' | 'early' | 'over' {
+  if (v.kind !== 'event') return 'open';
+  const now = Date.now();
+  if (v.starts_at && now < new Date(v.starts_at).getTime() - 3 * 3600000) return 'early';
+  if (v.ends_at && now > new Date(v.ends_at).getTime() + 3 * 3600000) return 'over';
+  return 'open';
+}
+
+export function eventDate(iso: string | null | undefined) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+}
 
 export type RequestKind = 'waiter' | 'bill' | 'water';
 export type RequestStatus = 'sent' | 'seen' | 'done' | 'cancelled';
