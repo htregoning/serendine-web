@@ -1,13 +1,13 @@
 import Link from 'next/link';
 
-export const metadata = { title: 'Terms of use · Serendine' };
+export const metadata = { title: 'Terms and Conditions · Serendine' };
 
 // DRAFT for legal review. Items in [brackets] must be completed before launch.
 export default function Terms() {
   return (
     <main className="legal">
       <Link href="/" className="small">← Serendine</Link>
-      <h1 className="display">Terms of use</h1>
+      <h1 className="display">Terms and Conditions</h1>
       <p className="small">Draft for legal review · Last updated 3 October 2026</p>
 
       <p>
