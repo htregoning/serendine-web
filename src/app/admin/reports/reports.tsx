@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import MediaView from '@/components/media-view';
+import type { MediaKind } from '@/lib/media';
 
 type Report = {
   id: string;
@@ -17,21 +19,39 @@ type Report = {
   resolved_at: string | null;
 };
 
-function Evidence({ value }: { value: unknown }) {
+type Item = { from?: string; text?: string; media?: { path: string; key: string; iv: string; mime: string; kind: MediaKind } };
+
+function Evidence({ value, supabase }: { value: unknown; supabase: ReturnType<typeof createClient> }) {
   if (!value) return <span className="small">No messages included.</span>;
   if (Array.isArray(value)) {
     return (
       <div className="col" style={{ gap: 4 }}>
-        {(value as { from?: string; text?: string }[]).map((m, i) => (
-          <span key={i} className="small" style={{ color: m.from === 'them' ? 'var(--text)' : 'var(--faint)' }}>
-            <b>{m.from === 'them' ? 'Reported person' : 'Reporter'}:</b> {m.text}
-          </span>
+        {(value as Item[]).map((m, i) => (
+          <div key={i} className="small" style={{ color: m.from === 'them' ? 'var(--text)' : 'var(--faint)' }}>
+            <b>{m.from === 'them' ? 'Reported person' : 'Reporter'}:</b> {m.media ? `[${m.media.kind === 'video' ? 'video' : 'photo'}] ` : ''}{m.text}
+            {m.media && (
+              <div style={{ maxWidth: 260, marginTop: 4 }}>
+                <MediaView supabase={supabase} src={{ bucket: 'chat-media', payload: { $m: 1, ...m.media } }} />
+              </div>
+            )}
+          </div>
         ))}
       </div>
     );
   }
-  const g = value as { group_message?: string };
-  if (g.group_message) return <span className="small"><b>Group chat message:</b> {g.group_message}</span>;
+  const g = value as { group_message?: string; group_media?: string; kind?: MediaKind };
+  if (g.group_message || g.group_media) {
+    return (
+      <div className="small">
+        <b>Group chat {g.group_media ? (g.kind === 'video' ? 'video' : 'photo') : 'message'}:</b> {g.group_message ?? ''}
+        {g.group_media && (
+          <div style={{ maxWidth: 260, marginTop: 4 }}>
+            <MediaView supabase={supabase} src={{ bucket: 'group-media', path: g.group_media, kind: g.kind ?? 'image' }} />
+          </div>
+        )}
+      </div>
+    );
+  }
   return <span className="small">{JSON.stringify(value)}</span>;
 }
 
@@ -99,7 +119,7 @@ export default function Reports() {
             account{r.banned ? ' · BANNED' : ''}
           </span>
           {r.reason && <span><b>Reason:</b> {r.reason}</span>}
-          <Evidence value={r.evidence} />
+          <Evidence value={r.evidence} supabase={supabase} />
           <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
             {!r.resolved_at && <button className="btn btn-ghost btn-sm" onClick={() => resolve(r.id)}>Mark handled</button>}
             {r.banned ? (

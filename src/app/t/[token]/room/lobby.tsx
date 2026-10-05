@@ -7,6 +7,9 @@ import type { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/avatar';
 import { genderTag } from '@/lib/types';
 import { SendDrink } from '@/components/drinks';
+import Linkify from '@/components/linkify';
+import MediaView, { AttachButton } from '@/components/media-view';
+import { MediaProblem, prepareMedia, type MediaKind } from '@/lib/media';
 
 type Client = ReturnType<typeof createClient>;
 
@@ -14,6 +17,9 @@ type Post = {
   id: number;
   visit_id: string;
   is_host?: boolean;
+  media_path?: string | null;
+  media_kind?: MediaKind | null;
+  pending?: boolean;
   alias: string;
   gender: string;
   has_photo: boolean;
@@ -64,6 +70,8 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
   const [menu, setMenu] = useState<Post | null>(null);
   const [reporting, setReporting] = useState(false);
   const [reason, setReason] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [mediaNote, setMediaNote] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const lastId = useRef(0);
 
@@ -125,6 +133,29 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
     if (MENTION.test(text)) askHost(venueId, 'mention');
   }
 
+  // Photos and videos for the group wait for a member of staff to approve them.
+  async function postMedia(file: File) {
+    if (uploading) return;
+    setError(null);
+    setMediaNote(null);
+    setUploading(true);
+    try {
+      const prepared = await prepareMedia(file);
+      const path = `${venueId}/${crypto.randomUUID()}.${prepared.ext}`;
+      const up = await supabase.storage.from('group-media').upload(path, prepared.blob, { contentType: prepared.mime, upsert: false });
+      if (up.error) throw new MediaProblem(t('Photos are switched off in this group, or the upload failed.'));
+      const caption = draft.trim().slice(0, 300);
+      const { error } = await supabase.rpc('post_media_to_lobby', { p_path: path, p_kind: prepared.kind, p_caption: caption });
+      if (error) throw new MediaProblem(error.message.includes('Slow down') ? t('Slow down a little, then try again.') : t('That did not send. Please try again.'));
+      if (caption) setDraft('');
+      setMediaNote(t('Sent to the staff. It appears in the group once they approve it.'));
+      load();
+    } catch (e) {
+      setError(e instanceof MediaProblem ? t(e.message) : t('That did not send. Please try again.'));
+    }
+    setUploading(false);
+  }
+
   async function block(report: boolean) {
     if (!menu) return;
     const { error } = await supabase.rpc('block_from_lobby', {
@@ -179,7 +210,7 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
                   <span className="lobby-name host-name">
                     Seren <span className="host-badge">{t('AI host')}</span>
                   </span>
-                  <div className="bubble theirs host-bubble" style={{ maxWidth: '100%' }}>{p.body}</div>
+                  <div className="bubble theirs host-bubble" style={{ maxWidth: '100%' }}><Linkify text={p.body} /></div>
                   <span className="small" style={{ fontSize: 11 }}>{time(p.created_at)}</span>
                 </div>
               </div>
@@ -200,7 +231,15 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
                     {tag && <span className="small"> · {tag}</span>}
                   </button>
                 )}
-                <div className={p.mine ? 'bubble mine' : 'bubble theirs'} style={{ maxWidth: '100%' }}>{p.body}</div>
+                {p.media_path && p.media_kind ? (
+                  <div className={p.mine ? 'bubble mine media-bubble' : 'bubble theirs media-bubble'} style={{ maxWidth: '100%' }}>
+                    <MediaView supabase={supabase} src={{ bucket: 'group-media', path: p.media_path, kind: p.media_kind }} />
+                    {p.body && <div className="media-caption"><Linkify text={p.body} /></div>}
+                    {p.pending && <div className="media-caption small">{t('Waiting for staff to approve')}</div>}
+                  </div>
+                ) : (
+                  <div className={p.mine ? 'bubble mine' : 'bubble theirs'} style={{ maxWidth: '100%' }}><Linkify text={p.body} /></div>
+                )}
                 <span className="small" style={{ fontSize: 11, alignSelf: p.mine ? 'flex-end' : 'flex-start' }}>{time(p.created_at)}</span>
               </div>
             </div>
@@ -258,7 +297,10 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
       )}
 
       {error && <p className="error" role="status">{error}</p>}
+      {mediaNote && <p className="small" role="status" style={{ margin: 0 }}>{mediaNote}</p>}
+      {uploading && <p className="small" role="status" style={{ margin: 0 }}>{t('Sending…')}</p>}
       <form className="row" style={{ gap: 10 }} onSubmit={post}>
+        <AttachButton onFile={postMedia} disabled={uploading} />
         <label htmlFor="lobby-draft" style={{ position: 'absolute', left: -9999 }}>{t('Message the room')}</label>
         <input
           id="lobby-draft"

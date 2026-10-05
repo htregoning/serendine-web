@@ -11,6 +11,8 @@ import Announce from './announce';
 import GrowthSettings from './growth-settings';
 import StaffScript from './staff-script';
 import HostSettings from './host-settings';
+import PhotoReview from './photo-review';
+import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
 
 
@@ -30,6 +32,8 @@ export type StaffVenue = {
   weekly_report?: boolean;
   host_enabled?: boolean;
   brand?: BrandInitial;
+  photos_private?: boolean;
+  photos_group?: boolean;
   host_tone?: 'lively' | 'relaxed' | 'family';
   menu_pdf_path: string | null;
   menu_updated_at: string | null;
@@ -196,6 +200,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
 
       <NotifyToggle supabase={supabase} who="staff" />
 
+      <PhotoReview supabase={supabase} venueId={venue.id} />
+
       <Announce supabase={supabase} venueId={venue.id} guestsHere={guestsHere} />
 
       <div className="staff-grid">
@@ -286,6 +292,9 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
               initial={venue.brand}
               onSaved={() => router.refresh()}
             />
+          )}
+          {isManager && venue.photos_private !== undefined && (
+            <MediaSettings venueId={venue.id} privateOn={venue.photos_private} groupOn={venue.photos_group !== false} />
           )}
           {isManager && venue.host_enabled !== undefined && (
             <HostSettings venueId={venue.id} enabled={venue.host_enabled} tone={venue.host_tone ?? 'lively'} />

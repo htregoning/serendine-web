@@ -9,6 +9,9 @@ import { notify } from '@/lib/push';
 import Avatar from '@/components/avatar';
 import { SendDrink } from '@/components/drinks';
 import { genderTag } from '@/lib/types';
+import Linkify from '@/components/linkify';
+import MediaView, { AttachButton } from '@/components/media-view';
+import { MediaProblem, encodeMedia, encryptBlob, parseMedia, prepareMedia, type MediaPayload } from '@/lib/media';
 
 export type Conv = {
   conversation_id: string;
@@ -27,7 +30,7 @@ export type Conv = {
 };
 
 type Row = { id: number; sender_visit: string; ciphertext: string; iv: string; created_at: string };
-type Msg = { id: number; mine: boolean; text: string };
+type Msg = { id: number; mine: boolean; text: string; media?: MediaPayload | null };
 
 type Props = {
   supabase: ReturnType<typeof createClient>;
@@ -60,8 +63,12 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
   const [theirTable, setTheirTable] = useState<string | null>(null);
   const [panel, setPanel] = useState<'none' | 'block' | 'report'>('none');
   const [reason, setReason] = useState('');
+  const [sendingMedia, setSendingMedia] = useState(false);
+  const [revealed, setRevealed] = useState<Set<number>>(() => new Set());
   const bottom = useRef<HTMLDivElement>(null);
   const c = conv.conversation_id;
+  // Photos from someone you haven't replied to yet arrive blurred until you tap them.
+  const iReplied = messages.some((m) => m.mine);
 
   // Derive the shared secret on this phone from my private key and their public key.
   useEffect(() => {
@@ -94,7 +101,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
           // keep the fallback text
         }
       }
-      return { id: r.id, mine: r.sender_visit === myVisitId, text };
+      return { id: r.id, mine: r.sender_visit === myVisitId, text, media: parseMedia(text) };
     },
     [key, myVisitId],
   );
@@ -165,6 +172,43 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
     setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
   }
 
+  // A photo or video: shrunk on this phone, locked with its own key, uploaded, and the key sent
+  // inside an encrypted message so only the two of you can open it.
+  async function sendMedia(file: File) {
+    if (!key || sendingMedia) return;
+    setError(null);
+    setSendingMedia(true);
+    try {
+      const prepared = await prepareMedia(file);
+      const sealed = await encryptBlob(prepared.blob);
+      const path = `${c}/${crypto.randomUUID()}`;
+      const up = await supabase.storage
+        .from('chat-media')
+        .upload(path, sealed.cipher, { contentType: 'application/octet-stream', upsert: false });
+      if (up.error) throw new MediaProblem(t('Photos and videos are switched off here, or the upload failed. Please try again.'));
+      const caption = draft.trim().slice(0, 300);
+      const payload: MediaPayload = {
+        $m: 1, path, key: sealed.key, iv: sealed.iv, mime: prepared.mime, kind: prepared.kind,
+        w: prepared.w, h: prepared.h, ...(caption ? { caption } : {}),
+      };
+      const text = encodeMedia(payload);
+      const { ciphertext, iv } = await encryptText(key, text);
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({ conversation_id: c, sender_visit: myVisitId, ciphertext, iv })
+        .select('id')
+        .single();
+      if (error) throw new MediaProblem(error.message.includes('Slow down') ? t('Slow down a little, then try again.') : t('That did not send. Please try again.'));
+      if (caption) setDraft('');
+      notify('message', c);
+      const m: Msg = { id: (data as { id: number }).id, mine: true, text, media: payload };
+      setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
+    } catch (e) {
+      setError(e instanceof MediaProblem ? t(e.message) : t('That did not send. Please try again.'));
+    }
+    setSendingMedia(false);
+  }
+
   // Move chat to this device: make a new key here and publish its public half.
   // Messages sent before the move stay readable only on the old device.
   async function useThisDevice() {
@@ -189,7 +233,14 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
   }
 
   async function block(report: boolean) {
-    const evidence = report ? messages.slice(-30).map((m) => ({ from: m.mine ? 'me' : 'them', text: m.text })) : null;
+    // Photos go with a report (with their key), so the team can see what was sent.
+    const evidence = report
+      ? messages.slice(-30).map((m) =>
+          m.media
+            ? { from: m.mine ? 'me' : 'them', text: m.media.caption ?? '', media: { path: m.media.path, key: m.media.key, iv: m.media.iv, mime: m.media.mime, kind: m.media.kind } }
+            : { from: m.mine ? 'me' : 'them', text: m.text },
+        )
+      : null;
     const { error } = await supabase.rpc('block_partner', {
       c,
       p_report: report,
@@ -284,9 +335,22 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
             {t('Start with something easy: ask about their order, or what brings them here tonight. Messages are encrypted; only the two of you can read them.')}
           </p>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className={m.mine ? 'bubble mine' : 'bubble theirs'}>{m.text}</div>
-        ))}
+        {messages.map((m) =>
+          m.media ? (
+            <div key={m.id} className={m.mine ? 'bubble mine media-bubble' : 'bubble theirs media-bubble'}>
+              <MediaView
+                supabase={supabase}
+                src={{ bucket: 'chat-media', payload: m.media }}
+                blurred={!m.mine && !iReplied && !revealed.has(m.id)}
+                onReveal={() => setRevealed((s) => new Set(s).add(m.id))}
+              />
+              {m.media.caption && <div className="media-caption"><Linkify text={m.media.caption} /></div>}
+            </div>
+          ) : (
+            <div key={m.id} className={m.mine ? 'bubble mine' : 'bubble theirs'}><Linkify text={m.text} /></div>
+          ),
+        )}
+        {sendingMedia && <div className="bubble mine small" style={{ opacity: 0.7 }}>{t('Sending…')}</div>}
         <div ref={bottom} />
       </div>
 
@@ -295,6 +359,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
         {panel === 'none' && (
           <>
             <form className="row" style={{ gap: 10 }} onSubmit={send}>
+              <AttachButton onFile={sendMedia} disabled={!key || sendingMedia} />
               <label htmlFor="draft" style={{ position: 'absolute', left: -9999 }}>{t('Message')}</label>
               <input
                 id="draft"

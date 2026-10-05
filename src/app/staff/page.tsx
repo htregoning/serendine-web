@@ -75,6 +75,9 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
       },
     };
   }
+  // Photo and video switches (after database update 0020).
+  const media = await supabase.from('venues').select('photos_private, photos_group').eq('id', picked.id).maybeSingle();
+  if (!media.error && media.data) venue = { ...venue, ...(media.data as Partial<StaffVenue>) };
   // AI host settings (after database update 0018).
   const host = await supabase.from('venues').select('host_enabled, host_tone').eq('id', picked.id).maybeSingle();
   if (!host.error && host.data) venue = { ...venue, ...(host.data as Partial<StaffVenue>) };
