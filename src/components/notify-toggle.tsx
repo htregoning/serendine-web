@@ -8,7 +8,7 @@ import { enablePush, pushState, refreshPush, sendTestPush, type PushState } from
 import { playSound, setSoundOn, soundOn } from '@/lib/alerts';
 import { inTelegram } from '@/lib/telegram';
 
-type Props = { supabase: ReturnType<typeof createClient>; who: 'guest' | 'staff' };
+type Props = { supabase: ReturnType<typeof createClient>; who: 'guest' | 'staff'; compact?: boolean };
 
 const TEST_RESULT: Record<string, string> = {
   'not configured': 'The server keys for notifications aren’t set up yet (VAPID keys in Vercel).',
@@ -20,7 +20,7 @@ const TEST_RESULT: Record<string, string> = {
 };
 
 // Notifications and sound settings, with honest help for iPhone and blocked cases.
-export default function NotifyToggle({ supabase, who }: Props) {
+export default function NotifyToggle({ supabase, who, compact = false }: Props) {
   const t = useT();
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -84,6 +84,28 @@ export default function NotifyToggle({ supabase, who }: Props) {
           {soundButton}
         </div>
         {msg && <span className="small" role="status">{msg}</span>}
+      </div>
+    );
+  }
+
+  // A slim prompt (guest room): one line and a button, instead of the full card.
+  if (compact && state === 'off') {
+    return (
+      <div className="row notify-slim" style={{ gap: 8, alignItems: 'center' }}>
+        <span className="small grow">{t('Get alerts for messages and drinks, even with your phone locked.')}</span>
+        <button
+          className="btn btn-primary btn-sm"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            const s = await enablePush(supabase);
+            setState(s);
+            setBusy(false);
+            if (s === 'on') test();
+          }}
+        >
+          {busy ? t('Turning on…') : t('Turn on')}
+        </button>
       </div>
     );
   }

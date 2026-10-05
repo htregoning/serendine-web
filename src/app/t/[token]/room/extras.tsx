@@ -36,7 +36,7 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
   const [bDay, setBDay] = useState('');
   const [bMonth, setBMonth] = useState('');
   const [bdayOffer, setBdayOffer] = useState<string | null>(null);
-  const [groups, setGroups] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,13 +47,12 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
       .eq('id', venue.venue_id)
       .maybeSingle()
       .then(({ data }: { data: { birthday_offer?: string | null } | null }) => setBdayOffer(data?.birthday_offer ?? null));
-    // Group bookings (after update 0025, and only if the venue has switched them on).
     supabase
-      .from('venues')
-      .select('groups_enabled')
-      .eq('id', venue.venue_id)
+      .from('visits')
+      .select('mute_venue')
+      .eq('id', visitId)
       .maybeSingle()
-      .then(({ data }: { data: { groups_enabled?: boolean } | null }) => setGroups(!!data?.groups_enabled));
+      .then(({ data }: { data: { mute_venue?: boolean } | null }) => setMuted(!!data?.mute_venue));
     supabase.rpc('my_birthday').then(({ data }: { data: { birth_day: number | null; birth_month: number | null }[] | null }) => {
       const b = data?.[0];
       if (b?.birth_day && b?.birth_month) {
@@ -61,7 +60,7 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
         setBMonth(String(b.birth_month));
       }
     });
-  }, [supabase, venue.venue_id]);
+  }, [supabase, venue.venue_id, visitId]);
 
   // Close with the Escape key.
   useEffect(() => {
@@ -186,17 +185,18 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
           </div>
         )}
 
-        <div className="col extras-later" style={{ gap: 8 }}>
-          <span className="label">{t('Coming back?')}</span>
-          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-            {groups && (
-              <a className="btn btn-outline btn-sm" href={`/plan?v=${encodeURIComponent(venue.venue_slug)}`} style={{ textDecoration: 'none' }}>
-                {t('Plan a night here')}
-              </a>
-            )}
-            <a className="btn btn-ghost btn-sm" href="/me" style={{ textDecoration: 'none' }}>{t('Your places and plans')}</a>
-          </div>
-        </div>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={!muted}
+            onChange={async (e) => {
+              const next = !e.target.checked;
+              setMuted(next);
+              await supabase.rpc('set_venue_mute', { p_mute: next });
+            }}
+          />
+          <span>{t('Notifications from {venue}', { venue: venue.venue_name })}</span>
+        </label>
 
         {error && <p className="error" role="status" style={{ margin: 0 }}>{error}</p>}
         <div className="row" style={{ gap: 10 }}>

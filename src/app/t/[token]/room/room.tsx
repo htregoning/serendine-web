@@ -79,6 +79,9 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
   const t = useT();
   const where = venue.kind === 'event' ? venue.table_label : `${t('Table')} ${venue.table_label}`;
   const [tab, setTab] = useState<'people' | 'group' | 'chats'>('people');
+  // The venue comes first (tonight, service, coming back); the social side sits behind "People here tonight".
+  const [view, setView] = useState<'venue' | 'social'>('venue');
+  const [groupsOn, setGroupsOn] = useState(false);
   // The optional details sheet opens once straight after check-in, and whenever the guest taps their name.
   const [extrasOpen, setExtrasOpen] = useState(firstVisit);
   const [askOpen, setAskOpen] = useState<'other' | 'help' | null>(null);
@@ -105,6 +108,36 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
     if (firstVisit) window.history.replaceState(null, '', `/t/${token}/room`);
   }, [firstVisit, token]);
   activeRef.current = activeId;
+
+  // Group bookings show "Plan a night here" (after update 0025, if the venue switched them on).
+  useEffect(() => {
+    supabase
+      .from('venues')
+      .select('groups_enabled')
+      .eq('id', venue.venue_id)
+      .maybeSingle()
+      .then(({ data }: { data: { groups_enabled?: boolean } | null }) => setGroupsOn(!!data?.groups_enabled));
+  }, [supabase, venue.venue_id]);
+
+  // The phone's back button returns from the social side to the venue view.
+  useEffect(() => {
+    const onPop = () => setView('venue');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  function openSocial(next: 'people' | 'group' | 'chats') {
+    setTab(next);
+    setView('social');
+    window.history.pushState({ room: 'social' }, '');
+    window.scrollTo(0, 0);
+  }
+
+  function backToVenue() {
+    if (window.history.state?.room === 'social') window.history.back();
+    else setView('venue');
+    window.scrollTo(0, 0);
+  }
 
   const loadConvs = useCallback(async () => {
     const { data } = await supabase.rpc('my_conversations', { v: venue.venue_id });
@@ -334,162 +367,243 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
         <button className="btn btn-ghost btn-sm" onClick={leave}>{t('Leave')}</button>
       </header>
 
-      <div className="tabs" role="tablist" aria-label="Sections">
-        <button className="tab" role="tab" aria-selected={tab === 'people'} onClick={() => setTab('people')}>{t('People')}</button>
-        <button className="tab" role="tab" aria-selected={tab === 'group'} onClick={() => setTab('group')}>{t('Group')}</button>
-        <button className="tab" role="tab" aria-selected={tab === 'chats'} onClick={() => setTab('chats')}>
-          {t('Chats')}
-          {unreadCount > 0 && <span className="tab-badge" aria-label={t('{n} unread', { n: unreadCount })}>{unreadCount}</span>}
-        </button>
-      </div>
-
       {note && <p className="error" role="status">{note}</p>}
 
-      <VenueNews supabase={supabase} venueId={venue.venue_id} visitId={visit.id} venueName={venue.venue_name} />
+      {/* A drink someone sent (or yours waiting for an answer) stays on top in both views. */}
       <DrinksPanel supabase={supabase} myVisitId={visit.id} />
 
-      {tab !== 'chats' && (
-        <div className="card row open-card">
-          <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={44} version={photoVersion} />
-          <div className="col grow" style={{ gap: 2 }}>
-            <strong>{t('Open to chat')}</strong>
-            <span className="small">
-              {isOpen ? t('Visible as {name} · {mode}', { name: visit.alias, mode: t(MODE_LABELS[me.mode]) }) : t("You're hidden. Nobody can message you.")}
-            </span>
-          </div>
-          <button className="switch" role="switch" aria-checked={isOpen} aria-label={t('Open to chat')} onClick={toggleOpen}>
-            <span />
-          </button>
-        </div>
-      )}
-
-      {tab === 'group' &&
-        (isOpen ? (
-          <Lobby
-            supabase={supabase}
-            venueId={venue.venue_id}
-            drinksEnabled={venue.drinks_enabled !== false}
-            onChatWith={(id) => openChatWith(id)}
-            onNote={(n) => {
-              setNote(n);
-              loadPeople();
-              loadConvs();
-            }}
-          />
-        ) : (
-          <p className="card small">{t('Switch on Open to chat to join the group chat for everyone here.')}</p>
-        ))}
-
-      {tab === 'people' && (
+      {view === 'venue' ? (
         <>
-          <NotifyToggle supabase={supabase} who="guest" />
-          {isOpen ? (
-            <div className="col" style={{ gap: 0 }}>
-              <div className="row list-head">
-                <span className="eyebrow grow">{t('Open to chat now · {n}', { n: people.length })}</span>
-                <Buzz token={token} compact />
-              </div>
-              {people.length === 0 && (
-                <p className="small" style={{ padding: '12px 2px' }}>{t("Nobody else is open yet. We'll show them here as soon as they switch on.")}</p>
-              )}
-              {people.map((p) => {
-                const tag = genderTag(p.gender);
-                return (
-                  <div key={p.visit_id} className="row person-row">
-                    <Avatar supabase={supabase} visitId={p.visit_id} alias={p.alias} hasPhoto={p.has_photo} size={46} />
-                    <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
-                      <strong className="person-name">{p.alias}</strong>
-                      <span className="small">
-                        {[t(MODE_LABELS[p.mode]), tag ? t(tag) : '', p.zone].filter(Boolean).join(' · ')}
-                      </span>
+          {/* 1. Tonight at the venue: their announcements and the welcome offer. */}
+          <section className="col room-section" aria-label={t('Tonight at {venue}', { venue: venue.venue_name })}>
+            <VenueNews supabase={supabase} venueId={venue.venue_id} visitId={visit.id} venueName={venue.venue_name} />
+            {venue.offer_enabled &&
+              (me.optedIn ? (
+                <div className="offer-row" role="status">
+                  <span className="grow">
+                    <b style={{ color: 'var(--accent)' }}>{venue.offer_text}</b>
+                    <br />
+                    <span className="small">
+                      {redeemedCode ? t('Redeemed · {code}. Enjoy!', { code: redeemedCode }) : t('Show this to your server at {where} to redeem.', { where })}
+                    </span>
+                  </span>
+                </div>
+              ) : (
+                <div className="offer-row">
+                  <span className="grow small"><b style={{ color: 'var(--accent)' }}>{t('Welcome offer')}</b> · {venue.offer_text}</span>
+                  <button className="btn btn-primary btn-sm" onClick={() => setExtrasOpen(true)}>{t('Get it')}</button>
+                </div>
+              ))}
+          </section>
+
+          {/* 2. Service: ask the staff, the menu, and this table's orders. */}
+          {(showRequests || menuUrl || ordering) && (
+            <section className="col room-section" aria-label={t('Ask the staff')}>
+              {requests.length > 0 && (
+                <div className="col" style={{ gap: 8 }}>
+                  {requests.map((r) => (
+                    <div key={r.id} className="card row" role="status" style={{ padding: '10px 14px' }}>
+                      <span className="dot" style={{ background: r.status === 'seen' ? 'var(--accent)' : 'var(--faint)' }} />
+                      <div className="col grow" style={{ gap: 0 }}>
+                        <strong style={{ fontSize: 14 }}>{r.kind === 'other' && r.note ? r.note : t(REQUESTS[r.kind].done)}</strong>
+                        <span className="small">
+                          {r.status === 'seen' && r.claimed_name ? t('{name} is on the way', { name: r.claimed_name }) : t(STATUS_TEXT[r.status])}
+                        </span>
+                      </div>
+                      {r.status === 'sent' && (
+                        <button className="btn btn-ghost btn-sm" onClick={() => cancel(r.id)}>{t('Cancel')}</button>
+                      )}
                     </div>
-                    <button className="btn btn-outline btn-sm" onClick={() => openChatWith(p.visit_id)}>{t('Say hello')}</button>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="col" style={{ alignItems: 'center', textAlign: 'center', padding: '40px 12px' }}>
-              <span className="display" style={{ fontSize: 22 }}>{t('It works both ways')}</span>
-              <p className="small">{t("Switch on Open to chat to see who else is open. Until then, nobody knows you're here.")}</p>
-              <Buzz token={token} compact />
-            </div>
+                  ))}
+                </div>
+              )}
+              {(showRequests || menuUrl) && (
+                <nav className="service-bar" aria-label={t('Ask the staff')}>
+                  {showRequests &&
+                    buttons.map((k) => {
+                      const active = k !== 'other' && requests.some((r) => r.kind === k);
+                      return (
+                        <button
+                          key={k}
+                          className="service-tile"
+                          data-active={active}
+                          onClick={() => (k === 'other' ? setAskOpen('other') : ask(k))}
+                          aria-label={t(REQUESTS[k].ask)}
+                        >
+                          <Icon d={ICONS[k]} />
+                          {active ? t('Asked') : t(SHORT[k])}
+                        </button>
+                      );
+                    })}
+                  {menuUrl && (
+                    <a className="service-tile" href={menuUrl} target="_blank" rel="noopener noreferrer">
+                      <Icon d={ICONS.menu} />
+                      {venue.kind === 'event' ? t('Programme') : t('Menu')}
+                    </a>
+                  )}
+                </nav>
+              )}
+              {ordering && <TableOrders supabase={supabase} venueId={venue.venue_id} tableId={venue.table_id} currency={ordering.currency} />}
+            </section>
           )}
+
+          {/* 3. The doorway to the social side: switch on, see who's here. */}
+          <section className="card col people-strip" aria-label={t('People here tonight')}>
+            <div className="row" style={{ gap: 14 }}>
+              <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={44} version={photoVersion} />
+              <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
+                <strong>{t('Open to chat')}</strong>
+                <span className="small">
+                  {isOpen ? t('Visible as {name} · {mode}', { name: visit.alias, mode: t(MODE_LABELS[me.mode]) }) : t("You're hidden. Nobody can message you.")}
+                </span>
+              </div>
+              <button className="switch" role="switch" aria-checked={isOpen} aria-label={t('Open to chat')} onClick={toggleOpen}>
+                <span />
+              </button>
+            </div>
+            <button className="people-door" onClick={() => openSocial(unreadCount > 0 ? 'chats' : 'people')}>
+              <span className="col grow" style={{ gap: 2, textAlign: 'start' }}>
+                <strong>{t('People here tonight')}</strong>
+                <span className="small">
+                  {unreadCount > 0
+                    ? t('{n} unread', { n: unreadCount })
+                    : isOpen
+                      ? t('Open to chat now · {n}', { n: people.length })
+                      : t('See who’s here, the group chat and your chats')}
+                </span>
+              </span>
+              {unreadCount > 0 && <span className="tab-badge">{unreadCount}</span>}
+              <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1 }}>›</span>
+            </button>
+          </section>
 
           <div style={{ flex: 1 }} />
 
-          {ordering && <TableOrders supabase={supabase} venueId={venue.venue_id} tableId={venue.table_id} currency={ordering.currency} />}
-
-          {venue.offer_enabled && (
-            me.optedIn ? (
-              <div className="offer-row" role="status">
-                <span className="grow">
-                  <b style={{ color: 'var(--accent)' }}>{venue.offer_text}</b>
-                  <br />
-                  <span className="small">
-                    {redeemedCode ? t('Redeemed · {code}. Enjoy!', { code: redeemedCode }) : t('Show this to your server at {where} to redeem.', { where })}
-                  </span>
-                </span>
-              </div>
-            ) : (
-              <div className="offer-row">
-                <span className="grow small"><b style={{ color: 'var(--accent)' }}>{t('Welcome offer')}</b> · {venue.offer_text}</span>
-                <button className="btn btn-primary btn-sm" onClick={() => setExtrasOpen(true)}>{t('Get it')}</button>
-              </div>
-            )
-          )}
-
-          {requests.length > 0 && (
-            <div className="col" style={{ gap: 8 }}>
-              {requests.map((r) => (
-                <div key={r.id} className="card row" role="status" style={{ padding: '10px 14px' }}>
-                  <span className="dot" style={{ background: r.status === 'seen' ? 'var(--accent)' : 'var(--faint)' }} />
-                  <div className="col grow" style={{ gap: 0 }}>
-                    <strong style={{ fontSize: 14 }}>{r.kind === 'other' && r.note ? r.note : t(REQUESTS[r.kind].done)}</strong>
-                    <span className="small">
-                      {r.status === 'seen' && r.claimed_name
-                        ? t('{name} is on the way', { name: r.claimed_name })
-                        : t(STATUS_TEXT[r.status])}
-                    </span>
-                  </div>
-                  {r.status === 'sent' && (
-                    <button className="btn btn-ghost btn-sm" onClick={() => cancel(r.id)}>{t('Cancel')}</button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {(showRequests || menuUrl) && (
-            <nav className="service-bar" aria-label={t('Ask the staff')}>
-              {showRequests &&
-                buttons.map((k) => {
-                  const active = k !== 'other' && requests.some((r) => r.kind === k);
-                  return (
-                    <button
-                      key={k}
-                      className="service-tile"
-                      data-active={active}
-                      onClick={() => (k === 'other' ? setAskOpen('other') : ask(k))}
-                      aria-label={t(REQUESTS[k].ask)}
-                    >
-                      <Icon d={ICONS[k]} />
-                      {active ? t('Asked') : t(SHORT[k])}
-                    </button>
-                  );
-                })}
-              {menuUrl && (
-                <a className="service-tile" href={menuUrl} target="_blank" rel="noopener noreferrer">
-                  <Icon d={ICONS.menu} />
-                  {venue.kind === 'event' ? t('Programme') : t('Menu')}
+          {/* 4. Coming back: plan the next night here. */}
+          <section className="col room-section coming-back" aria-label={t('Coming back?')}>
+            <span className="eyebrow">{t('Coming back?')}</span>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {groupsOn && (
+                <a className="btn btn-outline btn-sm" href={`/plan?v=${encodeURIComponent(venue.venue_slug)}`} style={{ textDecoration: 'none' }}>
+                  {t('Plan a night here')}
                 </a>
               )}
-            </nav>
-          )}
+              <a className="btn btn-ghost btn-sm" href="/me" style={{ textDecoration: 'none' }}>{t('Your places and plans')}</a>
+            </div>
+          </section>
+
           <button className="help-link" onClick={() => setAskOpen('help')}>
             <Icon d={ICONS.help} />
             {t('Need help discreetly?')}
           </button>
+        </>
+      ) : (
+        <>
+          <button className="link-quiet small" onClick={backToVenue}>‹ {venue.venue_name}</button>
+
+          <div className="card row open-card">
+            <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={44} version={photoVersion} />
+            <div className="col grow" style={{ gap: 2 }}>
+              <strong>{t('Open to chat')}</strong>
+              <span className="small">
+                {isOpen ? t('Visible as {name} · {mode}', { name: visit.alias, mode: t(MODE_LABELS[me.mode]) }) : t("You're hidden. Nobody can message you.")}
+              </span>
+            </div>
+            <button className="switch" role="switch" aria-checked={isOpen} aria-label={t('Open to chat')} onClick={toggleOpen}>
+              <span />
+            </button>
+          </div>
+
+          <div className="tabs" role="tablist" aria-label="Sections">
+            <button className="tab" role="tab" aria-selected={tab === 'people'} onClick={() => setTab('people')}>{t('People')}</button>
+            <button className="tab" role="tab" aria-selected={tab === 'group'} onClick={() => setTab('group')}>{t('Group')}</button>
+            <button className="tab" role="tab" aria-selected={tab === 'chats'} onClick={() => setTab('chats')}>
+              {t('Chats')}
+              {unreadCount > 0 && <span className="tab-badge" aria-label={t('{n} unread', { n: unreadCount })}>{unreadCount}</span>}
+            </button>
+          </div>
+
+          {tab === 'group' &&
+            (isOpen ? (
+              <Lobby
+                supabase={supabase}
+                venueId={venue.venue_id}
+                drinksEnabled={venue.drinks_enabled !== false}
+                onChatWith={(id) => openChatWith(id)}
+                onNote={(n) => {
+                  setNote(n);
+                  loadPeople();
+                  loadConvs();
+                }}
+              />
+            ) : (
+              <p className="card small">{t('Switch on Open to chat to join the group chat for everyone here.')}</p>
+            ))}
+
+          {tab === 'people' &&
+            (isOpen ? (
+              <div className="col" style={{ gap: 0 }}>
+                <div className="row list-head">
+                  <span className="eyebrow grow">{t('Open to chat now · {n}', { n: people.length })}</span>
+                  <Buzz token={token} compact />
+                </div>
+                {people.length === 0 && (
+                  <p className="small" style={{ padding: '12px 2px' }}>{t("Nobody else is open yet. We'll show them here as soon as they switch on.")}</p>
+                )}
+                {people.map((p) => {
+                  const tag = genderTag(p.gender);
+                  return (
+                    <div key={p.visit_id} className="row person-row">
+                      <Avatar supabase={supabase} visitId={p.visit_id} alias={p.alias} hasPhoto={p.has_photo} size={46} />
+                      <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
+                        <strong className="person-name">{p.alias}</strong>
+                        <span className="small">{[t(MODE_LABELS[p.mode]), tag ? t(tag) : '', p.zone].filter(Boolean).join(' · ')}</span>
+                      </div>
+                      <button className="btn btn-outline btn-sm" onClick={() => openChatWith(p.visit_id)}>{t('Say hello')}</button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="col" style={{ alignItems: 'center', textAlign: 'center', padding: '40px 12px' }}>
+                <span className="display" style={{ fontSize: 22 }}>{t('It works both ways')}</span>
+                <p className="small">{t("Switch on Open to chat to see who else is open. Until then, nobody knows you're here.")}</p>
+                <Buzz token={token} compact />
+              </div>
+            ))}
+
+          {tab === 'chats' && (
+            <>
+              {convs.length === 0 ? (
+                <div className="col" style={{ alignItems: 'center', textAlign: 'center', padding: '40px 12px' }}>
+                  <span className="display" style={{ fontSize: 22 }}>{t('No chats yet')}</span>
+                  <p className="small">{t('Say hello to someone on the People tab, and your chat will appear here.')}</p>
+                </div>
+              ) : (
+                <div className="col" style={{ gap: 0 }}>
+                  {convs.map((c) => (
+                    <button key={c.conversation_id} className="row person-row chat-row" onClick={() => openConv(c.conversation_id)}>
+                      <Avatar supabase={supabase} visitId={c.partner_visit} alias={c.partner_alias} hasPhoto={c.partner_has_photo} size={46} />
+                      <div className="col grow" style={{ gap: 2, minWidth: 0, textAlign: 'start' }}>
+                        <strong className="person-name">{c.partner_alias}</strong>
+                        <span className="small" style={unread[c.conversation_id] ? { color: 'var(--accent)', fontWeight: 700 } : undefined}>
+                          {unread[c.conversation_id] ? t('New message') : c.i_keep && c.they_keep ? t('Connected') : t('Tap to open')}
+                        </span>
+                      </div>
+                      {unread[c.conversation_id] && <span className="dot" style={{ background: 'var(--accent)' }} aria-hidden="true" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <a href="/connections" className="small" style={{ textAlign: 'center', marginTop: 8 }}>
+                {t('Your connections from other nights')}
+              </a>
+            </>
+          )}
+
+          <div style={{ flex: 1 }} />
+          {/* Ask for alerts once they're actually socialising, as a slim row. */}
+          <NotifyToggle supabase={supabase} who="guest" compact />
         </>
       )}
 
@@ -533,38 +647,6 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
             </div>
           </div>
         </div>
-      )}
-
-      {tab === 'chats' && (
-        <>
-          {convs.length === 0 ? (
-            <div className="col" style={{ alignItems: 'center', textAlign: 'center', padding: '40px 12px' }}>
-              <span className="display" style={{ fontSize: 22 }}>{t('No chats yet')}</span>
-              <p className="small">{t('Say hello to someone on the People tab, and your chat will appear here.')}</p>
-            </div>
-          ) : (
-            <div className="col" style={{ gap: 0 }}>
-              {convs.map((c) => (
-                <button key={c.conversation_id} className="row person-row chat-row" onClick={() => openConv(c.conversation_id)}>
-                  <Avatar supabase={supabase} visitId={c.partner_visit} alias={c.partner_alias} hasPhoto={c.partner_has_photo} size={46} />
-                  <div className="col grow" style={{ gap: 2, minWidth: 0, textAlign: 'start' }}>
-                    <strong className="person-name">{c.partner_alias}</strong>
-                    <span className="small" style={unread[c.conversation_id] ? { color: 'var(--accent)', fontWeight: 700 } : undefined}>
-                      {unread[c.conversation_id] ? t('New message') : c.i_keep && c.they_keep ? t('Connected') : t('Tap to open')}
-                    </span>
-                  </div>
-                  {unread[c.conversation_id] && <span className="dot" style={{ background: 'var(--accent)' }} aria-hidden="true" />}
-                </button>
-              ))}
-            </div>
-          )}
-          <a href="/connections" className="small" style={{ textAlign: 'center', marginTop: 8 }}>
-            {t('Your connections from other nights')}
-          </a>
-          <a href="/me" className="small" style={{ textAlign: 'center', marginTop: 4 }}>
-            {t('Your places and plans')}
-          </a>
-        </>
       )}
 
       {extrasOpen && (

@@ -176,6 +176,12 @@ const AR: Record<string, string> = {
   'Ready · on its way': 'جاهز · في الطريق إليك',
   'Served': 'تم التقديم',
   // Coming back
+  'Tonight at {venue}': 'الليلة في {venue}',
+  'People here tonight': 'الموجودون الليلة',
+  'See who’s here, the group chat and your chats': 'شاهد من هنا، والدردشة الجماعية، ومحادثاتك',
+  'Get alerts for messages and drinks, even with your phone locked.': 'احصل على تنبيهات للرسائل والمشروبات، حتى وهاتفك مقفل.',
+  'Turn on': 'تفعيل',
+  'Notifications from {venue}': 'إشعارات {venue}',
   'Coming back?': 'هل ستعود؟',
   'Plan a night here': 'خطّط لأمسية هنا',
   'Your places and plans': 'أماكنك وخططك',

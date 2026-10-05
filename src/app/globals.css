@@ -522,3 +522,15 @@ h1.display.arrive-title { font-size: 40px; line-height: 1.08; }
 .gathering-status.status-confirmed { border-color: var(--good); border-width: 2px; }
 .gathering-status.status-suggested { border-color: #f2a93b; border-width: 2px; }
 .gathering-status.status-declined, .gathering-status.status-cancelled { opacity: 0.8; }
+
+/* Guest room: venue first, then the doorway to the social side. */
+.room-section { gap: 10px; }
+.room-section:empty { display: none; }
+.people-strip { gap: 0; padding: 12px 14px 4px; }
+.people-door {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 12px 2px;
+  border: none; border-top: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; cursor: pointer;
+}
+.people-door .tab-badge { position: static; }
+.coming-back { padding-top: 6px; border-top: 1px solid var(--line); }
+.notify-slim { padding: 10px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }

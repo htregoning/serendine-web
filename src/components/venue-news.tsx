@@ -36,7 +36,6 @@ const ago = (iso: string) => {
 export default function VenueNews({ supabase, venueId, visitId, venueName }: { supabase: Client; venueId: string; visitId: string; venueName: string }) {
   const t = useT();
   const [items, setItems] = useState<Announcement[]>([]);
-  const [muted, setMuted] = useState(false);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const seen = useRef<Set<string> | null>(null);
   const mutedRef = useRef(false);
@@ -64,7 +63,6 @@ export default function VenueNews({ supabase, venueId, visitId, venueName }: { s
       .maybeSingle()
       .then(({ data }: { data: { mute_venue?: boolean } | null }) => {
         mutedRef.current = !!data?.mute_venue;
-        setMuted(!!data?.mute_venue);
       });
   }, [supabase, visitId]);
 
@@ -80,13 +78,6 @@ export default function VenueNews({ supabase, venueId, visitId, venueName }: { s
       clearInterval(t);
     };
   }, [supabase, venueId, load]);
-
-  async function toggleMute() {
-    const next = !muted;
-    setMuted(next);
-    mutedRef.current = next;
-    await supabase.rpc('set_venue_mute', { p_mute: next });
-  }
 
   const shown = items.filter((a) => !hidden.has(a.id));
   const agoT = (iso: string) => {
@@ -107,9 +98,6 @@ export default function VenueNews({ supabase, venueId, visitId, venueName }: { s
           <button className="icon-btn" aria-label={t('Dismiss')} onClick={() => setHidden((h) => new Set(h).add(a.id))}>×</button>
         </div>
       ))}
-      <button className="link-quiet small" onClick={toggleMute}>
-        {muted ? t("Turn {venue}'s notifications back on", { venue: venueName }) : t('Mute notifications from {venue}', { venue: venueName })}
-      </button>
     </section>
   );
 }
