@@ -22,7 +22,11 @@ export default function GatheringView({ initial, signedIn, logoUrl, justCreated,
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('https://serendine.com');
 
-  useEffect(() => setOrigin(window.location.origin), []);
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    setCanShare(typeof navigator.share === 'function');
+  }, []);
 
   const reload = useCallback(async () => {
     const { data } = await supabase.rpc('gathering_by_code', { p_code: initial.code });
@@ -55,6 +59,15 @@ export default function GatheringView({ initial, signedIn, logoUrl, justCreated,
     setBusy(false);
     if (error) setMsg(error.message);
     reload();
+  }
+
+  // The phone's own share sheet: Instagram, Telegram, SMS, email…
+  async function shareOther() {
+    try {
+      await navigator.share({ title: g.title, text: message.replace(` ${link}`, ''), url: link });
+    } catch {
+      /* closed without sharing */
+    }
   }
 
   async function copy() {
@@ -114,12 +127,15 @@ export default function GatheringView({ initial, signedIn, logoUrl, justCreated,
         )}
       </div>
 
-      {g.i_am_organiser && !closed && (
+      {(g.i_am_organiser || (g.my_rsvp && g.my_rsvp !== 'no')) && !closed && (
         <div className="col" style={{ gap: 8 }}>
           <a className="btn btn-primary" href={whatsappLink(message)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-            Invite friends on WhatsApp
+            {g.i_am_organiser ? 'Invite friends on WhatsApp' : 'Invite more friends on WhatsApp'}
           </a>
-          <button className="btn btn-ghost btn-sm" onClick={copy}>{copied ? 'Link copied' : 'Copy the link'}</button>
+          <div className="row" style={{ gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {canShare && <button className="btn btn-ghost btn-sm" onClick={shareOther}>Share another way</button>}
+            <button className="btn btn-ghost btn-sm" onClick={copy}>{copied ? 'Link copied' : 'Copy the link'}</button>
+          </div>
         </div>
       )}
 
