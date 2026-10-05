@@ -52,6 +52,9 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     .select('google_review_url, instagram_handle, birthday_offer, weekly_report')
     .eq('id', picked.id)
     .maybeSingle();
-  const venue: StaffVenue = extra.error || !extra.data ? picked : { ...picked, ...(extra.data as Partial<StaffVenue>) };
+  let venue: StaffVenue = extra.error || !extra.data ? picked : { ...picked, ...(extra.data as Partial<StaffVenue>) };
+  // AI host settings (after database update 0018).
+  const host = await supabase.from('venues').select('host_enabled, host_tone').eq('id', picked.id).maybeSingle();
+  if (!host.error && host.data) venue = { ...venue, ...(host.data as Partial<StaffVenue>) };
   return <StaffScreen venue={venue} />;
 }

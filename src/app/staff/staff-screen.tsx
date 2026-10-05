@@ -10,6 +10,7 @@ import NotifyToggle from '@/components/notify-toggle';
 import Announce from './announce';
 import GrowthSettings from './growth-settings';
 import StaffScript from './staff-script';
+import HostSettings from './host-settings';
 
 
 export type StaffVenue = {
@@ -26,6 +27,8 @@ export type StaffVenue = {
   instagram_handle?: string | null;
   birthday_offer?: string | null;
   weekly_report?: boolean;
+  host_enabled?: boolean;
+  host_tone?: 'lively' | 'relaxed' | 'family';
   menu_pdf_path: string | null;
   menu_updated_at: string | null;
   role: 'manager' | 'staff';
@@ -273,6 +276,9 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
 
           {isManager && <ManagerTools venue={venue} onSaved={() => router.refresh()} />}
           {isManager && venue.weekly_report !== undefined && <GrowthSettings venue={venue} onSaved={() => router.refresh()} />}
+          {isManager && venue.host_enabled !== undefined && (
+            <HostSettings venueId={venue.id} enabled={venue.host_enabled} tone={venue.host_tone ?? 'lively'} />
+          )}
         </aside>
       </div>
     </main>

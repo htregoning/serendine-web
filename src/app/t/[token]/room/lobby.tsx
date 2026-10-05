@@ -13,6 +13,7 @@ type Client = ReturnType<typeof createClient>;
 type Post = {
   id: number;
   visit_id: string;
+  is_host?: boolean;
   alias: string;
   gender: string;
   has_photo: boolean;
@@ -30,6 +31,18 @@ type Props = {
   onNewWhileAway?: () => void;
   drinksEnabled?: boolean;
 };
+
+const MENTION = /(seren|سيرين)/i;
+const QUIET_MS = 10 * 60 * 1000;
+
+// Ask Seren (the AI host) to speak. The server decides whether it actually should.
+function askHost(venueId: string, reason: 'quiet' | 'mention') {
+  fetch('/api/host', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ venueId, reason }),
+  }).catch(() => {});
+}
 
 function time(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -75,6 +88,21 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
     };
   }, [supabase, venueId, load]);
 
+  // When the room has been quiet for 10 minutes, nudge the host (checked every minute or two).
+  const postsRef = useRef<Post[]>([]);
+  postsRef.current = posts;
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const list = postsRef.current;
+      const last = list.length ? new Date(list[list.length - 1].created_at).getTime() : 0;
+      if (document.visibilityState === 'visible' && Date.now() - last > QUIET_MS) askHost(venueId, 'quiet');
+      timer = setTimeout(tick, 60000 + Math.random() * 60000);
+    };
+    timer = setTimeout(tick, 30000 + Math.random() * 60000);
+    return () => clearTimeout(timer);
+  }, [venueId]);
+
   useEffect(() => {
     const newest = posts.length ? posts[posts.length - 1].id : 0;
     if (newest > lastId.current) bottom.current?.scrollIntoView({ block: 'end' });
@@ -94,6 +122,7 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
       return;
     }
     load();
+    if (MENTION.test(text)) askHost(venueId, 'mention');
   }
 
   async function block(report: boolean) {
@@ -121,6 +150,11 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
       <p className="small" style={{ margin: 0 }}>
         {t('Everyone who is open to chat here can read the group. Private chats stay encrypted. Group messages are cleared after the night.')}
       </p>
+      {posts.some((p) => p.is_host) && (
+        <p className="small" style={{ margin: 0 }}>
+          {t('Seren is Serendine’s AI host. It only joins the group chat, never your private chats.')}
+        </p>
+      )}
 
       <div className="icebreaker">
         <span className="eyebrow">{t('Tonight’s icebreaker')}</span>
@@ -137,6 +171,20 @@ export default function Lobby({ supabase, venueId, onChatWith, onNote, drinksEna
           </p>
         )}
         {posts.map((p) => {
+          if (p.is_host) {
+            return (
+              <div key={p.id} className="lobby-post host">
+                <span className="host-avatar" aria-hidden="true">S</span>
+                <div className="col" style={{ gap: 2, minWidth: 0 }}>
+                  <span className="lobby-name host-name">
+                    Seren <span className="host-badge">{t('AI host')}</span>
+                  </span>
+                  <div className="bubble theirs host-bubble" style={{ maxWidth: '100%' }}>{p.body}</div>
+                  <span className="small" style={{ fontSize: 11 }}>{time(p.created_at)}</span>
+                </div>
+              </div>
+            );
+          }
           const tag = genderTag(p.gender);
           return (
             <div key={p.id} className={p.mine ? 'lobby-post mine' : 'lobby-post'}>

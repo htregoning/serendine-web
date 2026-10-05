@@ -35,7 +35,8 @@ export default function Privacy() {
         <li><b>Your birthday</b> (day and month only), if you add it. It is shared only with venues whose offers you agreed to receive.</li>
         <li><b>Notification details</b>: if you turn notifications on, the address your browser or Telegram gives us for sending them.</li>
         <li><b>Visit details</b>: the venue and table you scanned, the name or alias you enter, what you&apos;re there for (friendly chat, networking or dating), whether you are open to chat, and when you arrived and left.</li>
-        <li><b>Messages</b>: stored only in encrypted form. The keys to read them are created and kept on your device.</li>
+        <li><b>Private messages</b>: stored only in encrypted form. The keys to read them are created and kept on your device.</li>
+        <li><b>Group chat messages</b>: messages you post to a venue&apos;s group chat are not encrypted. Everyone open to chat at that venue can read them, and they are deleted after the night (within 12 hours).</li>
         <li><b>Service requests</b> such as &quot;bring the bill&quot;, with your table number, sent to the venue&apos;s staff.</li>
         <li><b>Marketing consent</b>: whether you agreed to hear from the venue, and when.</li>
         <li><b>Safety records</b>: people you block, and reports you make, including any messages you choose to include in a report.</li>
@@ -50,7 +51,17 @@ export default function Privacy() {
         <li>To let the venue send you offers and marketing, only where you have given consent.</li>
         <li>To meet legal obligations.</li>
       </ul>
-      <p>We do not sell your personal data, and we do not use your messages for advertising. We cannot read them.</p>
+      <p>We do not sell your personal data, and we do not use your messages for advertising. We cannot read your private messages.</p>
+
+      <h2>Seren, the AI host</h2>
+      <p>
+        Some venues turn on Seren, an AI host that posts in the venue&apos;s group chat when it goes quiet and replies when
+        someone mentions it. Seren is always labelled as AI. To write its messages, the most recent group chat messages
+        (up to 12 from the last two hours, with the names people chose to show) and the venue&apos;s current offer and
+        announcements are sent to our AI provider, Anthropic. Seren never sees private chats, photos, email addresses or
+        any account details. Anthropic processes this only to provide the service to us and does not use it to train its
+        models. If you don&apos;t want your words passed to Seren, don&apos;t post in the group chat of a venue that uses it.
+      </p>
 
       <h2>Information we receive from Google</h2>
       <p>
@@ -69,7 +80,7 @@ export default function Privacy() {
       <ul>
         <li><b>The venue you check in at</b>, as described in the next section.</li>
         <li><b>Other guests</b>, only what you choose to show: your name or alias, what you&apos;re there for, gender if you chose one, and your selfie, and only while you are open to chat.</li>
-        <li><b>Service providers</b> who run the service for us: Supabase (database and sign-in), Vercel (website hosting), Resend (email delivery), Google, Apple and Telegram (sign-in and notifications) and browser push services. They may only use it to provide their service to us.</li>
+        <li><b>Service providers</b> who run the service for us: Supabase (database and sign-in), Vercel (website hosting), Resend (email delivery), Anthropic (AI for Seren, the group chat host, where a venue turns it on), Google, Apple and Telegram (sign-in and notifications) and browser push services. They may only use it to provide their service to us.</li>
         <li><b>Authorities</b>, where the law requires it.</li>
       </ul>
 
