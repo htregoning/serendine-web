@@ -163,9 +163,29 @@ const FONT_CSS: Record<ThemeFont, string> = {
 };
 
 // A <style> body that re-colours the whole page for a venue.
+// The standard Serendine look on guest screens: navy with soft white text and pink highlights
+// (calmer than the all-pink marketing pages).
+export const SERENDINE_GUEST_VARS: Record<string, string> = {
+  '--bg': '#0B1A3A',
+  '--card': '#13254F',
+  '--line': '#22396B',
+  '--line-strong': '#34508A',
+  '--text': '#F5F2FA',
+  '--text-2': '#C9CDE3',
+  '--muted': '#9AA4C9',
+  '--faint': '#7D88B0',
+  '--accent': '#FF2E93',
+  '--on-accent': '#12030C',
+  '--bubble': '#1B3263',
+};
+
 export function themeCss(theme: VenueTheme | null | undefined) {
-  const vars = themeVars(theme);
-  if (!vars || !theme) return '';
+  const vars = themeVars(theme) ?? SERENDINE_GUEST_VARS;
+  if (vars === SERENDINE_GUEST_VARS) {
+    const decls = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
+    return `:root{${decls}}`;
+  }
+  if (!theme) return '';
   const decls = Object.entries(vars)
     .map(([k, v]) => `${k}:${v}`)
     .join(';');

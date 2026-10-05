@@ -4,8 +4,15 @@ import { venueAtTable } from '@/lib/venue-server';
 import type { ChatMode } from '@/lib/types';
 import Room from './room';
 
-export default async function RoomPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function RoomPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ welcome?: string }>;
+}) {
   const { token } = await params;
+  const { welcome } = await searchParams;
   const supabase = await createClient();
 
   const venue = await venueAtTable(token);
@@ -35,6 +42,7 @@ export default async function RoomPage({ params }: { params: Promise<{ token: st
       token={token}
       venue={venue}
       menuUrl={menuUrl}
+      firstVisit={welcome === '1'}
       visit={{
         id: visit.id as string,
         alias: visit.alias as string,

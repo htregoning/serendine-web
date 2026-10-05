@@ -390,3 +390,66 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; }
 .review-item { gap: 8px; }
 .review-item .media-box { aspect-ratio: 1 / 1; }
 .drink-confirm { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line-strong); color: var(--text); }
+
+/* ---------------------------------------------------------------------------
+   Guest screens, refreshed: calmer type, cleaner lists, service bar, sheets
+   --------------------------------------------------------------------------- */
+.guest h1.display { color: var(--text); letter-spacing: -0.2px; }
+.guest .lede { color: var(--text-2); }
+.guest .tabs { padding: 4px; }
+.guest .tab { height: 40px; border-radius: 10px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.guest .tab[aria-selected='true'] { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+.tab-badge {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: var(--on-accent);
+  font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Arrival */
+.arrive { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+h1.display.arrive-title { font-size: 40px; line-height: 1.08; }
+.reassure { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.reassure li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 1.45; color: var(--text-2); }
+.reassure svg { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+.offer-box { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--accent); }
+.offer-box strong { font-size: 15px; }
+
+/* Check-in */
+.input.input-lg { height: 56px; font-size: 17px; }
+.chips-sm { margin-top: 4px; }
+.chips-sm .chip { height: 34px; padding: 0 12px; font-size: 13px; font-weight: 500; color: var(--text-2); }
+
+/* Room */
+.room-head { gap: 12px; }
+.room-venue { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-me {
+  border: none; background: none; padding: 0; min-height: 28px; color: var(--muted); font-size: 13px;
+  display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; text-align: start; white-space: nowrap;
+}
+.open-card { gap: 14px; padding: 12px 14px; }
+.list-head { padding: 4px 2px 8px; gap: 8px; }
+.person-row { gap: 12px; padding: 10px 2px; border-top: 1px solid var(--line); }
+.person-name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-row { width: 100%; min-height: 66px; border: none; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; }
+.btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.offer-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; border: 1px dashed var(--accent); font-size: 14px; }
+.service-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.service-tile {
+  height: 64px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--text);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  font-size: 12px; font-weight: 600; text-decoration: none;
+}
+.service-tile[data-active='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* Bottom sheet */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%; max-width: 480px; max-height: 90dvh; overflow-y: auto; box-sizing: border-box;
+  background: var(--card); color: var(--text); border-radius: 24px 24px 0 0;
+  padding: 12px 22px calc(22px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3); animation: sheet-up 0.22s ease-out;
+}
+.sheet .input { background: var(--bg); }
+.sheet-grip { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--line-strong); }
+.extras-photo { gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); }
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
