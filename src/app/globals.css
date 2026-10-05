@@ -389,3 +389,4 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; }
 .review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 .review-item { gap: 8px; }
 .review-item .media-box { aspect-ratio: 1 / 1; }
+.drink-confirm { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line-strong); color: var(--text); }

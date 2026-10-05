@@ -75,6 +75,10 @@ const AR: Record<string, string> = {
   'Tonight’s icebreaker': 'سؤال الليلة لكسر الجليد',
   'Answer in the group': 'أجب في الدردشة الجماعية',
   'AI host': 'مضيف ذكي',
+  // Drinks: confirming the cost
+  'They can accept or say no thanks. Nothing is charged unless they accept.': 'يمكنهم القبول أو الاعتذار. لا يُحتسب أي شيء ما لم يقبلوا.',
+  "I understand that if {name} accepts, the drink is added to my bill and I'll pay for it.": 'أفهم أنه إذا قبل {name}، فسيُضاف المشروب إلى فاتورتي وسأدفع ثمنه.',
+  'Accepted · staff will bring it over and add it to your bill': 'تم القبول · سيحضره الموظفون ويضيفونه إلى فاتورتك',
   // Photos and videos
   'This video has expired or was removed.': 'انتهت صلاحية هذا الفيديو أو تمت إزالته.',
   'This photo has expired or was removed.': 'انتهت صلاحية هذه الصورة أو تمت إزالتها.',

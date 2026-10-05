@@ -37,13 +37,17 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
   const t = useT();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function send() {
     setBusy(true);
     setError(null);
-    const { data, error } = await supabase.rpc('offer_drink', { p_to: toVisit, p_note: note.trim() || null });
+    if (!confirmed) return;
+    let { data, error } = await supabase.rpc('offer_drink', { p_to: toVisit, p_note: note.trim() || null, p_confirmed: true });
+    // Before database update 0021 the confirmation isn't recorded on the server.
+    if (error && error.code === 'PGRST202') ({ data, error } = await supabase.rpc('offer_drink', { p_to: toVisit, p_note: note.trim() || null }));
     setBusy(false);
     if (error) {
       const m = error.message;
@@ -53,6 +57,7 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
     notify('drink', data as string);
     setOpen(false);
     setNote('');
+    setConfirmed(false);
     onDone(t('Drink offered to {name}. If they accept, staff will bring it over and add it to your bill.', { name: toAlias }));
   }
 
@@ -66,7 +71,7 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
   return (
     <div className="card col" style={{ gap: 8, width: '100%' }}>
       <strong>{t('Send {name} a drink', { name: toAlias })}</strong>
-      <span className="small">{t("They can accept or say no thanks. If they accept, it's added to your bill.")}</span>
+      <span className="small">{t('They can accept or say no thanks. Nothing is charged unless they accept.')}</span>
       <label className="label" htmlFor={`drink-${toVisit}`}>{t('Note for the staff (optional)')}</label>
       <input
         id={`drink-${toVisit}`}
@@ -76,10 +81,14 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
+      <label className="check drink-confirm">
+        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+        <span>{t("I understand that if {name} accepts, the drink is added to my bill and I'll pay for it.", { name: toAlias })}</span>
+      </label>
       {error && <p className="error">{error}</p>}
       <div className="row" style={{ gap: 8 }}>
-        <button className="btn btn-ghost btn-sm grow" onClick={() => setOpen(false)}>{t('Cancel')}</button>
-        <button className="btn btn-primary btn-sm grow" onClick={send} disabled={busy}>{busy ? t('Sending…') : t('Offer drink')}</button>
+        <button className="btn btn-ghost btn-sm grow" onClick={() => { setOpen(false); setConfirmed(false); }}>{t('Cancel')}</button>
+        <button className="btn btn-primary btn-sm grow" onClick={send} disabled={busy || !confirmed}>{busy ? t('Sending…') : t('Offer drink')}</button>
       </div>
     </div>
   );
@@ -87,7 +96,7 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
 
 const STATUS_OUT: Record<Drink['status'], string> = {
   offered: 'Waiting for them to accept',
-  accepted: 'Accepted · staff will bring it over',
+  accepted: 'Accepted · staff will bring it over and add it to your bill',
   declined: 'They said no thanks',
   served: 'Delivered. Cheers!',
   cancelled: 'Withdrawn',
