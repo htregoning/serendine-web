@@ -36,7 +36,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     );
   }
 
-  const { data: mine } = await supabase.rpc('my_gatherings');
+  const [{ data: mine }, { data: token }] = await Promise.all([supabase.rpc('my_gatherings'), supabase.rpc('my_active_table_token')]);
+  const atTable = typeof token === 'string' && token;
   const name =
     (user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? (user.user_metadata?.name as string | undefined)?.split(' ')[0] ?? '';
 
@@ -46,6 +47,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       mine={(mine as MyPlan[] | null) ?? []}
       startVenue={v ?? null}
       defaultName={name}
+      backHref={atTable ? `/t/${token}/room` : '/'}
+      backLabel={atTable ? 'Back to your table' : 'Home'}
     />
   );
 }

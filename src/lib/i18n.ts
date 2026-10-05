@@ -175,6 +175,10 @@ const AR: Record<string, string> = {
   'Being prepared': 'قيد التحضير',
   'Ready · on its way': 'جاهز · في الطريق إليك',
   'Served': 'تم التقديم',
+  // Coming back
+  'Coming back?': 'هل ستعود؟',
+  'Plan a night here': 'خطّط لأمسية هنا',
+  'Your places and plans': 'أماكنك وخططك',
   // Photos and videos
   'This video has expired or was removed.': 'انتهت صلاحية هذا الفيديو أو تمت إزالته.',
   'This photo has expired or was removed.': 'انتهت صلاحية هذه الصورة أو تمت إزالتها.',

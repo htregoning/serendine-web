@@ -561,6 +561,9 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
           <a href="/connections" className="small" style={{ textAlign: 'center', marginTop: 8 }}>
             {t('Your connections from other nights')}
           </a>
+          <a href="/me" className="small" style={{ textAlign: 'center', marginTop: 4 }}>
+            {t('Your places and plans')}
+          </a>
         </>
       )}
 

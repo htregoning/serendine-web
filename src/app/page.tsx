@@ -3,9 +3,7 @@ import Logo from '@/components/logo';
 import SiteFooter from '@/components/site-footer';
 import { createClient } from '@/lib/supabase/server';
 import SignInCard from '@/components/sign-in-card';
-import VenueThemeFrame from '@/components/venue-theme-frame';
-import HomeHub, { type MyPlace } from './home-hub';
-import type { MyPlan } from './plan/plan-screen';
+import HubPage from './hub-page';
 
 // Opening Serendine from the home screen takes a checked-in guest straight back to their room.
 export default async function Home() {
@@ -21,25 +19,7 @@ export default async function Home() {
     if (typeof pending === 'string' && pending) redirect(`/thanks/${pending}`);
 
     // Signed in and not at a table: their own page (plans, places they've been).
-    const [plans, places] = await Promise.all([supabase.rpc('my_gatherings'), supabase.rpc('my_places')]);
-    const name =
-      (user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? (user.user_metadata?.name as string | undefined)?.split(' ')[0] ?? '';
-    return (
-      <VenueThemeFrame theme={null}>
-        <main className="shell">
-          <div className="brand-lockup" style={{ marginBottom: 4 }}>
-            <Logo size={56} />
-            <span className="wordmark" style={{ fontSize: 18 }}>Serendine</span>
-          </div>
-          <HomeHub
-            name={name}
-            plans={plans.error ? [] : ((plans.data as MyPlan[] | null) ?? [])}
-            places={places.error ? [] : ((places.data as MyPlace[] | null) ?? [])}
-          />
-          <SiteFooter />
-        </main>
-      </VenueThemeFrame>
-    );
+    return <HubPage supabase={supabase} user={user} />;
   }
 
   return (

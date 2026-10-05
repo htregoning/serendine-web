@@ -25,7 +25,7 @@ function dubaiDate(daysAhead: number) {
   return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 }
 
-export default function PlanScreen({ venues, mine, startVenue, defaultName }: { venues: BookableVenue[]; mine: MyPlan[]; startVenue: string | null; defaultName: string }) {
+export default function PlanScreen({ venues, mine, startVenue, defaultName, backHref = '/', backLabel = 'Home' }: { venues: BookableVenue[]; mine: MyPlan[]; startVenue: string | null; defaultName: string; backHref?: string; backLabel?: string }) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
   const [making, setMaking] = useState(mine.length === 0 || !!startVenue);
@@ -75,6 +75,7 @@ export default function PlanScreen({ venues, mine, startVenue, defaultName }: { 
 
   return (
     <main className="shell">
+      <a className="small" href={backHref} style={{ alignSelf: 'flex-start' }}>‹ {backLabel}</a>
       <div className="row">
         <h1 className="display grow" style={{ fontSize: 30 }}>Plan a night out</h1>
         {!making && <button className="btn btn-primary btn-sm" onClick={() => setMaking(true)}>New plan</button>}

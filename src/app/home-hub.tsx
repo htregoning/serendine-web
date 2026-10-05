@@ -25,7 +25,7 @@ function day(iso: string) {
 }
 
 // A signed-in guest's own page: plans, places they've been, ratings, connections.
-export default function HomeHub({ name, plans, places }: { name: string; plans: MyPlan[]; places: MyPlace[] }) {
+export default function HomeHub({ name, plans, places, atTable = false }: { name: string; plans: MyPlan[]; places: MyPlace[]; atTable?: boolean }) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
   const upcoming = plans.filter((p) => new Date(p.starts_at).getTime() > Date.now() - 6 * 3600000 && p.status !== 'cancelled');
@@ -72,7 +72,7 @@ export default function HomeHub({ name, plans, places }: { name: string; plans: 
               <span className="small">
                 {day(p.started_at)}
                 {p.place ? ` · ${p.place}` : ''}
-                {!p.ended_at ? ' · here now' : ''}
+                {!p.ended_at ? ' · you’re here now' : ''}
               </span>
               {p.rating ? (
                 <span className="small" aria-label={`You rated it ${p.rating} out of 5`}>
@@ -83,7 +83,7 @@ export default function HomeHub({ name, plans, places }: { name: string; plans: 
               ) : null}
             </div>
             <div className="col" style={{ gap: 6, alignItems: 'flex-end' }}>
-              {p.can_rate && !p.rating && (
+              {p.can_rate && !p.rating && p.ended_at && (
                 <a className="btn btn-outline btn-sm" href={`/thanks/${p.visit_id}`} style={{ textDecoration: 'none' }}>Rate it</a>
               )}
               {p.groups_enabled && (
@@ -101,7 +101,7 @@ export default function HomeHub({ name, plans, places }: { name: string; plans: 
 
       <div className="row" style={{ gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <a className="btn btn-ghost btn-sm" href="/connections" style={{ textDecoration: 'none' }}>Your connections</a>
-        <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>
+        {!atTable && <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>}
       </div>
     </div>
   );
