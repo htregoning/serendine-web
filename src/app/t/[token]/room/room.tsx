@@ -14,6 +14,7 @@ import { selfieThumbnail } from '@/lib/photo';
 import Lobby from './lobby';
 import { DrinksPanel } from '@/components/drinks';
 import { LangToggle, useT } from '@/components/lang';
+import VenueMark from '@/components/venue-mark';
 import { MODE_LABELS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
@@ -229,7 +230,7 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
     router.replace(`/thanks/${visit.id}`);
   }
 
-  // Always the Serendine brand colours (venue colours can return with white-labelling).
+  // Colours, type and logo come from the venue's theme (see the table layout).
   const style = {} as React.CSSProperties;
   const active = convs.find((c) => c.conversation_id === activeId);
   const anyUnread = Object.values(unread).some(Boolean);
@@ -261,7 +262,11 @@ export default function Room({ token, venue, visit, menuUrl }: Props) {
     <main className="shell" style={style}>
       <div className="row">
         <div className="col grow" style={{ gap: 2 }}>
-          <span className="display" style={{ fontSize: 26 }}>{venue.venue_name}</span>
+          {venue.logo_url ? (
+            <VenueMark venue={venue} size={36} />
+          ) : (
+            <span className="display" style={{ fontSize: 26 }}>{venue.venue_name}</span>
+          )}
           <span className="small">{where} · {visit.alias}</span>
         </div>
         <LangToggle />

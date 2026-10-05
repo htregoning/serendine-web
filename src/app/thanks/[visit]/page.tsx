@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { visitTheme } from '@/lib/venue-server';
+import VenueThemeFrame from '@/components/venue-theme-frame';
 import Thanks, { type FeedbackInfo } from './thanks';
 
 export const metadata = { title: 'How was it? · Serendine' };
@@ -16,5 +18,10 @@ export default async function ThanksPage({ params }: { params: Promise<{ visit: 
   const { data, error } = await supabase.rpc('feedback_info', { p_visit: visit });
   const info = ((data as FeedbackInfo[] | null) ?? [])[0];
   if (error || !info) redirect('/');
-  return <Thanks visitId={visit} info={info} />;
+  const theme = await visitTheme(visit);
+  return (
+    <VenueThemeFrame theme={theme}>
+      <Thanks visitId={visit} info={info} />
+    </VenueThemeFrame>
+  );
 }

@@ -9,19 +9,17 @@ import { GENDER_LABELS, MODE_LABELS, eventDate, eventWindow, type ChatMode, type
 import { LangToggle, useLang, useT } from '@/components/lang';
 import { monthNames } from '@/lib/i18n';
 import Buzz from '@/components/buzz';
+import VenueMark from '@/components/venue-mark';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
 export default function Welcome({ token, venue, signedIn }: Props) {
-  // Always the Serendine brand colours (venue colours can return with white-labelling).
-  const style = {} as React.CSSProperties;
+  // Colours, type and logo come from the venue's theme (see the table layout).
   const t = useT();
   return (
-    <main className="shell" style={style}>
+    <main className="shell">
       <div className="row">
-        <div className="avatar" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
-          {venue.venue_name.trim().charAt(0).toUpperCase()}
-        </div>
+        <VenueMark venue={venue} />
         <div className="col grow" style={{ gap: 2 }}>
           <strong>{venue.venue_name}</strong>
           <span className="small">
@@ -158,7 +156,9 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
   const [alias, setAlias] = useState('');
-  const [mode, setMode] = useState<ChatMode>('friendly');
+  // Only the chat modes this venue offers (a family restaurant might switch dating off).
+  const modes = (Object.keys(MODE_LABELS) as ChatMode[]).filter((m) => !venue.allowed_modes || venue.allowed_modes.includes(m));
+  const [mode, setMode] = useState<ChatMode>(modes[0] ?? 'friendly');
   const [gender, setGender] = useState<Gender | null>(null);
   const [adult, setAdult] = useState(false);
   const [optIn, setOptIn] = useState(false);
@@ -212,7 +212,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
       router.replace(`/t/${token}/room`);
     } catch (e) {
       const m = (e as { message?: string } | null)?.message ?? '';
-      setError(/not opened yet|has finished|no longer use/.test(m) ? m + '.' : t('Something went wrong. Please try again.'));
+      setError(/not opened yet|has finished|no longer use|not available here/.test(m) ? m + '.' : t('Something went wrong. Please try again.'));
       setBusy(false);
     }
   }
@@ -242,10 +242,11 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
         </div>
         <span className="small">{t("Shown next to your name so people know who they're chatting to.")}</span>
       </div>
+      {modes.length > 1 && (
       <div className="col">
         <span className="label">{t("I'm here for")}</span>
         <div className="chips">
-          {(Object.keys(MODE_LABELS) as ChatMode[]).map((m) => (
+          {modes.map((m) => (
             <button key={m} type="button" className="chip" aria-pressed={mode === m} onClick={() => setMode(m)}>
               {t(MODE_LABELS[m])}
             </button>
@@ -253,6 +254,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
         </div>
         <span className="small">{t('Shown next to your name so nobody misreads your intent.')}</span>
       </div>
+      )}
       <label className="check">
         <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
         <span>{t('I am 18 or over and agree to the house rules: be kind, take no for an answer.')}</span>

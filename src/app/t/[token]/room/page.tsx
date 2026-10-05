@@ -1,14 +1,14 @@
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import type { ChatMode, VenueAtTable } from '@/lib/types';
+import { venueAtTable } from '@/lib/venue-server';
+import type { ChatMode } from '@/lib/types';
 import Room from './room';
 
 export default async function RoomPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const supabase = await createClient();
 
-  const { data } = await supabase.rpc('resolve_table', { token });
-  const venue = (Array.isArray(data) ? data[0] : null) as VenueAtTable | null;
+  const venue = await venueAtTable(token);
   if (!venue) notFound();
 
   const {

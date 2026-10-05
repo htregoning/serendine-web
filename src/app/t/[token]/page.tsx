@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import type { VenueAtTable } from '@/lib/types';
+import { venueAtTable } from '@/lib/venue-server';
 import Welcome from './welcome';
 
 // The page a table's QR code opens: /t/<token>
@@ -8,8 +8,7 @@ export default async function TablePage({ params }: { params: Promise<{ token: s
   const { token } = await params;
   const supabase = await createClient();
 
-  const { data } = await supabase.rpc('resolve_table', { token });
-  const venue = (Array.isArray(data) ? data[0] : null) as VenueAtTable | null;
+  const venue = await venueAtTable(token);
   if (!venue) notFound();
 
   const {

@@ -22,6 +22,10 @@ export type VenueAtTable = {
   place?: string | null;
   requests_enabled?: boolean;
   zone?: string;
+  // The venue's look and the chat modes it offers (after database update 0019).
+  theme?: import('./theme').VenueTheme | null;
+  logo_url?: string | null;
+  allowed_modes?: ChatMode[];
 };
 
 // "Table 12" at a restaurant, "North Stand" at an event.

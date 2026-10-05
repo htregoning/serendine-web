@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import StaffSignIn from './sign-in';
 import StaffScreen, { type StaffVenue } from './staff-screen';
+import type { ThemeFont } from '@/lib/theme';
+import type { ChatMode } from '@/lib/types';
 
 export const metadata = { title: 'Serendine · Staff' };
 
@@ -53,6 +55,26 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     .eq('id', picked.id)
     .maybeSingle();
   let venue: StaffVenue = extra.error || !extra.data ? picked : { ...picked, ...(extra.data as Partial<StaffVenue>) };
+  // The venue's look and chat modes (after database update 0019).
+  const look = await supabase
+    .from('venues')
+    .select('theme_preset, theme_bg, theme_text, theme_accent, theme_font, allowed_modes, brand_updated_at')
+    .eq('id', picked.id)
+    .maybeSingle();
+  if (!look.error && look.data) {
+    const l = look.data as {
+      theme_preset: string; theme_bg: string; theme_text: string; theme_accent: string;
+      theme_font: ThemeFont; allowed_modes: ChatMode[]; brand_updated_at: string;
+    };
+    venue = {
+      ...venue,
+      brand: {
+        theme: { preset: l.theme_preset, bg: l.theme_bg, fg: l.theme_text, accent: l.theme_accent, font: l.theme_font },
+        modes: l.allowed_modes,
+        logoUrl: `/api/logo/${picked.id}?v=${Math.floor(new Date(l.brand_updated_at).getTime() / 1000)}`,
+      },
+    };
+  }
   // AI host settings (after database update 0018).
   const host = await supabase.from('venues').select('host_enabled, host_tone').eq('id', picked.id).maybeSingle();
   if (!host.error && host.data) venue = { ...venue, ...(host.data as Partial<StaffVenue>) };

@@ -110,7 +110,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
   font-family: var(--font-display), Georgia, serif; font-size: 19px; font-weight: 600;
 }
 
-.tag { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 10px; color: var(--bg); }
+.tag { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 10px; color: #0b1a3a; }
 .tag-friendly { background: #7fc8b5; }
 .tag-networking { background: #8fb4f0; }
 .tag-dating { background: #efa0b0; }
@@ -143,7 +143,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .chat-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); gap: 6px; }
 .bubble { max-width: 78%; padding: 10px 14px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble.mine { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-radius: 18px 18px 4px 18px; }
-.bubble.theirs { align-self: flex-start; background: #1a2f5e; color: var(--text); border-radius: 18px 18px 18px 4px; }
+.bubble.theirs { align-self: flex-start; background: var(--bubble, #1a2f5e); color: var(--text); border-radius: 18px 18px 18px 4px; }
 .icon-btn { width: 44px; height: 44px; border: none; background: transparent; font-size: 30px; line-height: 1; margin-left: -8px; }
 .link-danger { border: none; background: transparent; color: var(--danger); font-weight: 600; font-size: 14px; min-height: 44px; padding: 0 10px; }
 
@@ -318,6 +318,38 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; }
 .host-name { font-weight: 700; display: inline-flex; gap: 6px; align-items: center; }
 .host-badge {
   font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
-  padding: 2px 6px; border-radius: 999px; background: rgba(255, 46, 147, 0.18); color: #FF7DB8;
+  padding: 2px 6px; border-radius: 999px; background: var(--line); color: var(--text-2);
 }
-.host-bubble { border: 1px solid rgba(255, 46, 147, 0.35); }
+.host-bubble { border: 1px solid var(--accent); }
+
+/* Venue themes: the venue's look on guest screens, Serendine kept small */
+.themed .shell { min-height: calc(100dvh - 44px); }
+.themed:has(.chat) .powered-by { display: none; }
+.powered-by {
+  display: block; text-align: center; text-decoration: none;
+  font-size: 11px; letter-spacing: 0.04em; color: var(--faint);
+  padding: 8px 0 calc(16px + env(safe-area-inset-bottom));
+}
+.powered-by span { font-family: var(--font-display), system-ui, sans-serif; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.venue-logo { display: block; width: auto; max-width: 160px; object-fit: contain; flex-shrink: 0; }
+
+/* Staff: "Your look" settings */
+.brand-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.brand-preset {
+  display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 14px;
+  border: 1px solid var(--line-strong); background: transparent; color: var(--text); text-align: start;
+}
+.brand-preset[aria-pressed='true'] { border: 2px solid var(--accent); padding: 9px; }
+.brand-preset b { font-size: 14px; }
+.brand-swatch { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; gap: 4px; padding-bottom: 7px; border: 1px solid var(--line); }
+.brand-swatch i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+.brand-colours { display: flex; gap: 12px; flex-wrap: wrap; }
+.brand-colour { display: flex; gap: 8px; align-items: center; }
+.brand-colour input[type='color'] { width: 44px; height: 44px; padding: 0; border: 1px solid var(--line-strong); border-radius: 10px; background: none; cursor: pointer; }
+.brand-hex { height: 36px; width: 104px; font-size: 14px; padding: 0 10px; font-family: ui-monospace, monospace; }
+.brand-logo-thumb { height: 44px; max-width: 140px; object-fit: contain; border-radius: 8px; border: 1px dashed var(--line-strong); padding: 4px; background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 12px 12px; }
+.brand-preview {
+  width: 100%; max-width: 300px; border-radius: 26px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px;
+  border: 6px solid #111; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); font-family: var(--font-body), system-ui, sans-serif;
+}
+.brand-preview .input { pointer-events: none; }
