@@ -32,6 +32,48 @@ export const PRESETS: { id: string; name: string; hint: string; theme: VenueThem
     hint: 'Sand, deep teal and coral',
     theme: { preset: 'beach', bg: '#FBF5EA', fg: '#12343B', accent: '#C4501F', font: 'modern' },
   },
+  {
+    id: 'majlis',
+    name: 'Majlis',
+    hint: 'Deep emerald and gold',
+    theme: { preset: 'majlis', bg: '#0F2A24', fg: '#F3EBDD', accent: '#D4AF6A', font: 'classic' },
+  },
+  {
+    id: 'bistro',
+    name: 'Bistro',
+    hint: 'Cream and burgundy',
+    theme: { preset: 'bistro', bg: '#F6EFE4', fg: '#2A1A17', accent: '#7A1E2C', font: 'classic' },
+  },
+  {
+    id: 'rooftop',
+    name: 'Rooftop',
+    hint: 'Midnight with a violet glow',
+    theme: { preset: 'rooftop', bg: '#0E0F1A', fg: '#ECEBF5', accent: '#9A8CFF', font: 'modern' },
+  },
+  {
+    id: 'marina',
+    name: 'Marina',
+    hint: 'Crisp white and harbour blue',
+    theme: { preset: 'marina', bg: '#F5F8FB', fg: '#0E2238', accent: '#1D5C96', font: 'minimal' },
+  },
+  {
+    id: 'desert',
+    name: 'Desert',
+    hint: 'Sand and terracotta',
+    theme: { preset: 'desert', bg: '#F3E9DC', fg: '#3A2618', accent: '#A4532B', font: 'modern' },
+  },
+  {
+    id: 'garden',
+    name: 'Garden terrace',
+    hint: 'Soft green and olive',
+    theme: { preset: 'garden', bg: '#F2F5EC', fg: '#1E2B1C', accent: '#4A7336', font: 'modern' },
+  },
+  {
+    id: 'zen',
+    name: 'Zen',
+    hint: 'Paper white, ink and red',
+    theme: { preset: 'zen', bg: '#F7F5F0', fg: '#161616', accent: '#B3261E', font: 'minimal' },
+  },
 ];
 
 export const FONT_LABELS: Record<ThemeFont, { name: string; hint: string }> = {
