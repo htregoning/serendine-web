@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { RequestKind, RequestStatus } from '@/lib/types';
+import { REQUEST_BUTTONS, type RequestKind, type RequestStatus } from '@/lib/types';
 import { playSound, unlockAudio } from '@/lib/alerts';
 import { notify } from '@/lib/push';
 import NotifyToggle from '@/components/notify-toggle';
@@ -25,6 +25,7 @@ export type StaffVenue = {
   offer_text: string;
   drinks_enabled?: boolean;
   drink_limits?: number[];
+  request_buttons?: string[];
   currency?: string;
   requests_enabled?: boolean;
   kind?: 'venue' | 'event';
@@ -42,15 +43,24 @@ export type StaffVenue = {
   role: 'manager' | 'staff';
 };
 
-type Req = { id: string; kind: RequestKind; status: RequestStatus; created_at: string; table_id: string };
+type Req = { id: string; kind: RequestKind; status: RequestStatus; created_at: string; table_id: string; note?: string | null; claimed_name?: string | null };
 type DrinkOrder = { id: string; from_table: string; from_alias: string; to_table: string; to_alias: string; note: string | null; accepted_at: string; max_amount?: number | null; currency?: string; payer_confirmed?: boolean };
 type OfferGuest = { visit_id: string; table_label: string; alias: string; redeemed: boolean; code: string | null };
 
 const LABELS: Record<RequestKind, string> = {
+  order: 'Ready to order',
+  again: 'Same again',
   waiter: 'Call a waiter',
   bill: 'Bring the bill',
   water: 'Water please',
+  other: 'Request',
+  help: 'Needs help · discreet',
 };
+const BUTTON_NAMES: Record<string, string> = {
+  order: 'Ready to order', again: 'Same again', waiter: 'Call a waiter', bill: 'Bring the bill', water: 'Water', other: 'Ask for anything',
+};
+const AMBER_MIN = 3;
+const LATE_MIN = 5;
 
 function ago(iso: string, now: number) {
   const m = Math.floor((now - new Date(iso).getTime()) / 60000);
@@ -71,13 +81,17 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
   const isManager = venue.role === 'manager';
 
   const loadRequests = useCallback(async () => {
-    const { data } = await supabase
-      .from('service_requests')
-      .select('id, kind, status, created_at, table_id')
-      .eq('venue_id', venue.id)
-      .in('status', ['sent', 'seen'])
-      .order('created_at', { ascending: true });
-    const list = (data as Req[] | null) ?? [];
+    const q = (cols: string) =>
+      supabase
+        .from('service_requests')
+        .select(cols)
+        .eq('venue_id', venue.id)
+        .in('status', ['sent', 'seen'])
+        .order('created_at', { ascending: true });
+    // Notes and who claimed it arrive with database update 0023.
+    let res = await q('id, kind, status, created_at, table_id, note, claimed_name');
+    if (res.error) res = await q('id, kind, status, created_at, table_id');
+    const list = ((res.data as unknown) as Req[] | null) ?? [];
     const fresh = list.filter((r) => !seen.current.has(r.id));
     fresh.forEach((r) => seen.current.add(r.id));
     if (!first.current && fresh.length > 0) playSound('staff');
@@ -167,6 +181,28 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
     return () => clearInterval(t);
   }, []);
 
+  // Managers get a second alert when a request has waited 5 minutes with nobody on it.
+  const lateAlerted = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!isManager) return;
+    const late = requests.filter((r) => r.status === 'sent' && now - new Date(r.created_at).getTime() >= LATE_MIN * 60000);
+    if (late.some((r) => !lateAlerted.current.has(r.id))) playSound('staff');
+    late.forEach((r) => lateAlerted.current.add(r.id));
+  }, [requests, now, isManager]);
+
+  // "On my way": the first member of staff to tap claims it, so two people don't go.
+  async function claim(id: string) {
+    const { data, error } = await supabase.rpc('claim_request', { p_id: id });
+    if (error && error.code === 'PGRST202') return setStatus(id, 'seen'); // before update 0023
+    if (error) {
+      setNote(error.message.includes('already on it') ? error.message + '.' : 'That did not save. Please try again.');
+    } else {
+      setRequests((rs) => rs.map((r) => (r.id === id ? { ...r, status: 'seen', claimed_name: data as string } : r)));
+      notify('request_update', id);
+    }
+    loadRequests();
+  }
+
   async function setStatus(id: string, status: RequestStatus) {
     setRequests((rs) => (status === 'done' ? rs.filter((r) => r.id !== id) : rs.map((r) => (r.id === id ? { ...r, status } : r))));
     const { error } = await supabase.from('service_requests').update({ status }).eq('id', id);
@@ -219,8 +255,14 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
           )}
           {requests.map((r) => {
             const fresh = r.status === 'sent';
+            const mins = (now - new Date(r.created_at).getTime()) / 60000;
+            const wait = !fresh ? '' : mins >= LATE_MIN ? 'late' : mins >= AMBER_MIN ? 'amber' : '';
             return (
-              <div key={r.id} className="card row" style={{ gap: 18, borderWidth: 2, borderColor: fresh ? 'var(--accent)' : 'var(--line)' }}>
+              <div
+                key={r.id}
+                className={`card row request-card ${wait} ${r.kind === 'help' ? 'request-help' : ''}`}
+                style={{ gap: 18, borderWidth: 2, borderColor: fresh ? 'var(--accent)' : 'var(--line)' }}
+              >
                 <div
                   className="table-tile"
                   style={{ background: fresh ? 'var(--accent)' : 'var(--line)', color: fresh ? 'var(--on-accent)' : 'var(--text)' }}
@@ -229,11 +271,15 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
                   <span className="display" style={{ fontSize: 30, lineHeight: 1 }}>{tables[r.table_id] ?? '–'}</span>
                 </div>
                 <div className="col grow" style={{ gap: 4 }}>
-                  <strong style={{ fontSize: 20 }}>{LABELS[r.kind]}</strong>
-                  <span className="small">{fresh ? 'New' : 'Someone is on the way'} · {ago(r.created_at, now)}</span>
+                  <strong style={{ fontSize: 20 }}>{LABELS[r.kind] ?? 'Request'}</strong>
+                  {r.note && <span style={{ fontSize: 17 }}>&ldquo;{r.note}&rdquo;</span>}
+                  <span className="small">
+                    {fresh ? (wait === 'late' ? 'Waiting · nobody on it yet' : 'New') : r.claimed_name ? `${r.claimed_name} is on it` : 'Someone is on the way'} ·{' '}
+                    {ago(r.created_at, now)}
+                  </span>
                 </div>
                 {fresh && (
-                  <button className="btn btn-ghost" onClick={() => setStatus(r.id, 'seen')}>On my way</button>
+                  <button className="btn btn-ghost" onClick={() => claim(r.id)}>On my way</button>
                 )}
                 <button className="btn btn-primary" onClick={() => setStatus(r.id, 'done')}>Done</button>
               </div>
@@ -318,6 +364,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
   const [drinksOn, setDrinksOn] = useState(venue.drinks_enabled !== false);
   const [requestsOn, setRequestsOn] = useState(venue.requests_enabled !== false);
   const [limitsText, setLimitsText] = useState((venue.drink_limits ?? []).join(', '));
+  const [buttons, setButtons] = useState<string[]>(venue.request_buttons ?? []);
   const [currency, setCurrency] = useState(venue.currency ?? 'AED');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -337,6 +384,8 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
         drinks_enabled: drinksOn,
         // Only sent once the events database update (0012) has added this setting.
         ...(venue.requests_enabled === undefined ? {} : { requests_enabled: requestsOn }),
+        // Only sent once the requests update (0023) has added this setting.
+        ...(venue.request_buttons === undefined ? {} : { request_buttons: REQUEST_BUTTONS.filter((b) => buttons.includes(b)) }),
         // Only sent once the drinks update (0021) has added these settings.
         ...(venue.drink_limits === undefined ? {} : { drink_limits: limits, currency: currency.trim().toUpperCase().slice(0, 3) || 'AED' }),
       })
@@ -397,6 +446,22 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
             <input type="checkbox" checked={requestsOn} onChange={(e) => setRequestsOn(e.target.checked)} />
             <span>Let guests call a waiter, ask for the bill or water</span>
           </label>
+        )}
+        {venue.request_buttons !== undefined && requestsOn && (
+          <div className="col" style={{ gap: 6, paddingLeft: 32 }}>
+            <span className="small">Buttons guests see (start with a few, add more later):</span>
+            {REQUEST_BUTTONS.map((b) => (
+              <label key={b} className="check">
+                <input
+                  type="checkbox"
+                  checked={buttons.includes(b)}
+                  onChange={(e) => setButtons((cur) => (e.target.checked ? [...cur, b] : cur.filter((x) => x !== b)))}
+                />
+                <span>{BUTTON_NAMES[b]}</span>
+              </label>
+            ))}
+            <span className="small">&ldquo;Need help discreetly?&rdquo; is always on and goes to managers only.</span>
+          </div>
         )}
         <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save</button>
       </div>

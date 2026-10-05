@@ -48,7 +48,9 @@ export function eventDate(iso: string | null | undefined) {
   return `${d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-export type RequestKind = 'waiter' | 'bill' | 'water';
+export type RequestKind = 'waiter' | 'bill' | 'water' | 'order' | 'again' | 'other' | 'help';
+// The buttons a venue can offer guests, in the order they appear ("help" is always available).
+export const REQUEST_BUTTONS: Exclude<RequestKind, 'help'>[] = ['order', 'again', 'waiter', 'bill', 'water', 'other'];
 export type RequestStatus = 'sent' | 'seen' | 'done' | 'cancelled';
 
 export type Gender = 'male' | 'female' | 'unspecified';

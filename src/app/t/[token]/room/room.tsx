@@ -16,17 +16,22 @@ import Extras, { type MyExtras } from './extras';
 import { DrinksPanel } from '@/components/drinks';
 import { useT } from '@/components/lang';
 import VenueMark from '@/components/venue-mark';
-import { MODE_LABELS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
+import { MODE_LABELS, REQUEST_BUTTONS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
 type Person = { visit_id: string; alias: string; mode: ChatMode; zone: string; public_key: string | null; gender: string; has_photo: boolean };
-type Req = { id: string; kind: RequestKind; status: RequestStatus };
+type Req = { id: string; kind: RequestKind; status: RequestStatus; note?: string | null; claimed_name?: string | null };
 
 const REQUESTS: Record<RequestKind, { ask: string; done: string }> = {
+  order: { ask: 'Ready to order', done: 'Ready to order' },
+  again: { ask: 'Same again', done: 'Same again' },
   waiter: { ask: 'Call a waiter', done: 'Waiter called' },
   bill: { ask: 'Bring the bill', done: 'Bill requested' },
   water: { ask: 'Water please', done: 'Water requested' },
+  other: { ask: 'Ask for anything', done: 'Request sent' },
+  help: { ask: 'I need help', done: 'The manager has been told' },
 };
+const QUICK_ASKS = ['Napkins', 'Cutlery', 'Clear the plates', 'High chair', 'Card machine', 'Ice'];
 const STATUS_TEXT: Record<RequestStatus, string> = {
   sent: 'Sent to staff',
   seen: 'On the way',
@@ -34,16 +39,29 @@ const STATUS_TEXT: Record<RequestStatus, string> = {
   cancelled: 'Cancelled',
 };
 
-type Props = { token: string; venue: VenueAtTable; visit: Visit; menuUrl: string | null; firstVisit?: boolean };
+type Props = {
+  token: string;
+  venue: VenueAtTable;
+  visit: Visit;
+  menuUrl: string | null;
+  firstVisit?: boolean;
+  requestButtons?: RequestKind[];
+};
 
 // Line icons for the service bar.
 const ICONS: Record<RequestKind | 'menu', string> = {
+  order: 'M9 3h6v3H9zM6 5h12v16H6zM9 11h6M9 15h4',
+  again: 'M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5',
+  other: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12ZM12 9v6M9 12h6',
+  help: 'M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z',
   waiter: 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0',
   bill: 'M6 2h12v20l-3-2-3 2-3-2-3 2V2zM9 7h6M9 11h6M9 15h4',
   water: 'M12 2.7s6 6.3 6 11.3a6 6 0 0 1-12 0c0-5 6-11.3 6-11.3z',
   menu: 'M4 4h7v16H4zM13 4h7v16h-7z',
 };
-const SHORT: Record<RequestKind, string> = { waiter: 'Waiter', bill: 'Bill', water: 'Water' };
+const SHORT: Record<RequestKind, string> = {
+  order: 'Ready to order', again: 'Same again', waiter: 'Waiter', bill: 'Bill', water: 'Water', other: 'Ask for…', help: 'Help',
+};
 
 function Icon({ d }: { d: string }) {
   return (
@@ -53,7 +71,7 @@ function Icon({ d }: { d: string }) {
   );
 }
 
-export default function Room({ token, venue, visit, menuUrl, firstVisit = false }: Props) {
+export default function Room({ token, venue, visit, menuUrl, firstVisit = false, requestButtons = ['waiter', 'bill', 'water'] }: Props) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
   const t = useT();
@@ -61,6 +79,8 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
   const [tab, setTab] = useState<'people' | 'group' | 'chats'>('people');
   // The optional details sheet opens once straight after check-in, and whenever the guest taps their name.
   const [extrasOpen, setExtrasOpen] = useState(firstVisit);
+  const [askOpen, setAskOpen] = useState<'other' | 'help' | null>(null);
+  const [askText, setAskText] = useState('');
   const [me, setMe] = useState<MyExtras>({ mode: visit.mode, gender: visit.gender, optedIn: visit.optedIn });
   const [hasPhoto, setHasPhoto] = useState(visit.hasPhoto);
   const [photoVersion, setPhotoVersion] = useState(0);
@@ -149,13 +169,17 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
   }, [supabase, venue.venue_id]);
 
   const loadRequests = useCallback(async () => {
-    const { data } = await supabase
-      .from('service_requests')
-      .select('id, kind, status')
-      .eq('visit_id', visit.id)
-      .in('status', ['sent', 'seen'])
-      .order('created_at', { ascending: false });
-    const list = (data as Req[] | null) ?? [];
+    const q = (cols: string) =>
+      supabase
+        .from('service_requests')
+        .select(cols)
+        .eq('visit_id', visit.id)
+        .in('status', ['sent', 'seen'])
+        .order('created_at', { ascending: false });
+    // Who's coming and the guest's note arrive with database update 0023.
+    let res = await q('id, kind, status, note, claimed_name');
+    if (res.error) res = await q('id, kind, status');
+    const list = ((res.data as unknown) as Req[] | null) ?? [];
     const before = statusRef.current;
     if (list.some((r) => r.status === 'seen' && before[r.id] === 'sent')) {
       playSound('update');
@@ -207,11 +231,12 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
     if (error) setIsOpen(!next);
   }
 
-  async function ask(kind: RequestKind) {
-    if (requests.some((r) => r.kind === kind)) return;
+  async function ask(kind: RequestKind, text?: string) {
+    if (kind !== 'other' && requests.some((r) => r.kind === kind)) return;
+    const note = text?.trim().slice(0, 200);
     const { data, error } = await supabase
       .from('service_requests')
-      .insert({ venue_id: venue.venue_id, table_id: venue.table_id, visit_id: visit.id, kind })
+      .insert({ venue_id: venue.venue_id, table_id: venue.table_id, visit_id: visit.id, kind, ...(note ? { note } : {}) })
       .select('id')
       .single();
     if (error) setNote(t('That did not send. Please try again.'));
@@ -283,6 +308,15 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
 
   const unreadCount = Object.values(unread).filter(Boolean).length;
   const showRequests = venue.requests_enabled !== false && venue.kind !== 'event';
+  const buttons = REQUEST_BUTTONS.filter((k) => requestButtons.includes(k));
+
+  async function sendAsk() {
+    if (!askOpen) return;
+    if (askOpen === 'other' && !askText.trim()) return;
+    await ask(askOpen, askText);
+    setAskOpen(null);
+    setAskText('');
+  }
 
   return (
     <main className="shell room" style={style}>
@@ -407,8 +441,12 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
                 <div key={r.id} className="card row" role="status" style={{ padding: '10px 14px' }}>
                   <span className="dot" style={{ background: r.status === 'seen' ? 'var(--accent)' : 'var(--faint)' }} />
                   <div className="col grow" style={{ gap: 0 }}>
-                    <strong style={{ fontSize: 14 }}>{t(REQUESTS[r.kind].done)}</strong>
-                    <span className="small">{t(STATUS_TEXT[r.status])}</span>
+                    <strong style={{ fontSize: 14 }}>{r.kind === 'other' && r.note ? r.note : t(REQUESTS[r.kind].done)}</strong>
+                    <span className="small">
+                      {r.status === 'seen' && r.claimed_name
+                        ? t('{name} is on the way', { name: r.claimed_name })
+                        : t(STATUS_TEXT[r.status])}
+                    </span>
                   </div>
                   {r.status === 'sent' && (
                     <button className="btn btn-ghost btn-sm" onClick={() => cancel(r.id)}>{t('Cancel')}</button>
@@ -421,10 +459,16 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
           {(showRequests || menuUrl) && (
             <nav className="service-bar" aria-label={t('Ask the staff')}>
               {showRequests &&
-                (Object.keys(REQUESTS) as RequestKind[]).map((k) => {
-                  const active = requests.some((r) => r.kind === k);
+                buttons.map((k) => {
+                  const active = k !== 'other' && requests.some((r) => r.kind === k);
                   return (
-                    <button key={k} className="service-tile" data-active={active} onClick={() => ask(k)} aria-label={t(REQUESTS[k].ask)}>
+                    <button
+                      key={k}
+                      className="service-tile"
+                      data-active={active}
+                      onClick={() => (k === 'other' ? setAskOpen('other') : ask(k))}
+                      aria-label={t(REQUESTS[k].ask)}
+                    >
                       <Icon d={ICONS[k]} />
                       {active ? t('Asked') : t(SHORT[k])}
                     </button>
@@ -438,7 +482,53 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false 
               )}
             </nav>
           )}
+          <button className="help-link" onClick={() => setAskOpen('help')}>
+            <Icon d={ICONS.help} />
+            {t('Need help discreetly?')}
+          </button>
         </>
+      )}
+
+      {askOpen && (
+        <div className="sheet-backdrop" onClick={() => setAskOpen(null)}>
+          <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="ask-title" onClick={(e) => e.stopPropagation()}>
+            <span className="sheet-grip" aria-hidden="true" />
+            {askOpen === 'other' ? (
+              <>
+                <div className="col" style={{ gap: 4 }}>
+                  <h2 id="ask-title" className="display" style={{ margin: 0, fontSize: 24 }}>{t('Ask for anything')}</h2>
+                  <span className="small">{t('Goes straight to the staff with your table number.')}</span>
+                </div>
+                <div className="chips">
+                  {QUICK_ASKS.map((q) => (
+                    <button key={q} type="button" className="chip" aria-pressed={askText === t(q)} onClick={() => setAskText(t(q))}>
+                      {t(q)}
+                    </button>
+                  ))}
+                </div>
+                <label htmlFor="ask-text" className="label">{t('Or write your own')}</label>
+                <input id="ask-text" className="input" maxLength={120} value={askText} onChange={(e) => setAskText(e.target.value)} placeholder={t('e.g. Can we move to a bigger table?')} />
+              </>
+            ) : (
+              <>
+                <div className="col" style={{ gap: 4 }}>
+                  <h2 id="ask-title" className="display" style={{ margin: 0, fontSize: 24 }}>{t('Need help discreetly?')}</h2>
+                  <span className="small">
+                    {t("Only the manager is told, with your table. They'll come over quietly. Use it if anyone is making you uncomfortable, or for anything you'd rather not say out loud.")}
+                  </span>
+                </div>
+                <label htmlFor="ask-text" className="label">{t('Anything they should know? (optional)')}</label>
+                <input id="ask-text" className="input" maxLength={120} value={askText} onChange={(e) => setAskText(e.target.value)} />
+              </>
+            )}
+            <div className="row" style={{ gap: 10 }}>
+              <button className="btn btn-ghost grow" onClick={() => { setAskOpen(null); setAskText(''); }}>{t('Cancel')}</button>
+              <button className="btn btn-primary grow" onClick={sendAsk} disabled={askOpen === 'other' && !askText.trim()}>
+                {askOpen === 'help' ? t('Tell the manager') : t('Send')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {tab === 'chats' && (

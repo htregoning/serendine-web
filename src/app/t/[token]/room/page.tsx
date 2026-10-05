@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { venueAtTable } from '@/lib/venue-server';
-import type { ChatMode } from '@/lib/types';
+import type { ChatMode, RequestKind } from '@/lib/types';
 import Room from './room';
 
 export default async function RoomPage({
@@ -32,7 +32,12 @@ export default async function RoomPage({
 
   const { data: photo } = await supabase.rpc('visit_photo', { v: visit.id });
 
-  const { data: v } = await supabase.from('venues').select('menu_pdf_path').eq('id', venue.venue_id).single();
+  // The request buttons the manager chose (after database update 0023).
+  const withButtons = await supabase.from('venues').select('menu_pdf_path, request_buttons').eq('id', venue.venue_id).single();
+  const v = withButtons.error
+    ? (await supabase.from('venues').select('menu_pdf_path').eq('id', venue.venue_id).single()).data
+    : withButtons.data;
+  const requestButtons = ((v as { request_buttons?: string[] } | null)?.request_buttons ?? ['waiter', 'bill', 'water']) as RequestKind[];
   const menuUrl = v?.menu_pdf_path
     ? supabase.storage.from('menus').getPublicUrl(v.menu_pdf_path as string).data.publicUrl
     : null;
@@ -43,6 +48,7 @@ export default async function RoomPage({
       venue={venue}
       menuUrl={menuUrl}
       firstVisit={welcome === '1'}
+      requestButtons={requestButtons}
       visit={{
         id: visit.id as string,
         alias: visit.alias as string,

@@ -453,3 +453,14 @@ h1.display.arrive-title { font-size: 40px; line-height: 1.08; }
 .extras-photo { gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); }
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+
+/* More table requests */
+.service-tile { text-align: center; line-height: 1.2; padding: 4px; }
+.help-link {
+  align-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
+  border: none; background: none; color: var(--muted); font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+.help-link svg { width: 16px; height: 16px; }
+.request-card.amber { border-color: #F2A93B !important; box-shadow: 0 0 0 3px rgba(242, 169, 59, 0.25); }
+.request-card.late { border-color: #FF5C6C !important; box-shadow: 0 0 0 3px rgba(255, 92, 108, 0.3); }
+.request-card.request-help { background: rgba(255, 92, 108, 0.12); }
