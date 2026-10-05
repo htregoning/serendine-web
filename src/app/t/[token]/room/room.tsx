@@ -13,6 +13,7 @@ import Avatar, { forgetPhoto } from '@/components/avatar';
 import { selfieThumbnail } from '@/lib/photo';
 import Lobby from './lobby';
 import Extras, { type MyExtras } from './extras';
+import TableOrders from './orders';
 import { DrinksPanel } from '@/components/drinks';
 import { useT } from '@/components/lang';
 import VenueMark from '@/components/venue-mark';
@@ -46,6 +47,7 @@ type Props = {
   menuUrl: string | null;
   firstVisit?: boolean;
   requestButtons?: RequestKind[];
+  ordering?: { currency: string } | null;
 };
 
 // Line icons for the service bar.
@@ -71,7 +73,7 @@ function Icon({ d }: { d: string }) {
   );
 }
 
-export default function Room({ token, venue, visit, menuUrl, firstVisit = false, requestButtons = ['waiter', 'bill', 'water'] }: Props) {
+export default function Room({ token, venue, visit, menuUrl, firstVisit = false, requestButtons = ['waiter', 'bill', 'water'], ordering = null }: Props) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
   const t = useT();
@@ -415,6 +417,8 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
           )}
 
           <div style={{ flex: 1 }} />
+
+          {ordering && <TableOrders supabase={supabase} venueId={venue.venue_id} tableId={venue.table_id} currency={ordering.currency} />}
 
           {venue.offer_enabled && (
             me.optedIn ? (

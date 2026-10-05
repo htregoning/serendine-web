@@ -12,6 +12,7 @@ import GrowthSettings from './growth-settings';
 import StaffScript from './staff-script';
 import HostSettings from './host-settings';
 import PhotoReview from './photo-review';
+import OrdersPanel from './orders-panel';
 import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
 
@@ -26,6 +27,7 @@ export type StaffVenue = {
   drinks_enabled?: boolean;
   drink_limits?: number[];
   request_buttons?: string[];
+  ordering_enabled?: boolean;
   currency?: string;
   requests_enabled?: boolean;
   kind?: 'venue' | 'event';
@@ -285,6 +287,11 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
               </div>
             );
           })}
+          {venue.ordering_enabled && (
+            <div style={{ marginTop: 12 }}>
+              <OrdersPanel supabase={supabase} venueId={venue.id} tables={tables} />
+            </div>
+          )}
         </section>
 
         <aside className="col" style={{ gap: 16 }}>
@@ -365,6 +372,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
   const [requestsOn, setRequestsOn] = useState(venue.requests_enabled !== false);
   const [limitsText, setLimitsText] = useState((venue.drink_limits ?? []).join(', '));
   const [buttons, setButtons] = useState<string[]>(venue.request_buttons ?? []);
+  const [orderingOn, setOrderingOn] = useState(venue.ordering_enabled === true);
   const [currency, setCurrency] = useState(venue.currency ?? 'AED');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -384,6 +392,8 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
         drinks_enabled: drinksOn,
         // Only sent once the events database update (0012) has added this setting.
         ...(venue.requests_enabled === undefined ? {} : { requests_enabled: requestsOn }),
+        // Only sent once the ordering update (0024) has added this setting.
+        ...(venue.ordering_enabled === undefined ? {} : { ordering_enabled: orderingOn }),
         // Only sent once the requests update (0023) has added this setting.
         ...(venue.request_buttons === undefined ? {} : { request_buttons: REQUEST_BUTTONS.filter((b) => buttons.includes(b)) }),
         // Only sent once the drinks update (0021) has added these settings.
@@ -462,6 +472,18 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
             ))}
             <span className="small">&ldquo;Need help discreetly?&rdquo; is always on and goes to managers only.</span>
           </div>
+        )}
+        {venue.ordering_enabled !== undefined && (
+          <>
+            <label className="check">
+              <input type="checkbox" checked={orderingOn} onChange={(e) => setOrderingOn(e.target.checked)} />
+              <span>Let tables order from their phones (staff confirm each order; payment as usual)</span>
+            </label>
+            <div className="row" style={{ gap: 8, paddingLeft: 32, flexWrap: 'wrap' }}>
+              <a className="btn btn-ghost btn-sm" href={`/staff/menu?v=${venue.slug}`} style={{ textDecoration: 'none' }}>Edit the menu</a>
+              <a className="btn btn-ghost btn-sm" href={`/staff/kitchen?v=${venue.slug}`} style={{ textDecoration: 'none' }}>Open the kitchen screen</a>
+            </div>
+          </>
         )}
         <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save</button>
       </div>

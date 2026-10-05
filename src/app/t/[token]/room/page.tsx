@@ -38,6 +38,9 @@ export default async function RoomPage({
     ? (await supabase.from('venues').select('menu_pdf_path').eq('id', venue.venue_id).single()).data
     : withButtons.data;
   const requestButtons = ((v as { request_buttons?: string[] } | null)?.request_buttons ?? ['waiter', 'bill', 'water']) as RequestKind[];
+  // Ordering from the table (after database update 0024).
+  const ord = await supabase.from('venues').select('ordering_enabled, currency').eq('id', venue.venue_id).single();
+  const ordering = ord.error ? null : (ord.data as { ordering_enabled: boolean; currency: string });
   const menuUrl = v?.menu_pdf_path
     ? supabase.storage.from('menus').getPublicUrl(v.menu_pdf_path as string).data.publicUrl
     : null;
@@ -49,6 +52,7 @@ export default async function RoomPage({
       menuUrl={menuUrl}
       firstVisit={welcome === '1'}
       requestButtons={requestButtons}
+      ordering={ordering?.ordering_enabled ? { currency: ordering.currency ?? 'AED' } : null}
       visit={{
         id: visit.id as string,
         alias: visit.alias as string,

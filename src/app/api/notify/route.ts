@@ -12,6 +12,7 @@ const FUNCTIONS = {
   drink: 'push_for_drink',
   test: 'push_for_test',
   announcement: 'push_for_announcement',
+  order: 'push_for_order',
 } as const;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

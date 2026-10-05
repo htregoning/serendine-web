@@ -78,6 +78,9 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   // Drink price limits (after database update 0021).
   const dl = await supabase.from('venues').select('drink_limits, currency').eq('id', picked.id).maybeSingle();
   if (!dl.error && dl.data) venue = { ...venue, ...(dl.data as Partial<StaffVenue>) };
+  // Ordering from the table (after database update 0024).
+  const ord = await supabase.from('venues').select('ordering_enabled').eq('id', picked.id).maybeSingle();
+  if (!ord.error && ord.data) venue = { ...venue, ...(ord.data as Partial<StaffVenue>) };
   // Request buttons (after database update 0023).
   const rb = await supabase.from('venues').select('request_buttons').eq('id', picked.id).maybeSingle();
   if (!rb.error && rb.data) venue = { ...venue, ...(rb.data as Partial<StaffVenue>) };
