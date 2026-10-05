@@ -186,6 +186,9 @@ const AR: Record<string, string> = {
   'Plan a night here': 'خطّط لأمسية هنا',
   'Your places and plans': 'أماكنك وخططك',
   // Photos and videos
+  'Take a photo': 'التقط صورة',
+  'Record a video': 'سجّل فيديو',
+  'Choose from gallery': 'اختر من المعرض',
   'This video has expired or was removed.': 'انتهت صلاحية هذا الفيديو أو تمت إزالته.',
   'This photo has expired or was removed.': 'انتهت صلاحية هذه الصورة أو تمت إزالتها.',
   'Loading…': 'جارٍ التحميل…',

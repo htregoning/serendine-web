@@ -119,22 +119,61 @@ export default function MediaView({
 }
 
 // The paperclip-style button that opens the camera or photo library.
+// Camera button: take a photo, record a video, or choose from the gallery.
+// (A plain file picker on Android only offers the gallery, so the camera options are separate.)
 export function AttachButton({ onFile, disabled }: { onFile: (f: File) => void; disabled?: boolean }) {
   const t = useT();
-  return (
-    <label className="attach-btn" aria-label={t('Add a photo or video')} aria-disabled={disabled || undefined}>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" /><circle cx="12" cy="13.5" r="3.5" /></svg>
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [open]);
+
+  const pick = (accept: string, capture: boolean, label: string) => (
+    <label className="attach-option">
+      {label}
       <input
         type="file"
-        accept="image/*,video/*"
+        accept={accept}
+        {...(capture ? { capture: 'environment' as const } : {})}
         hidden
         disabled={disabled}
         onChange={(e) => {
           const f = e.target.files?.[0];
           e.target.value = '';
+          setOpen(false);
           if (f) onFile(f);
         }}
       />
     </label>
+  );
+
+  return (
+    <div className="attach-wrap">
+      <button
+        type="button"
+        className="attach-btn"
+        aria-label={t('Add a photo or video')}
+        aria-expanded={open}
+        aria-disabled={disabled || undefined}
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" /><circle cx="12" cy="13.5" r="3.5" /></svg>
+      </button>
+      {open && (
+        <>
+          <div className="attach-scrim" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="attach-menu" role="menu">
+            {pick('image/*', true, t('Take a photo'))}
+            {pick('video/*', true, t('Record a video'))}
+            {pick('image/*,video/*', false, t('Choose from gallery'))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
