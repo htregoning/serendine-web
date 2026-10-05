@@ -20,7 +20,14 @@ type Drink = {
   note: string | null;
   status: 'offered' | 'accepted' | 'declined' | 'served' | 'cancelled';
   created_at: string;
+  max_amount?: number | null;
+  currency?: string;
 };
+
+// "Up to AED 60"
+export function limitLabel(t: (s: string, v?: Record<string, string | number>) => string, max: number | null | undefined, currency = 'AED') {
+  return max ? t('Up to {currency} {amount}', { currency, amount: max }) : t('No price limit');
+}
 
 function Glasses() {
   return (
@@ -38,14 +45,30 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  // Price limits the venue offers (after database update 0021). undefined = still loading, null = not available.
+  const [limits, setLimits] = useState<{ limits: number[]; currency: string } | null | undefined>(undefined);
+  const [max, setMax] = useState<number | null | 'unset'>('unset');
+
+  useEffect(() => {
+    if (!open || limits !== undefined) return;
+    supabase.rpc('drink_limits_here').then(({ data, error }: { data: { limits: number[]; currency: string }[] | null; error: unknown }) => {
+      const row = error ? null : (data ?? [])[0];
+      setLimits(row && row.limits?.length ? row : null);
+    });
+  }, [open, limits, supabase]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function send() {
     setBusy(true);
     setError(null);
-    if (!confirmed) return;
-    let { data, error } = await supabase.rpc('offer_drink', { p_to: toVisit, p_note: note.trim() || null, p_confirmed: true });
+    if (!confirmed || (limits && max === 'unset')) return;
+    let { data, error } = await supabase.rpc('offer_drink', {
+      p_to: toVisit,
+      p_note: note.trim() || null,
+      p_confirmed: true,
+      p_max: max === 'unset' ? null : max,
+    });
     // Before database update 0021 the confirmation isn't recorded on the server.
     if (error && error.code === 'PGRST202') ({ data, error } = await supabase.rpc('offer_drink', { p_to: toVisit, p_note: note.trim() || null }));
     setBusy(false);
@@ -58,6 +81,7 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
     setOpen(false);
     setNote('');
     setConfirmed(false);
+    setMax('unset');
     onDone(t('Drink offered to {name}. If they accept, staff will bring it over and add it to your bill.', { name: toAlias }));
   }
 
@@ -72,23 +96,40 @@ export function SendDrink({ supabase, toVisit, toAlias, onDone }: { supabase: Cl
     <div className="card col" style={{ gap: 8, width: '100%' }}>
       <strong>{t('Send {name} a drink', { name: toAlias })}</strong>
       <span className="small">{t('They can accept or say no thanks. Nothing is charged unless they accept.')}</span>
+      {limits && (
+        <div className="col" style={{ gap: 6 }}>
+          <span className="label">{t('How much would you like to spend?')}</span>
+          <div className="chips">
+            {[...limits.limits, null].map((m) => (
+              <button key={m ?? 'none'} type="button" className="chip" aria-pressed={max === m} onClick={() => setMax(m)}>
+                {limitLabel(t, m, limits.currency)}
+              </button>
+            ))}
+          </div>
+          <span className="small">{t('{name} and the staff see this, so nobody orders more than you meant.', { name: toAlias })}</span>
+        </div>
+      )}
       <label className="label" htmlFor={`drink-${toVisit}`}>{t('Note for the staff (optional)')}</label>
       <input
         id={`drink-${toVisit}`}
         className="input"
         maxLength={80}
-        placeholder={t("e.g. whatever they're drinking")}
+        placeholder={t('e.g. a glass of rosé')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
       <label className="check drink-confirm">
         <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
-        <span>{t("I understand that if {name} accepts, the drink is added to my bill and I'll pay for it.", { name: toAlias })}</span>
+        <span>
+          {limits && max !== 'unset' && max !== null
+            ? t('I understand that if {name} accepts, a drink up to {currency} {amount} is added to my bill and I will pay for it.', { name: toAlias, currency: limits.currency, amount: max })
+            : t("I understand that if {name} accepts, the drink is added to my bill and I'll pay for it.", { name: toAlias })}
+        </span>
       </label>
       {error && <p className="error">{error}</p>}
       <div className="row" style={{ gap: 8 }}>
         <button className="btn btn-ghost btn-sm grow" onClick={() => { setOpen(false); setConfirmed(false); }}>{t('Cancel')}</button>
-        <button className="btn btn-primary btn-sm grow" onClick={send} disabled={busy || !confirmed}>{busy ? t('Sending…') : t('Offer drink')}</button>
+        <button className="btn btn-primary btn-sm grow" onClick={send} disabled={busy || !confirmed || (!!limits && max === 'unset')}>{busy ? t('Sending…') : t('Offer drink')}</button>
       </div>
     </div>
   );
@@ -152,6 +193,9 @@ export function DrinksPanel({ supabase, myVisitId }: { supabase: Client; myVisit
               <Avatar supabase={supabase} visitId={d.other_visit} alias={d.other_alias} hasPhoto={d.other_has_photo} />
               <div className="col grow" style={{ gap: 2 }}>
                 <strong>{t('{name} would like to buy you a drink', { name: d.other_alias })}</strong>
+                {d.max_amount ? (
+                  <span className="small">{t('Anything up to {currency} {amount}. Just tell your server.', { currency: d.currency ?? 'AED', amount: d.max_amount })}</span>
+                ) : null}
                 {d.note && <span className="small">&ldquo;{d.note}&rdquo;</span>}
               </div>
             </div>
@@ -175,6 +219,7 @@ export function DrinksPanel({ supabase, myVisitId }: { supabase: Client; myVisit
                         ? t('You said no thanks')
                         : t('Withdrawn')
                   : t(STATUS_OUT[d.status])}
+                {d.max_amount ? ` · ${limitLabel(t, d.max_amount, d.currency)}` : ''}
               </span>
             </div>
             {!d.incoming && d.status === 'offered' && (

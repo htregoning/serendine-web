@@ -24,6 +24,8 @@ export type StaffVenue = {
   offer_enabled: boolean;
   offer_text: string;
   drinks_enabled?: boolean;
+  drink_limits?: number[];
+  currency?: string;
   requests_enabled?: boolean;
   kind?: 'venue' | 'event';
   google_review_url?: string | null;
@@ -41,7 +43,7 @@ export type StaffVenue = {
 };
 
 type Req = { id: string; kind: RequestKind; status: RequestStatus; created_at: string; table_id: string };
-type DrinkOrder = { id: string; from_table: string; from_alias: string; to_table: string; to_alias: string; note: string | null; accepted_at: string };
+type DrinkOrder = { id: string; from_table: string; from_alias: string; to_table: string; to_alias: string; note: string | null; accepted_at: string; max_amount?: number | null; currency?: string; payer_confirmed?: boolean };
 type OfferGuest = { visit_id: string; table_label: string; alias: string; redeemed: boolean; code: string | null };
 
 const LABELS: Record<RequestKind, string> = {
@@ -248,9 +250,13 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
                   <span style={{ fontSize: 17, fontWeight: 700 }}>
                     Table {d.from_table} → Table {d.to_table}
                   </span>
+                  <span style={{ fontWeight: 700, color: 'var(--accent)' }}>
+                    {d.max_amount ? `Up to ${d.currency ?? 'AED'} ${d.max_amount}` : 'No price limit set'}
+                  </span>
                   <span className="small">
                     From {d.from_alias} to {d.to_alias}
                     {d.note ? ` · "${d.note}"` : ''} · add to Table {d.from_table}&apos;s bill
+                    {d.payer_confirmed ? ' (they agreed to pay)' : ''}
                   </span>
                   <button className="btn btn-primary btn-sm" onClick={() => served(d.id)}>Served</button>
                 </div>
@@ -311,10 +317,17 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
   const [offerOn, setOfferOn] = useState(venue.offer_enabled);
   const [drinksOn, setDrinksOn] = useState(venue.drinks_enabled !== false);
   const [requestsOn, setRequestsOn] = useState(venue.requests_enabled !== false);
+  const [limitsText, setLimitsText] = useState((venue.drink_limits ?? []).join(', '));
+  const [currency, setCurrency] = useState(venue.currency ?? 'AED');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
   async function saveOffer() {
+    // "40, 60, 100" → [40, 60, 100]
+    const limits = [...new Set(limitsText.split(/[,\s]+/).map((x) => Math.round(Number(x))).filter((n) => n > 0 && n <= 100000))]
+      .sort((a, b) => a - b)
+      .slice(0, 5);
+    if (venue.drink_limits !== undefined && limits.length === 0) return setMsg('Add at least one drink price limit, e.g. 40, 60, 100.');
     setBusy('offer');
     const { error } = await supabase
       .from('venues')
@@ -324,6 +337,8 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
         drinks_enabled: drinksOn,
         // Only sent once the events database update (0012) has added this setting.
         ...(venue.requests_enabled === undefined ? {} : { requests_enabled: requestsOn }),
+        // Only sent once the drinks update (0021) has added these settings.
+        ...(venue.drink_limits === undefined ? {} : { drink_limits: limits, currency: currency.trim().toUpperCase().slice(0, 3) || 'AED' }),
       })
       .eq('id', venue.id);
     setBusy(null);
@@ -365,6 +380,18 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
           <input type="checkbox" checked={drinksOn} onChange={(e) => setDrinksOn(e.target.checked)} />
           <span>Let guests send each other drinks (added to the sender&apos;s bill)</span>
         </label>
+        {venue.drink_limits !== undefined && drinksOn && (
+          <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
+            <div className="col grow" style={{ gap: 4 }}>
+              <label className="label" htmlFor="drink-limits">Drink price limits senders choose from</label>
+              <input id="drink-limits" className="input" inputMode="numeric" placeholder="40, 60, 100" value={limitsText} onChange={(e) => setLimitsText(e.target.value)} />
+            </div>
+            <div className="col" style={{ gap: 4, width: 90 }}>
+              <label className="label" htmlFor="drink-currency">Currency</label>
+              <input id="drink-currency" className="input" maxLength={3} value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            </div>
+          </div>
+        )}
         {venue.requests_enabled !== undefined && (
           <label className="check">
             <input type="checkbox" checked={requestsOn} onChange={(e) => setRequestsOn(e.target.checked)} />

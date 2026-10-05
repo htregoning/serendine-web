@@ -75,6 +75,9 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
       },
     };
   }
+  // Drink price limits (after database update 0021).
+  const dl = await supabase.from('venues').select('drink_limits, currency').eq('id', picked.id).maybeSingle();
+  if (!dl.error && dl.data) venue = { ...venue, ...(dl.data as Partial<StaffVenue>) };
   // Photo and video switches (after database update 0020).
   const media = await supabase.from('venues').select('photos_private, photos_group').eq('id', picked.id).maybeSingle();
   if (!media.error && media.data) venue = { ...venue, ...(media.data as Partial<StaffVenue>) };

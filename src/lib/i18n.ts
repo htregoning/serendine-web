@@ -79,6 +79,13 @@ const AR: Record<string, string> = {
   'They can accept or say no thanks. Nothing is charged unless they accept.': 'يمكنهم القبول أو الاعتذار. لا يُحتسب أي شيء ما لم يقبلوا.',
   "I understand that if {name} accepts, the drink is added to my bill and I'll pay for it.": 'أفهم أنه إذا قبل {name}، فسيُضاف المشروب إلى فاتورتي وسأدفع ثمنه.',
   'Accepted · staff will bring it over and add it to your bill': 'تم القبول · سيحضره الموظفون ويضيفونه إلى فاتورتك',
+  'Up to {currency} {amount}': 'حتى {amount} {currency}',
+  'No price limit': 'بلا حد للسعر',
+  'How much would you like to spend?': 'كم تودّ أن تنفق؟',
+  '{name} and the staff see this, so nobody orders more than you meant.': 'سيرى {name} والموظفون هذا الحد، حتى لا يُطلب أكثر مما قصدت.',
+  'e.g. a glass of rosé': 'مثلاً: كوب من العصير الطازج',
+  'I understand that if {name} accepts, a drink up to {currency} {amount} is added to my bill and I will pay for it.': 'أفهم أنه إذا قبل {name}، فسيُضاف مشروب حتى {amount} {currency} إلى فاتورتي وسأدفع ثمنه.',
+  'Anything up to {currency} {amount}. Just tell your server.': 'أي شيء حتى {amount} {currency}. أخبر النادل فقط.',
   // Photos and videos
   'This video has expired or was removed.': 'انتهت صلاحية هذا الفيديو أو تمت إزالته.',
   'This photo has expired or was removed.': 'انتهت صلاحية هذه الصورة أو تمت إزالتها.',
