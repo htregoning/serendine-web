@@ -41,3 +41,23 @@ export async function visitTheme(visitId: string) {
   const t = error ? null : ((data as ThemeRow[] | null) ?? [])[0];
   return t ? { preset: t.preset, bg: t.bg, fg: t.fg, accent: t.accent, font: t.font } : null;
 }
+
+// A venue's look by its id (the invite page for a planned night out). Null before update 0019.
+export async function venueTheme(venueId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('venues')
+    .select('theme_preset, theme_bg, theme_text, theme_accent, theme_font, brand_updated_at')
+    .eq('id', venueId)
+    .maybeSingle();
+  if (error || !data) return { theme: null, logoUrl: null };
+  const v = data as {
+    theme_preset: string; theme_bg: string; theme_text: string; theme_accent: string; theme_font: ThemeFont;
+    brand_updated_at: string;
+  };
+  // The logo link is always given; the page hides the image if the venue has none (saves loading the logo here).
+  return {
+    theme: { preset: v.theme_preset, bg: v.theme_bg, fg: v.theme_text, accent: v.theme_accent, font: v.theme_font },
+    logoUrl: `/api/logo/${venueId}?v=${Math.floor(new Date(v.brand_updated_at).getTime() / 1000)}`,
+  };
+}

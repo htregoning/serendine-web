@@ -28,6 +28,7 @@ export default async function Home() {
       <p className="lede">
         Scan the code on your table to say hello to another table, call a waiter or see the menu.
       </p>
+      <a className="btn btn-primary" href="/plan" style={{ textDecoration: 'none' }}>Plan a night out with friends</a>
       <div className="home-contact">
         <span className="small">Run a restaurant or bar? Bring Serendine to your tables.</span>
         <div className="row" style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>

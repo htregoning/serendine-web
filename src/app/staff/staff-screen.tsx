@@ -13,6 +13,7 @@ import StaffScript from './staff-script';
 import HostSettings from './host-settings';
 import PhotoReview from './photo-review';
 import OrdersPanel from './orders-panel';
+import GroupRequests from './group-requests';
 import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
 
@@ -28,6 +29,7 @@ export type StaffVenue = {
   drink_limits?: number[];
   request_buttons?: string[];
   ordering_enabled?: boolean;
+  groups_enabled?: boolean;
   currency?: string;
   requests_enabled?: boolean;
   kind?: 'venue' | 'event';
@@ -339,6 +341,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
             )}
           </div>
 
+          {venue.groups_enabled && <GroupRequests supabase={supabase} venueId={venue.id} />}
+
           <StaffScript offer={venue.offer_enabled ? venue.offer_text : null} />
 
           {isManager && <ManagerTools venue={venue} onSaved={() => router.refresh()} />}
@@ -373,6 +377,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
   const [limitsText, setLimitsText] = useState((venue.drink_limits ?? []).join(', '));
   const [buttons, setButtons] = useState<string[]>(venue.request_buttons ?? []);
   const [orderingOn, setOrderingOn] = useState(venue.ordering_enabled === true);
+  const [groupsOn, setGroupsOn] = useState(venue.groups_enabled === true);
   const [currency, setCurrency] = useState(venue.currency ?? 'AED');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -392,6 +397,8 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
         drinks_enabled: drinksOn,
         // Only sent once the events database update (0012) has added this setting.
         ...(venue.requests_enabled === undefined ? {} : { requests_enabled: requestsOn }),
+        // Only sent once the group plans update (0025) has added this setting.
+        ...(venue.groups_enabled === undefined ? {} : { groups_enabled: groupsOn }),
         // Only sent once the ordering update (0024) has added this setting.
         ...(venue.ordering_enabled === undefined ? {} : { ordering_enabled: orderingOn }),
         // Only sent once the requests update (0023) has added this setting.
@@ -483,6 +490,19 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
               <a className="btn btn-ghost btn-sm" href={`/staff/menu?v=${venue.slug}`} style={{ textDecoration: 'none' }}>Edit the menu</a>
               <a className="btn btn-ghost btn-sm" href={`/staff/kitchen?v=${venue.slug}`} style={{ textDecoration: 'none' }}>Open the kitchen screen</a>
             </div>
+          </>
+        )}
+        {venue.groups_enabled !== undefined && (
+          <>
+            <label className="check">
+              <input type="checkbox" checked={groupsOn} onChange={(e) => setGroupsOn(e.target.checked)} />
+              <span>Take group requests: guests can plan a night out here and invite friends; you confirm each one</span>
+            </label>
+            {groupsOn && (
+              <span className="small" style={{ paddingLeft: 32 }}>
+                Share your planning link: serendine.com/plan?v={venue.slug}
+              </span>
+            )}
           </>
         )}
         <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save</button>
