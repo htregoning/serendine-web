@@ -126,6 +126,8 @@ const AR: Record<string, string> = {
   'Not now': 'ليس الآن',
   'This needs a quick update from the venue first. Please try again later.': 'يحتاج هذا إلى تحديث سريع من المكان أولاً. حاول لاحقاً.',
   'That chat mode is not available here.': 'وضع الدردشة هذا غير متاح هنا.',
+  'Offers tonight': 'عروض الليلة',
+  'Sign in to see any offers from {venue}.': 'سجّل الدخول لترى عروض {venue}.',
   // Photos and videos
   'This video has expired or was removed.': 'انتهت صلاحية هذا الفيديو أو تمت إزالته.',
   'This photo has expired or was removed.': 'انتهت صلاحية هذه الصورة أو تمت إزالتها.',

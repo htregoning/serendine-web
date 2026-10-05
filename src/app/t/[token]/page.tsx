@@ -24,5 +24,7 @@ export default async function TablePage({ params }: { params: Promise<{ token: s
     if (visit && visit.table_id === venue.table_id) redirect(`/t/${token}/room`);
   }
 
-  return <Welcome token={token} venue={venue} signedIn={!!user} />;
+  // Offers are only shown to guests who have signed in.
+  const shown = user ? venue : { ...venue, offer_text: '' };
+  return <Welcome token={token} venue={shown} signedIn={!!user} />;
 }

@@ -22,7 +22,7 @@ export const DEFAULT_DESIGN: StickerDesign = {
   fg: '#0B1A3A',
   accent: '#FF2E93',
   headline: 'Scan to say hello to another table',
-  sub: 'Call a waiter, ask for the bill, see the menu. Stay anonymous until you both agree.',
+  sub: 'Sign in to see any offers tonight. Call a waiter, ask for the bill, see the menu. Stay anonymous until you both agree.',
   logo: null,
 };
 

@@ -130,8 +130,8 @@ function SignIn({ token, venue }: { token: string; venue: VenueAtTable }) {
         </ul>
         {venue.offer_enabled && (
           <div className="offer-box">
-            <span className="eyebrow" style={{ color: 'var(--accent)' }}>{t("Tonight's welcome offer")}</span>
-            <strong>{venue.offer_text}</strong>
+            <span className="eyebrow" style={{ color: 'var(--accent)' }}>{t('Offers tonight')}</span>
+            <strong>{t('Sign in to see any offers from {venue}.', { venue: venue.venue_name })}</strong>
           </div>
         )}
       </div>

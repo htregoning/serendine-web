@@ -1,4 +1,4 @@
--- Serendine: a shorter check-in. Guests start with just a name; chat style, "I am",
+-- Serendine: a shorter check-in, and offers only after signing in. Guests start with just a name; chat style, "I am",
 -- and the venue's offers can be set (or changed) afterwards from inside the room.
 -- Paste into Supabase › SQL Editor › New query, then Run. Safe to run more than once.
 
@@ -21,3 +21,7 @@ begin
 end;
 $$;
 grant execute on function update_my_visit(text, text, boolean) to authenticated;
+
+-- Table stickers now say offers appear after signing in (only venues still on the old standard wording change).
+alter table venues alter column sticker_sub set default 'Sign in to see any offers tonight. Call a waiter, ask for the bill, see the menu. Stay anonymous until you both agree.';
+update venues set sticker_sub = 'Sign in to see any offers tonight. Call a waiter, ask for the bill, see the menu. Stay anonymous until you both agree.' where sticker_sub = 'Call a waiter, ask for the bill, see the menu. Stay anonymous until you both agree.';
