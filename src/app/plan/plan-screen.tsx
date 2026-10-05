@@ -16,7 +16,13 @@ export type BookableVenue = {
   accent: string;
   has_logo: boolean;
   brand_version: number;
+  group_offers?: { min_size: number; offer: string }[]; // after update 0027
 };
+
+// The venue's offer for a group this size: the biggest threshold reached.
+function offerFor(v: BookableVenue | undefined, size: number) {
+  return [...(v?.group_offers ?? [])].sort((a, b) => b.min_size - a.min_size).find((o) => o.min_size <= size) ?? null;
+}
 export type MyPlan = { code: string; title: string; starts_at: string; status: Gathering['status']; venue_name: string; going: number; i_am_organiser: boolean };
 
 // Tomorrow in Dubai, as yyyy-mm-dd, for the date picker's default.
@@ -45,6 +51,8 @@ export default function PlanScreen({ venues, mine, startVenue, defaultName, back
     [venues, query],
   );
   const venue = venues.find((v) => v.id === venueId);
+  const offer = offerFor(venue, size);
+  const nextOffer = [...(venue?.group_offers ?? [])].sort((a, b) => a.min_size - b.min_size).find((o) => o.min_size > size) ?? null;
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -118,6 +126,11 @@ export default function PlanScreen({ venues, mine, startVenue, defaultName, back
                     <span className="col" style={{ gap: 0, alignItems: 'flex-start', textAlign: 'start' }}>
                       <b>{v.name}</b>
                       {v.place && <span className="small">{v.place}</span>}
+                      {(v.group_offers?.length ?? 0) > 0 && (
+                        <span className="small" style={{ color: 'var(--accent)', fontWeight: 700 }}>
+                          Group offers from {Math.min(...v.group_offers!.map((o) => o.min_size))} people
+                        </span>
+                      )}
                     </span>
                   </button>
                 ))}
@@ -149,6 +162,18 @@ export default function PlanScreen({ venues, mine, startVenue, defaultName, back
               <button type="button" className="qty-btn" onClick={() => setSize((s) => Math.min(60, s + 1))} aria-label="More people">+</button>
               <span className="small">people, roughly. You can tell the venue if it changes.</span>
             </div>
+            {offer && (
+              <div className="offer-row" role="status" style={{ marginTop: 10 }}>
+                <span className="grow small">
+                  <b style={{ color: 'var(--accent)' }}>{venue?.name} offer for {offer.min_size}+</b> · {offer.offer}
+                </span>
+              </div>
+            )}
+            {nextOffer && (
+              <span className="small" style={{ marginTop: 6 }}>
+                Bring {nextOffer.min_size - size} more and {venue?.name} offers: {nextOffer.offer}
+              </span>
+            )}
           </div>
 
           <div className="col">

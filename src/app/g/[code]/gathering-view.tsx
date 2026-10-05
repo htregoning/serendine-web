@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import SignInCard from '@/components/sign-in-card';
+import PlanReplies from './plan-replies';
 import { STATUS_TEXT, inviteUrl, when, whatsappLink, type Gathering } from '@/lib/gatherings';
 
 type Props = { initial: Gathering; signedIn: boolean; logoUrl: string | null; justCreated: boolean; defaultName: string };
@@ -94,6 +95,14 @@ export default function GatheringView({ initial, signedIn, logoUrl, justCreated,
         <span className="small">For about {g.party_size} people{g.note ? ` · ${g.note}` : ''}</span>
       </div>
 
+      {g.offer_text && (
+        <div className="offer-row">
+          <span className="grow small">
+            <b style={{ color: 'var(--accent)' }}>Group offer from {g.venue_name}</b> · {g.offer_text}
+          </span>
+        </div>
+      )}
+
       <div className={`card col gathering-status status-${g.status}`} style={{ gap: 6 }}>
         <strong>{STATUS_TEXT[g.status]}</strong>
         {g.status === 'suggested' && g.suggested_at && (
@@ -125,7 +134,7 @@ export default function GatheringView({ initial, signedIn, logoUrl, justCreated,
             </div>
           ))
         ) : (
-          <span className="small" style={{ padding: '6px 2px' }}>Say you&apos;re in to see who else is coming.</span>
+          <span className="small" style={{ padding: '6px 2px' }}>Answer below to see who else is coming and join the replies.</span>
         )}
       </div>
 
@@ -155,6 +164,7 @@ export default function GatheringView({ initial, signedIn, logoUrl, justCreated,
           </div>
         ))}
       {msg && <p className="error" role="status" style={{ margin: 0 }}>{msg}</p>}
+      {signedIn && g.my_rsvp && <PlanReplies supabase={supabase} code={g.code} canDelete={g.i_am_organiser} />}
       <a className="small" href="/plan" style={{ textAlign: 'center' }}>Plan your own night out</a>
     </main>
   );

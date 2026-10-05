@@ -79,8 +79,6 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
   const t = useT();
   const where = venue.kind === 'event' ? venue.table_label : `${t('Table')} ${venue.table_label}`;
   const [tab, setTab] = useState<'people' | 'group' | 'chats'>('people');
-  // The venue comes first (tonight, service, coming back); the social side sits behind "People here tonight".
-  const [view, setView] = useState<'venue' | 'social'>('venue');
   const [groupsOn, setGroupsOn] = useState(false);
   // The optional details sheet opens once straight after check-in, and whenever the guest taps their name.
   const [extrasOpen, setExtrasOpen] = useState(firstVisit);
@@ -119,25 +117,6 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
       .then(({ data }: { data: { groups_enabled?: boolean } | null }) => setGroupsOn(!!data?.groups_enabled));
   }, [supabase, venue.venue_id]);
 
-  // The phone's back button returns from the social side to the venue view.
-  useEffect(() => {
-    const onPop = () => setView('venue');
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
-
-  function openSocial(next: 'people' | 'group' | 'chats') {
-    setTab(next);
-    setView('social');
-    window.history.pushState({ room: 'social' }, '');
-    window.scrollTo(0, 0);
-  }
-
-  function backToVenue() {
-    if (window.history.state?.room === 'social') window.history.back();
-    else setView('venue');
-    window.scrollTo(0, 0);
-  }
 
   const loadConvs = useCallback(async () => {
     const { data } = await supabase.rpc('my_conversations', { v: venue.venue_id });
@@ -369,11 +348,10 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
 
       {note && <p className="error" role="status">{note}</p>}
 
-      {/* A drink someone sent (or yours waiting for an answer) stays on top in both views. */}
+      {/* A drink someone sent (or yours waiting for an answer) stays on top. */}
       <DrinksPanel supabase={supabase} myVisitId={visit.id} />
 
-      {view === 'venue' ? (
-        <>
+      <>
           {/* 1. Tonight at the venue: their announcements and the welcome offer. */}
           <section className="col room-section" aria-label={t('Tonight at {venue}', { venue: venue.venue_name })}>
             <VenueNews supabase={supabase} venueId={venue.venue_id} visitId={visit.id} venueName={venue.venue_name} />
@@ -447,60 +425,8 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
             </section>
           )}
 
-          {/* 3. The doorway to the social side: switch on, see who's here. */}
-          <section className="card col people-strip" aria-label={t('People here tonight')}>
-            <div className="row" style={{ gap: 14 }}>
-              <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={44} version={photoVersion} />
-              <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
-                <strong>{t('Open to chat')}</strong>
-                <span className="small">
-                  {isOpen ? t('Visible as {name} · {mode}', { name: visit.alias, mode: t(MODE_LABELS[me.mode]) }) : t("You're hidden. Nobody can message you.")}
-                </span>
-              </div>
-              <button className="switch" role="switch" aria-checked={isOpen} aria-label={t('Open to chat')} onClick={toggleOpen}>
-                <span />
-              </button>
-            </div>
-            <button className="people-door" onClick={() => openSocial(unreadCount > 0 ? 'chats' : 'people')}>
-              <span className="col grow" style={{ gap: 2, textAlign: 'start' }}>
-                <strong>{t('People here tonight')}</strong>
-                <span className="small">
-                  {unreadCount > 0
-                    ? t('{n} unread', { n: unreadCount })
-                    : isOpen
-                      ? t('Open to chat now · {n}', { n: people.length })
-                      : t('See who’s here, the group chat and your chats')}
-                </span>
-              </span>
-              {unreadCount > 0 && <span className="tab-badge">{unreadCount}</span>}
-              <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1 }}>›</span>
-            </button>
-          </section>
-
-          <div style={{ flex: 1 }} />
-
-          {/* 4. Coming back: plan the next night here. */}
-          <section className="col room-section coming-back" aria-label={t('Coming back?')}>
-            <span className="eyebrow">{t('Coming back?')}</span>
-            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-              {groupsOn && (
-                <a className="btn btn-outline btn-sm" href={`/plan?v=${encodeURIComponent(venue.venue_slug)}`} style={{ textDecoration: 'none' }}>
-                  {t('Plan a night here')}
-                </a>
-              )}
-              <a className="btn btn-ghost btn-sm" href="/me" style={{ textDecoration: 'none' }}>{t('Your places and plans')}</a>
-            </div>
-          </section>
-
-          <button className="help-link" onClick={() => setAskOpen('help')}>
-            <Icon d={ICONS.help} />
-            {t('Need help discreetly?')}
-          </button>
-        </>
-      ) : (
-        <>
-          <button className="link-quiet small" onClick={backToVenue}>‹ {venue.venue_name}</button>
-
+          {/* 3. People here tonight: open to chat, then People / Group / Chats. */}
+          <span className="eyebrow" style={{ marginTop: 6 }}>{t('People here tonight')}</span>
           <div className="card row open-card">
             <Avatar supabase={supabase} visitId={visit.id} alias={visit.alias} hasPhoto={hasPhoto} size={44} version={photoVersion} />
             <div className="col grow" style={{ gap: 2 }}>
@@ -601,11 +527,29 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
             </>
           )}
 
-          <div style={{ flex: 1 }} />
-          {/* Ask for alerts once they're actually socialising, as a slim row. */}
+          {/* Alerts for messages and drinks, as a slim row. */}
           <NotifyToggle supabase={supabase} who="guest" compact />
-        </>
-      )}
+
+          <div style={{ flex: 1 }} />
+
+          {/* 4. Coming back: plan the next night here. */}
+          <section className="col room-section coming-back" aria-label={t('Coming back?')}>
+            <span className="eyebrow">{t('Coming back?')}</span>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {groupsOn && (
+                <a className="btn btn-outline btn-sm" href={`/plan?v=${encodeURIComponent(venue.venue_slug)}`} style={{ textDecoration: 'none' }}>
+                  {t('Plan a night here')}
+                </a>
+              )}
+              <a className="btn btn-ghost btn-sm" href="/me" style={{ textDecoration: 'none' }}>{t('Your places and plans')}</a>
+            </div>
+          </section>
+
+          <button className="help-link" onClick={() => setAskOpen('help')}>
+            <Icon d={ICONS.help} />
+            {t('Need help discreetly?')}
+          </button>
+      </>
 
       {askOpen && (
         <div className="sheet-backdrop" onClick={() => setAskOpen(null)}>

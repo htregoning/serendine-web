@@ -19,6 +19,7 @@ export type Gathering = {
   i_am_organiser: boolean;
   my_rsvp: 'going' | 'maybe' | 'no' | null;
   members: { name: string; rsvp: 'going' | 'maybe' | 'no' }[];
+  offer_text?: string | null; // after update 0027
 };
 
 export const TIME_ZONE = 'Asia/Dubai';

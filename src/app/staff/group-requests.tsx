@@ -19,6 +19,7 @@ type Req = {
   organiser_name: string | null;
   organiser_email: string | null;
   going: number;
+  offer_text?: string | null;
 };
 
 const LABEL: Record<Req['status'], string> = {
@@ -82,6 +83,7 @@ export default function GroupRequests({ supabase, venueId }: { supabase: Client;
             {r.organiser_email ? ` (${r.organiser_email})` : ''} · {r.going} said they&apos;re in
           </span>
           {r.note && <span className="small">&ldquo;{r.note}&rdquo;</span>}
+          {r.offer_text && <span className="small" style={{ color: 'var(--accent)', fontWeight: 700 }}>Your group offer applies: {r.offer_text}</span>}
           <span className="small" style={{ fontWeight: 700 }}>
             {LABEL[r.status]}
             {r.status === 'suggested' && r.suggested_at ? `: ${when(r.suggested_at)}` : ''}

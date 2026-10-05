@@ -534,3 +534,6 @@ h1.display.arrive-title { font-size: 40px; line-height: 1.08; }
 .people-door .tab-badge { position: static; }
 .coming-back { padding-top: 6px; border-top: 1px solid var(--line); }
 .notify-slim { padding: 10px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+.plan-replies { max-height: 50dvh; overflow-y: auto; }
+.plan-reply { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); max-width: 88%; }
+.plan-reply.mine { align-self: flex-end; border-color: var(--accent); }

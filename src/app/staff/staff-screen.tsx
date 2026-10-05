@@ -14,6 +14,7 @@ import HostSettings from './host-settings';
 import PhotoReview from './photo-review';
 import OrdersPanel from './orders-panel';
 import GroupRequests from './group-requests';
+import GroupOffers from './group-offers';
 import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
 
@@ -503,6 +504,7 @@ function ManagerTools({ venue, onSaved }: { venue: StaffVenue; onSaved: () => vo
                 Share your planning link: serendine.com/plan?v={venue.slug}
               </span>
             )}
+            {groupsOn && <GroupOffers supabase={supabase} venueId={venue.id} />}
           </>
         )}
         <button className="btn btn-ghost btn-sm" onClick={saveOffer} disabled={busy === 'offer'}>Save</button>

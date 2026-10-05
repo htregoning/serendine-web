@@ -14,7 +14,21 @@ const FUNCTIONS = {
   announcement: 'push_for_announcement',
   order: 'push_for_order',
   gathering: 'push_for_gathering',
+  plan_message: 'push_for_plan_message',
 } as const;
+
+// Each database function's own parameter name.
+const PARAM: Record<keyof typeof FUNCTIONS, string> = {
+  message: 'c',
+  request_update: 'r',
+  new_request: 'r',
+  drink: 'p_id',
+  test: 'r',
+  announcement: 'p_id',
+  order: 'o',
+  gathering: 'p_id',
+  plan_message: 'p_id',
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,7 +55,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const fn = FUNCTIONS[kind as keyof typeof FUNCTIONS];
-  const arg = kind === 'test' ? {} : kind === 'message' ? { c: id } : kind === 'drink' || kind === 'announcement' ? { p_id: id } : { r: id };
+  const arg = kind === 'test' ? {} : { [PARAM[kind as keyof typeof FUNCTIONS]]: id };
   const { data, error } = await supabase.rpc(fn, arg);
   if (error) {
     return NextResponse.json({ sent: 0, reason: error.code === 'PGRST202' ? 'database update missing' : 'error' });
