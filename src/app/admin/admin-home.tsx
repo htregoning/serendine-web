@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/logo';
+import { statusLine, type Access, type PlanName } from '@/lib/plans';
 
 export type AdminVenue = {
   id: string;
@@ -18,6 +19,11 @@ export type AdminVenue = {
   kind?: 'venue' | 'event';
   starts_at?: string | null;
   ends_at?: string | null;
+  // After update 0028
+  plan?: PlanName;
+  access?: Access;
+  trial_ends_at?: string | null;
+  paid_until?: string | null;
 };
 
 // "2026-10-04T19:00" in the browser's time zone, for <input type="datetime-local">.
@@ -113,7 +119,14 @@ export default function AdminHome({ isAdmin, venues, email }: { isAdmin: boolean
       <div className="admin-grid">
         {venues.map((v) => (
           <Link key={v.id} href={`/admin/v/${v.id}`} className="card col admin-venue" style={{ gap: 8 }}>
-            <strong style={{ fontSize: 18 }}>{v.name}</strong>
+            <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+              <strong className="grow" style={{ fontSize: 18 }}>{v.name}</strong>
+              {v.plan && v.access && (
+                <span className={`pill plan-${v.access}`}>
+                  {statusLine({ plan: v.plan, access: v.access, trial_ends_at: v.trial_ends_at ?? null, paid_until: v.paid_until ?? null })}
+                </span>
+              )}
+            </div>
             <span className="small">
               {v.kind === 'event' ? `Event · ${eventWhen(v)}` : `serendine · /${v.slug}`}
             </span>

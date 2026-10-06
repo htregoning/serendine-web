@@ -15,6 +15,7 @@ import PhotoReview from './photo-review';
 import OrdersPanel from './orders-panel';
 import GroupRequests from './group-requests';
 import GroupOffers from './group-offers';
+import PlanBanner from './plan-banner';
 import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
 
@@ -238,6 +239,8 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
           <span className="small">Staff screen · Serendine{isManager ? ' · Manager' : ''}</span>
         </div>
       </header>
+
+      {isManager && <PlanBanner supabase={supabase} venueId={venue.id} />}
 
       {note && <p className="error" role="status">{note}</p>}
 

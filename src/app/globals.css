@@ -547,3 +547,11 @@ button.attach-btn { background: transparent; padding: 0; font: inherit; }
 }
 .attach-option { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px; font-weight: 600; font-size: 15px; color: var(--text); cursor: pointer; }
 .attach-option:hover, .attach-option:focus-within { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.btn-danger { background: var(--danger); color: #fff; border: none; }
+.btn-danger:disabled { opacity: 0.45; }
+.plan-trial, .plan-paid, .plan-open { border-color: var(--good, #2e9d6a); color: var(--good, #2e9d6a); }
+.plan-grace { border-color: #c98a12; color: #c98a12; }
+.plan-ended, .plan-off { border-color: var(--danger); color: var(--danger); }
+.plan-banner { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); }
+.plan-banner.warn { border-color: #c98a12; background: color-mix(in srgb, #c98a12 10%, var(--card)); }
+.plan-banner.stop { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--card)); }

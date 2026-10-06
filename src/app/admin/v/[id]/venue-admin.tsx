@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import PlanPanel from './plan-panel';
 
 type Table = { id: string; label: string; zone: string; qr_token: string; guests_now: number };
 type Member = { user_id: string | null; invite_id: string | null; email: string; role: 'manager' | 'staff'; pending: boolean };
@@ -24,7 +25,7 @@ function localInput(iso: string | null | undefined) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export default function VenueAdmin({ venue, me }: { venue: AdminVenueInfo; me: string }) {
+export default function VenueAdmin({ venue, me, isAdmin = false }: { venue: AdminVenueInfo; me: string; isAdmin?: boolean }) {
   const isEvent = venue.kind === 'event';
   const Word = isEvent ? 'Area' : 'Table';
   const word = isEvent ? 'area' : 'table';
@@ -97,6 +98,8 @@ export default function VenueAdmin({ venue, me }: { venue: AdminVenueInfo; me: s
       </form>
 
       {(msg || err) && <p className={err ? 'error' : 'card small'} role="status">{err ?? msg}</p>}
+
+      {isAdmin && <PlanPanel supabase={supabase} venueId={venue.id} venueName={venue.name} />}
 
       {isEvent && (
         <form
