@@ -23,13 +23,14 @@ export default function Privacy() {
         <li>Your messages are end-to-end encrypted on your phone. We cannot read them, and nor can the venue.</li>
         <li>Your table number is only shown to another guest if you both agree.</li>
         <li>Chats are deleted when you leave, unless you and the other person both choose to keep in touch.</li>
-        <li>The venue you check in at sees your name, email address, and when and at which table you visited. It never sees your messages or who you talk to.</li>
+        <li>The venue you check in at sees your name, email address (if you signed in with one), and when and at which table you visited. It never sees your messages or who you talk to.</li>
         <li>The venue may only send you offers and marketing if you tick the box to receive them.</li>
       </ul>
 
       <h2>What we collect</h2>
       <ul>
-        <li><b>Account details</b> from the sign-in you choose (Google, email link, or Telegram): your name, email address, profile picture where the provider supplies one, and a unique account ID. We never receive your password.</li>
+        <li><b>Account details</b> from the sign-in you choose (Google, email link, phone number, or Telegram): your name, email address or mobile number, profile picture where the provider supplies one, and a unique account ID. We never receive your password.</li>
+        <li><b>Your mobile number</b>, if you sign in with it. It is used only to send your sign-in code (through our messaging provider, by WhatsApp or text) and is never shown to other guests or to venues.</li>
         <li><b>Optional details you add</b>: whether you identify as male, female or prefer not to say, and an optional selfie, shown only to other guests open to chat at the same venue and deleted when you leave.</li>
         <li><b>Ratings and comments</b> you give after a visit. They go to that venue&apos;s managers with your name and table.</li>
         <li><b>Your birthday</b> (day and month only), if you add it. It is shared only with venues whose offers you agreed to receive.</li>

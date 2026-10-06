@@ -9,6 +9,7 @@ import { MODE_LABELS, eventDate, eventWindow, type ChatMode, type VenueAtTable }
 import { LangToggle, useT } from '@/components/lang';
 import Buzz from '@/components/buzz';
 import VenueMark from '@/components/venue-mark';
+import PhoneSignIn, { phoneLoginOn } from '@/components/phone-sign-in';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
@@ -58,6 +59,7 @@ function SignIn({ token, venue }: { token: string; venue: VenueAtTable }) {
   const [error, setError] = useState<string | null>(null);
   const [tg, setTg] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
   const t = useT();
   const redirectTo = () => `${window.location.origin}/auth/callback?next=/t/${token}`;
   const tgLink = telegramLink(token);
@@ -136,10 +138,17 @@ function SignIn({ token, venue }: { token: string; venue: VenueAtTable }) {
         )}
       </div>
       <div className="col" style={{ gap: 10 }}>
+        {showPhone ? (
+          <PhoneSignIn next={`/t/${token}`} onBack={() => setShowPhone(false)} />
+        ) : (
+          <>
         {process.env.NEXT_PUBLIC_APPLE_SIGNIN === 'on' && (
           <button className="btn btn-light" onClick={() => oauth('apple')}>{t('Continue with Apple')}</button>
         )}
         <button className="btn btn-light" onClick={() => oauth('google')}>{t('Continue with Google')}</button>
+        {phoneLoginOn && !sent && !showEmail && (
+          <button className="btn btn-ghost" onClick={() => setShowPhone(true)}>{t('Use my phone number')}</button>
+        )}
         {tgLink && (
           <a className="btn btn-ghost" href={tgLink} style={{ textDecoration: 'none' }}>
             {t('Open in Telegram')}
@@ -164,6 +173,8 @@ function SignIn({ token, venue }: { token: string; venue: VenueAtTable }) {
           </form>
         ) : (
           <button className="btn btn-ghost" onClick={() => setShowEmail(true)}>{t('Use my email instead')}</button>
+        )}
+          </>
         )}
         {error && <p className="error">{error}</p>}
         <p className="small" style={{ textAlign: 'center', margin: 0 }}>
