@@ -195,5 +195,5 @@ export function themeCss(theme: VenueTheme | null | undefined) {
 // Printed stickers stay light so they photocopy and scan well: a light theme is used as-is,
 // a dark one is flipped (its background colour becomes the text on white).
 export function stickerColours(t: Pick<VenueTheme, 'bg' | 'fg'>) {
-  return isDark(t.bg) ? { bg: '#FFFFFF', fg: t.bg } : { bg: t.bg, fg: t.fg };
+  return { bg: t.bg, fg: t.fg };
 }

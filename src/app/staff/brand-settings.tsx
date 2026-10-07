@@ -231,7 +231,7 @@ export default function BrandSettings({ venueId, venueName, offer, initial, onSa
       {theme.preset !== 'serendine' && (
         <label className="check">
           <input type="checkbox" checked={matchStickers} onChange={(e) => setMatchStickers(e.target.checked)} />
-          <span>Restyle our table stickers to match (they stay light so they print and scan well)</span>
+          <span>Restyle our table stickers to match (the QR code always sits on white, so it scans in any colours)</span>
         </label>
       )}
 

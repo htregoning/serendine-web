@@ -89,6 +89,7 @@ type Props = {
   initial: StickerDesign;
   canSave: boolean;
   isEvent?: boolean;
+  appLook?: { bg: string; fg: string; accent: string } | null;
 };
 
 function fileSafe(s: string) {
@@ -135,7 +136,7 @@ async function downloadCode(url: string, name: string, format: 'svg' | 'png', da
   canvas.toBlob((b) => b && saveBlob(b, `${name}.png`), 'image/png');
 }
 
-export default function StickerSheet({ venueId, venueName, venueSlug, tables, initial, canSave, isEvent = false }: Props) {
+export default function StickerSheet({ venueId, venueName, venueSlug, tables, initial, canSave, isEvent = false, appLook = null }: Props) {
   const [supabase] = useState(() => createClient());
   const [base, setBase] = useState('');
   const [codes, setCodes] = useState<Record<string, string>>({});
@@ -321,6 +322,19 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
           <div className="st-field">
             <span className="st-label">Colour presets</span>
             <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {appLook && (
+                <button
+                  className="st-preset"
+                  style={{ fontWeight: 700, borderColor: '#0b1a3a' }}
+                  onClick={() => setD((x) => ({ ...x, bg: appLook.bg, fg: appLook.fg, accent: appLook.accent }))}
+                  title="Use the same colours as your guest app"
+                >
+                  <span style={{ background: appLook.bg }} />
+                  <span style={{ background: appLook.fg }} />
+                  <span style={{ background: appLook.accent }} />
+                  Match our app look
+                </button>
+              )}
               {PRESETS.map((p) => (
                 <button
                   key={p.name}

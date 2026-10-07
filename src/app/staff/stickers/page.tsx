@@ -47,6 +47,19 @@ export default async function StickersPage({ searchParams }: { searchParams: Pro
   const saved = ((design as StickerDesign[] | null) ?? [])[0];
   const initial: StickerDesign = saved ? { ...DEFAULT_DESIGN, ...saved, sub: saved.sub ?? '' } : DEFAULT_DESIGN;
 
+  // The guest app's colours (after update 0019), for "Match our app look".
+  const { data: lookRow, error: lookErr } = await supabase
+    .from('venues')
+    .select('theme_preset, theme_bg, theme_text, theme_accent')
+    .eq('id', venue.id)
+    .maybeSingle();
+  const look = lookErr || !lookRow
+    ? null
+    : (() => {
+        const l = lookRow as { theme_preset: string; theme_bg: string; theme_text: string; theme_accent: string };
+        return l.theme_preset === 'serendine' ? null : { bg: l.theme_bg, fg: l.theme_text, accent: l.theme_accent };
+      })();
+
   const { data: kindRow } = await supabase.from('venues').select('kind').eq('id', venue.id).maybeSingle();
   const isEvent = (kindRow as { kind?: string } | null)?.kind === 'event';
 
@@ -60,6 +73,7 @@ export default async function StickersPage({ searchParams }: { searchParams: Pro
       initial={initial}
       canSave={!designError}
       isEvent={isEvent}
+      appLook={look}
     />
   );
 }
