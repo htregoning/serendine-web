@@ -358,6 +358,7 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
             <BrandSettings
               venueId={venue.id}
               venueName={venue.name}
+              venueSlug={venue.slug}
               offer={venue.offer_enabled ? venue.offer_text : null}
               initial={venue.brand}
               onSaved={() => router.refresh()}

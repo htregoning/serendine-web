@@ -22,7 +22,7 @@ export type BrandInitial = {
   logoUrl: string | null;
 };
 
-type Props = { venueId: string; venueName: string; offer: string | null; initial: BrandInitial; onSaved: () => void };
+type Props = { venueId: string; venueName: string; venueSlug: string; offer: string | null; initial: BrandInitial; onSaved: () => void };
 
 const ALL_MODES = Object.keys(MODE_LABELS) as ChatMode[];
 const FONT_VAR: Record<ThemeFont, string> = {
@@ -33,7 +33,7 @@ const FONT_VAR: Record<ThemeFont, string> = {
 
 // Managers choose how Serendine looks to their guests: a ready-made style or their own colours,
 // a type style, their logo, and which chat modes guests can pick.
-export default function BrandSettings({ venueId, venueName, offer, initial, onSaved }: Props) {
+export default function BrandSettings({ venueId, venueName, venueSlug, offer, initial, onSaved }: Props) {
   const [supabase] = useState(() => createClient());
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<VenueTheme>(initial.theme);
@@ -239,7 +239,7 @@ export default function BrandSettings({ venueId, venueName, offer, initial, onSa
         <button className="btn btn-primary btn-sm" onClick={save} disabled={busy || problems.length > 0 || modes.length === 0}>
           {busy ? 'Saving…' : 'Save look'}
         </button>
-        <a className="btn btn-ghost btn-sm" href="/staff/stickers" style={{ textDecoration: 'none' }}>Print stickers</a>
+        <a className="btn btn-ghost btn-sm" href={`/staff/stickers?v=${encodeURIComponent(venueSlug)}`} style={{ textDecoration: 'none' }}>Print stickers</a>
       </div>
       {msg && <p className="small" role="status" style={{ margin: 0 }}>{msg}</p>}
     </div>

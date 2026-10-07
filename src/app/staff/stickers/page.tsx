@@ -26,8 +26,25 @@ export default async function StickersPage({ searchParams }: { searchParams: Pro
       .select('venues(id, slug, name, accent)')
       .eq('user_id', user.id)
       .eq('role', 'manager');
-    const first = ((rows ?? []) as unknown as { venues: V | null }[]).find((r) => r.venues);
-    venue = first?.venues ?? null;
+    const mine = ((rows ?? []) as unknown as { venues: V | null }[]).flatMap((r) => (r.venues ? [r.venues] : []));
+    if (mine.length > 1) {
+      return (
+        <main className="shell">
+          <h1 className="display" style={{ fontSize: 28 }}>Which venue&apos;s stickers?</h1>
+          <div className="col" style={{ gap: 8 }}>
+            {mine
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((x) => (
+                <a key={x.id} className="card row" href={`/staff/stickers?v=${encodeURIComponent(x.slug)}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
+                  <strong className="grow">{x.name}</strong>
+                  <span aria-hidden="true">›</span>
+                </a>
+              ))}
+          </div>
+        </main>
+      );
+    }
+    venue = mine[0] ?? null;
   }
 
   const { data: tables } = venue ? await supabase.rpc('admin_tables', { v: venue.id }) : { data: null };
