@@ -176,6 +176,29 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .sticker-foot { margin: auto 0 0; font-size: 2.8mm; font-weight: 600; opacity: 0.8; display: flex; flex-direction: column; align-items: center; gap: 0.8mm; }
 .sticker-powered { font-size: 2.3mm; font-weight: 500; letter-spacing: 0.08em; color: var(--st-accent, #ff2e93); }
 
+/* 8 per A4 label sheet: Avery L7165 size (99.1 × 67.7 mm, 2 across × 4 down, 13.1 mm top, 4.65 mm side, 2.5 mm gap) */
+.label-page {
+  width: 210mm; height: 297mm; box-sizing: border-box; margin: 0 auto 8mm; padding: 13.1mm 4.65mm;
+  display: grid; grid-template-columns: repeat(2, 99.1mm); grid-auto-rows: 67.7mm; column-gap: 2.5mm; row-gap: 0;
+  background: #fff; box-shadow: 0 0 0 1px #cfd3ec; break-after: page; page-break-after: always;
+}
+.label-page:last-child { break-after: auto; page-break-after: auto; }
+.label8 {
+  box-sizing: border-box; width: 99.1mm; height: 67.7mm; padding: 4mm; display: flex; gap: 3.5mm; align-items: center;
+  background: var(--st-bg, #f7f6ff); color: var(--st-fg, #0b1a3a); border-radius: 2mm; outline: 0.3mm dashed #a6acd6;
+  font-family: var(--font-body), system-ui, sans-serif; overflow: hidden;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.label8-qr { width: 44mm; height: 44mm; flex-shrink: 0; padding: 2mm; box-sizing: border-box; }
+.label8-text { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; gap: 2mm; padding: 1mm 0; }
+.label8-top { min-height: 7mm; display: flex; align-items: center; }
+.label8-logo { max-width: 100%; max-height: 9mm; object-fit: contain; object-position: left center; }
+.label8-brand { font-size: 3.4mm; letter-spacing: 0.18em; }
+.label8-table { margin-left: 0; align-self: flex-start; font-size: 2.8mm; }
+.label8-line { margin: 0; font-family: var(--font-display), system-ui, sans-serif; font-weight: 500; font-size: 3.7mm; line-height: 1.2; }
+.label8-foot { margin: auto 0 0; display: flex; flex-direction: column; gap: 0.6mm; font-size: 2.3mm; font-weight: 600; opacity: 0.85; }
+.label8-foot .sticker-powered { font-size: 2mm; }
+
 /* Sticker designer (screen only) */
 .st-editor { max-width: 900px; margin: 0 auto 24px; background: #fff; border: 1px solid #cfd3ec; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; color: #0b1a3a; }
 .st-field { display: flex; flex-direction: column; gap: 6px; }
@@ -199,6 +222,8 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
   .stickers-page { background: #fff; padding: 0; }
   .sticker { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sticker-grid { gap: 6mm; }
+  .label-page { margin: 0; box-shadow: none; }
+  .label8 { outline: none; border-radius: 0; }
 }
 
 /* Brand */

@@ -146,6 +146,8 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
   const [editing, setEditing] = useState(true);
   const [showCodes, setShowCodes] = useState(isEvent);
   const [target, setTarget] = useState<'web' | 'telegram'>('web');
+  // 'large': 4 per A4 page, cut out (90 × 120 mm). 'labels8': 8 per A4 on Avery L7165-size label sheets (99.1 × 67.7 mm).
+  const [layout, setLayout] = useState<'large' | 'labels8'>('large');
   const codeUrl = (token: string) => (target === 'telegram' ? telegramLink(token) : `${base}/t/${token}`);
   const codeName = (label: string) =>
     `${fileSafe(venueSlug)}-${fileSafe(label)}${target === 'telegram' ? '-telegram' : ''}`;
@@ -239,12 +241,21 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
         <div className="col" style={{ gap: 4 }}>
           <strong style={{ fontSize: 20 }}>{isEvent ? 'QR codes' : 'Table stickers'} · {venueName}</strong>
           <span className="small">
-            {tables.length} {isEvent ? 'areas' : 'tables'}. Prints four stickers per A4 page at 90 × 120 mm. Each code opens that{' '}
-            {isEvent ? 'area' : 'table'}&apos;s check-in.
+            {tables.length} {isEvent ? 'areas' : 'tables'}.{' '}
+            {layout === 'large'
+              ? 'Prints four stickers per A4 page at 90 × 120 mm, to cut out.'
+              : 'Prints eight per A4 sheet of labels, 99.1 × 67.7 mm (Avery L7165 or any "8 per sheet, 99.1 × 67.7" labels).'}{' '}
+            Each code opens that {isEvent ? 'area' : 'table'}&apos;s check-in.
           </span>
           <span className="small">Codes point to {base || '…'}. Reprint after connecting your own domain.</span>
         </div>
-        <div className="row" style={{ gap: 8 }}>
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+          <button className={`st-btn${layout === 'large' ? ' st-btn-primary' : ''}`} onClick={() => setLayout('large')} aria-pressed={layout === 'large'}>
+            4 per page
+          </button>
+          <button className={`st-btn${layout === 'labels8' ? ' st-btn-primary' : ''}`} onClick={() => setLayout('labels8')} aria-pressed={layout === 'labels8'}>
+            8 per page (labels)
+          </button>
           <button className="st-btn" onClick={() => setShowCodes((s) => !s)}>{showCodes ? 'Hide downloads' : 'Download codes'}</button>
           <button className="st-btn" onClick={() => setEditing((e) => !e)}>{editing ? 'Hide design' : 'Edit design'}</button>
           <button className="st-btn st-btn-primary" onClick={() => window.print()}>Print stickers</button>
@@ -384,30 +395,61 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
         </section>
       )}
 
+      {layout === 'large' ? (
       <div className="sticker-grid" style={vars}>
-        {tables.map((t) => (
-          <article key={t.qr_token} className="sticker">
-            <div className="sticker-top">
-              {d.logo ? (
-                <img className="sticker-logo" src={d.logo} alt={venueName} />
-              ) : (
-                <>
-                  <Logo size={34} color={HEX.test(d.accent) ? d.accent : DEFAULT_DESIGN.accent} />
-                  <span className="sticker-brand">Serendine</span>
-                </>
-              )}
-              <span className="sticker-table">{where(t.label)}</span>
+          {tables.map((t) => (
+            <article key={t.qr_token} className="sticker">
+              <div className="sticker-top">
+                {d.logo ? (
+                  <img className="sticker-logo" src={d.logo} alt={venueName} />
+                ) : (
+                  <>
+                    <Logo size={34} color={HEX.test(d.accent) ? d.accent : DEFAULT_DESIGN.accent} />
+                    <span className="sticker-brand">Serendine</span>
+                  </>
+                )}
+                <span className="sticker-table">{where(t.label)}</span>
+              </div>
+              <div className="sticker-qr" dangerouslySetInnerHTML={{ __html: codes[t.qr_token] ?? '' }} />
+              <p className="sticker-line">{d.headline || DEFAULT_DESIGN.headline}</p>
+              {d.sub.trim() && <p className="sticker-sub">{d.sub}</p>}
+              <p className="sticker-foot">
+                <span>{venueName} · 18+</span>
+                <span className="sticker-powered">Powered by Serendine.com</span>
+              </p>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Label sheets print edge to edge: the label positions are measured from the paper's corner. */}
+          <style>{'@page { size: A4; margin: 0; }'}</style>
+          {Array.from({ length: Math.ceil(tables.length / 8) }, (_, i) => tables.slice(i * 8, i * 8 + 8)).map((page, i) => (
+            <div key={i} className="label-page" style={vars}>
+              {page.map((t) => (
+                <article key={t.qr_token} className="label8">
+                  <div className="sticker-qr label8-qr" dangerouslySetInnerHTML={{ __html: codes[t.qr_token] ?? '' }} />
+                  <div className="label8-text">
+                    <div className="label8-top">
+                      {d.logo ? (
+                        <img className="label8-logo" src={d.logo} alt={venueName} />
+                      ) : (
+                        <span className="sticker-brand label8-brand">Serendine</span>
+                      )}
+                    </div>
+                    <span className="sticker-table label8-table">{where(t.label)}</span>
+                    <p className="label8-line">{d.headline || DEFAULT_DESIGN.headline}</p>
+                    <p className="label8-foot">
+                      <span>{venueName} · 18+</span>
+                      <span className="sticker-powered">Powered by Serendine.com</span>
+                    </p>
+                  </div>
+                </article>
+              ))}
             </div>
-            <div className="sticker-qr" dangerouslySetInnerHTML={{ __html: codes[t.qr_token] ?? '' }} />
-            <p className="sticker-line">{d.headline || DEFAULT_DESIGN.headline}</p>
-            {d.sub.trim() && <p className="sticker-sub">{d.sub}</p>}
-            <p className="sticker-foot">
-              <span>{venueName} · 18+</span>
-              <span className="sticker-powered">Powered by Serendine.com</span>
-            </p>
-          </article>
-        ))}
-      </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }
