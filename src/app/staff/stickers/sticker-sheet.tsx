@@ -384,7 +384,7 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
         </section>
       )}
 
-      <div className="sheet" style={vars}>
+      <div className="sticker-grid" style={vars}>
         {tables.map((t) => (
           <article key={t.qr_token} className="sticker">
             <div className="sticker-top">

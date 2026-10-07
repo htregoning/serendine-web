@@ -159,7 +159,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
 .stickers-page { min-height: 100dvh; background: #e6e8f5; color: #0b1a3a; padding: 24px; }
 .stickers-head { max-width: 900px; margin: 0 auto 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .stickers-head .small { color: #3b4374; }
-.sheet { display: grid; grid-template-columns: repeat(2, 90mm); gap: 8mm; justify-content: center; }
+.sticker-grid { display: grid; grid-template-columns: repeat(2, 90mm); gap: 8mm; justify-content: center; }
 .sticker {
   width: 90mm; height: 120mm; box-sizing: border-box; padding: 9mm; background: var(--st-bg, #f7f6ff); border: 0.4mm dashed #a6acd6;
   display: flex; flex-direction: column; align-items: center; gap: 4mm; break-inside: avoid; page-break-inside: avoid;
@@ -198,6 +198,7 @@ h1.display { font-size: 32px; line-height: 1.12; margin: 0; color: var(--accent)
   .no-print { display: none !important; }
   .stickers-page { background: #fff; padding: 0; }
   .sticker { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sticker-grid { gap: 6mm; }
 }
 
 /* Brand */
