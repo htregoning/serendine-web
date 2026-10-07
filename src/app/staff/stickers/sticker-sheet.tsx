@@ -403,7 +403,7 @@ export default function StickerSheet({ venueId, venueName, venueSlug, tables, in
             {d.sub.trim() && <p className="sticker-sub">{d.sub}</p>}
             <p className="sticker-foot">
               <span>{venueName} · 18+</span>
-              <span className="sticker-powered">Powered by Serendine</span>
+              <span className="sticker-powered">Powered by Serendine.com</span>
             </p>
           </article>
         ))}
