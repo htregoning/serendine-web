@@ -524,7 +524,7 @@ h1.display.arrive-title { font-size: 40px; line-height: 1.08; }
 .order-send { position: sticky; bottom: calc(-22px - env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; background: var(--card); }
 .take-menu { max-height: 360px; overflow-y: auto; }
 
-.kitchen { min-height: 100dvh; padding: 24px; display: flex; flex-direction: column; gap: 20px; --text: #F5F2FA; --text-2: #C9CDE3; --muted: #9AA4C9; color: var(--text); }
+.kitchen { min-height: 100dvh; padding: 24px; display: flex; flex-direction: column; gap: 20px; --bg: #111418; --card: #1A1F26; --line: #2A313B; --line-strong: #3A4350; --text: #F2F4F7; --text-2: #C4CBD5; --muted: #9AA4B2; --accent: #7EA2FF; --on-accent: #0B1020; background: var(--bg); color: var(--text); }
 .kitchen-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
 @media (max-width: 760px) { .kitchen-cols { grid-template-columns: minmax(0, 1fr); } }
 .kitchen-col-title { margin: 0; font-size: 18px; color: var(--text-2); }

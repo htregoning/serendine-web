@@ -16,6 +16,7 @@ import OrdersPanel from './orders-panel';
 import GroupRequests from './group-requests';
 import GroupOffers from './group-offers';
 import PlanBanner from './plan-banner';
+import WorkTheme, { WorkThemeToggle } from '@/components/work-theme';
 import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
 
@@ -225,11 +226,12 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
     loadGuests();
   }
 
-  // Always the Serendine brand colours (venue colours can return with white-labelling).
   const style = {} as React.CSSProperties;
 
   return (
     <main className="staff" style={style}>
+      {/* Plain working colours, with the venue's brand colour as the accent when it reads well. */}
+      <WorkTheme accent={venue.brand?.theme.accent ?? null} />
       <header className="row" style={{ gap: 16 }}>
         <div className="avatar" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
           {venue.name.trim().charAt(0).toUpperCase()}
@@ -238,6 +240,7 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
           <span className="display" style={{ fontSize: 26 }}>{venue.name}</span>
           <span className="small">Staff screen · Serendine{isManager ? ' · Manager' : ''}</span>
         </div>
+        <WorkThemeToggle />
       </header>
 
       {isManager && <PlanBanner supabase={supabase} venueId={venue.id} />}

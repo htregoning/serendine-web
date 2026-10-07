@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/logo';
+import { WorkThemeToggle } from '@/components/work-theme';
 import { statusLine, type Access, type PlanName } from '@/lib/plans';
 
 export type AdminVenue = {
@@ -111,6 +112,7 @@ export default function AdminHome({ isAdmin, venues, email }: { isAdmin: boolean
           <span className="small">{isAdmin ? 'Admin' : 'Venue manager'} · {email}</span>
         </div>
         {isAdmin && <Link className="btn btn-ghost btn-sm" href="/admin/directory" style={{ textDecoration: 'none', color: 'var(--text)' }}>Directory</Link>}
+        <WorkThemeToggle />
         {isAdmin && <Link className="btn btn-ghost btn-sm" href="/admin/reports" style={{ textDecoration: 'none', color: 'var(--text)' }}>Reports</Link>}
       </header>
 
