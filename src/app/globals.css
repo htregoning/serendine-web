@@ -581,3 +581,23 @@ button.attach-btn { background: transparent; padding: 0; font: inherit; }
 .plan-banner { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); }
 .plan-banner.warn { border-color: #c98a12; background: color-mix(in srgb, #c98a12 10%, var(--card)); }
 .plan-banner.stop { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--card)); }
+
+/* Hide chats when switching apps */
+html.privacy-hide body > * { filter: blur(22px); }
+html.privacy-hide body::after {
+  content: 'Serendine'; position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent); color: var(--muted); font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase;
+}
+
+/* View-once photos */
+.once-card { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--line-strong); background: transparent; color: var(--text); font: inherit; font-weight: 600; font-size: 14px; text-align: start; }
+.once-ready { border-style: solid; border-color: var(--accent); cursor: pointer; }
+.once-used { opacity: 0.6; font-weight: 500; }
+.once-icon { width: 26px; height: 26px; border-radius: 50%; border: 2px solid currentColor; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.once-view { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.once-frame { position: relative; width: min(92vw, 520px); max-height: 74dvh; overflow: hidden; border-radius: 12px; }
+.once-frame video { width: 100%; max-height: 74dvh; display: block; background: #000; }
+.once-img { width: 100%; max-height: 74dvh; background: #000 center / contain no-repeat; }
+.once-mark { position: absolute; inset: -30%; display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around; gap: 34px 50px; transform: rotate(-24deg); pointer-events: none; }
+.once-mark span { color: rgba(255, 255, 255, 0.28); font-size: 15px; font-weight: 700; text-shadow: 0 0 2px rgba(0, 0, 0, 0.35); white-space: nowrap; }
+.attach-once { gap: 10px; border-bottom: 1px solid var(--line); border-radius: 10px 10px 0 0; padding-top: 6px; padding-bottom: 6px; }

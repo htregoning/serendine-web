@@ -1,5 +1,6 @@
 'use client';
 
+import PrivacyShield from '@/components/privacy-shield';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -79,6 +80,8 @@ export default function Connections() {
   const active = list?.find((c) => c.conversation_id === activeId);
   if (active) {
     return (
+      <>
+      <PrivacyShield />
       <Chat
         supabase={supabase}
         conv={toConv(active)}
@@ -94,6 +97,7 @@ export default function Connections() {
           load();
         }}
       />
+      </>
     );
   }
 

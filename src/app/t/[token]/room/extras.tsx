@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/avatar';
 import { LangToggle, useLang, useT } from '@/components/lang';
+import { hideOnSwitch, setHideOnSwitch } from '@/components/privacy-shield';
 import { monthNames } from '@/lib/i18n';
 import { GENDER_LABELS, MODE_LABELS, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 
@@ -37,6 +38,8 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
   const [bMonth, setBMonth] = useState('');
   const [bdayOffer, setBdayOffer] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
+  const [hide, setHide] = useState(true);
+  useEffect(() => setHide(hideOnSwitch()), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -184,6 +187,18 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
             )}
           </div>
         )}
+
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={hide}
+            onChange={(e) => {
+              setHide(e.target.checked);
+              setHideOnSwitch(e.target.checked);
+            }}
+          />
+          <span>{t('Hide my chats when I switch apps or lock my phone')}</span>
+        </label>
 
         <label className="check">
           <input

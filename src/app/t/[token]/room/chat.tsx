@@ -10,7 +10,7 @@ import Avatar from '@/components/avatar';
 import { SendDrink } from '@/components/drinks';
 import { genderTag } from '@/lib/types';
 import Linkify from '@/components/linkify';
-import MediaView, { AttachButton } from '@/components/media-view';
+import MediaView, { AttachButton, ViewOnce } from '@/components/media-view';
 import { MediaProblem, encodeMedia, encryptBlob, parseMedia, prepareMedia, type MediaPayload } from '@/lib/media';
 
 export type Conv = {
@@ -36,6 +36,7 @@ type Props = {
   supabase: ReturnType<typeof createClient>;
   conv: Conv;
   myVisitId: string;
+  myAlias?: string; // watermarked across view-once photos this person opens
   myTable: string;
   isEvent?: boolean;
   onBack: () => void;
@@ -47,7 +48,7 @@ type Props = {
   drinksEnabled?: boolean;
 };
 
-export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = false, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room', drinksEnabled = false }: Props) {
+export default function Chat({ supabase, conv, myVisitId, myAlias, myTable, isEvent = false, onBack, onChanged, onRemoved, context = 'room', backLabel = 'Back to the room', drinksEnabled = false }: Props) {
   const inRoom = context === 'room';
   const t = useT();
   const tRef = useRef(t);
@@ -174,14 +175,14 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
 
   // A photo or video: shrunk on this phone, locked with its own key, uploaded, and the key sent
   // inside an encrypted message so only the two of you can open it.
-  async function sendMedia(file: File) {
+  async function sendMedia(file: File, once = false) {
     if (!key || sendingMedia) return;
     setError(null);
     setSendingMedia(true);
     try {
       const prepared = await prepareMedia(file);
       const sealed = await encryptBlob(prepared.blob);
-      const path = `${c}/${crypto.randomUUID()}`;
+      const path = `${c}/${once ? 'once-' : ''}${crypto.randomUUID()}`;
       const up = await supabase.storage
         .from('chat-media')
         .upload(path, sealed.cipher, { contentType: 'application/octet-stream', upsert: false });
@@ -189,7 +190,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
       const caption = draft.trim().slice(0, 300);
       const payload: MediaPayload = {
         $m: 1, path, key: sealed.key, iv: sealed.iv, mime: prepared.mime, kind: prepared.kind,
-        w: prepared.w, h: prepared.h, ...(caption ? { caption } : {}),
+        w: prepared.w, h: prepared.h, ...(caption ? { caption } : {}), ...(once ? { once: true as const } : {}),
       };
       const text = encodeMedia(payload);
       const { ciphertext, iv } = await encryptText(key, text);
@@ -338,12 +339,16 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
         {messages.map((m) =>
           m.media ? (
             <div key={m.id} className={m.mine ? 'bubble mine media-bubble' : 'bubble theirs media-bubble'}>
-              <MediaView
-                supabase={supabase}
-                src={{ bucket: 'chat-media', payload: m.media }}
-                blurred={!m.mine && !iReplied && !revealed.has(m.id)}
-                onReveal={() => setRevealed((s) => new Set(s).add(m.id))}
-              />
+              {m.media.once ? (
+                <ViewOnce supabase={supabase} payload={m.media} mine={m.mine} viewer={myAlias ? `Seen by ${myAlias}` : 'Seen on Serendine'} />
+              ) : (
+                <MediaView
+                  supabase={supabase}
+                  src={{ bucket: 'chat-media', payload: m.media }}
+                  blurred={!m.mine && !iReplied && !revealed.has(m.id)}
+                  onReveal={() => setRevealed((s) => new Set(s).add(m.id))}
+                />
+              )}
               {m.media.caption && <div className="media-caption"><Linkify text={m.media.caption} /></div>}
             </div>
           ) : (
@@ -359,7 +364,7 @@ export default function Chat({ supabase, conv, myVisitId, myTable, isEvent = fal
         {panel === 'none' && (
           <>
             <form className="row" style={{ gap: 10 }} onSubmit={send}>
-              <AttachButton onFile={sendMedia} disabled={!key || sendingMedia} />
+              <AttachButton onFile={sendMedia} disabled={!key || sendingMedia} allowOnce />
               <label htmlFor="draft" style={{ position: 'absolute', left: -9999 }}>{t('Message')}</label>
               <input
                 id="draft"

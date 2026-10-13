@@ -20,6 +20,7 @@ export type MediaPayload = {
   w?: number;
   h?: number;
   caption?: string;
+  once?: true; // view once: deleted after the other person opens it
 };
 
 export class MediaProblem extends Error {}

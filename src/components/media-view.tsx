@@ -118,12 +118,111 @@ export default function MediaView({
   );
 }
 
+// View-once photos and videos (private chats). The receiver taps to open it full screen, with their
+// chat name and the time watermarked across it and no save button. Closing it deletes the file for good.
+const SEEN_KEY = 'serendine-seen-once';
+function seenOnce(path: string) {
+  try {
+    return (JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]') as string[]).includes(path);
+  } catch {
+    return false;
+  }
+}
+function markSeen(path: string) {
+  try {
+    const list = (JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]') as string[]).filter((p) => p !== path).slice(-200);
+    localStorage.setItem(SEEN_KEY, JSON.stringify([...list, path]));
+  } catch {
+    /* private mode */
+  }
+}
+
+export function ViewOnce({ supabase, payload, mine, viewer }: { supabase: Client; payload: MediaPayload; mine: boolean; viewer: string }) {
+  const t = useT();
+  const [phase, setPhase] = useState<'closed' | 'loading' | 'open' | 'done' | 'gone'>('closed');
+  const [url, setUrl] = useState<string | null>(null);
+  const [stamp, setStamp] = useState('');
+  const isVideo = payload.kind === 'video';
+
+  useEffect(() => {
+    if (!mine && seenOnce(payload.path)) setPhase('done');
+  }, [mine, payload.path]);
+
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+
+  async function open() {
+    setPhase('loading');
+    const { data, error } = await supabase.storage.from('chat-media').download(payload.path);
+    if (error || !data) return setPhase('gone');
+    try {
+      const b = await decryptBlob(data, payload.key, payload.iv, payload.mime);
+      setUrl(URL.createObjectURL(b));
+      setStamp(new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dubai', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
+      setPhase('open');
+    } catch {
+      setPhase('gone');
+    }
+  }
+
+  async function close() {
+    markSeen(payload.path);
+    setPhase('done');
+    if (url) URL.revokeObjectURL(url);
+    setUrl(null);
+    await supabase.storage.from('chat-media').remove([payload.path]);
+  }
+
+  const label = isVideo ? t('View-once video') : t('View-once photo');
+  if (mine) {
+    return (
+      <div className="once-card">
+        <span className="once-icon" aria-hidden="true">①</span>
+        <span>{label} · {t('sent')}</span>
+      </div>
+    );
+  }
+  if (phase === 'done' || phase === 'gone') {
+    return (
+      <div className="once-card once-used">
+        <span className="once-icon" aria-hidden="true">①</span>
+        <span>{label} · {phase === 'done' ? t('opened') : t('no longer available')}</span>
+      </div>
+    );
+  }
+  const mark = `${viewer} · ${stamp}`;
+  return (
+    <>
+      <button className="once-card once-ready" onClick={open} disabled={phase === 'loading'}>
+        <span className="once-icon" aria-hidden="true">①</span>
+        <span>{phase === 'loading' ? t('Opening…') : `${label} · ${t('tap to open')}`}</span>
+      </button>
+      {phase === 'open' && url && (
+        <div className="media-lightbox once-view" role="dialog" aria-label={label} onContextMenu={(e) => e.preventDefault()}>
+          <div className="once-frame">
+            {isVideo ? (
+              <video src={url} autoPlay playsInline controls controlsList="nodownload noplaybackrate" disablePictureInPicture onContextMenu={(e) => e.preventDefault()} />
+            ) : (
+              <div className="once-img" style={{ backgroundImage: `url(${url})`, aspectRatio: payload.w && payload.h ? `${payload.w} / ${payload.h}` : '3 / 4' }} role="img" aria-label={t('Shared photo')} />
+            )}
+            <div className="once-mark" aria-hidden="true">
+              {Array.from({ length: 12 }, (_, i) => <span key={i}>{mark}</span>)}
+            </div>
+          </div>
+          <span className="small" style={{ color: '#fff', textAlign: 'center' }}>{t('This disappears when you close it.')}</span>
+          <button className="btn btn-primary btn-sm" onClick={close}>{t('Close')}</button>
+        </div>
+      )}
+    </>
+  );
+}
+
 // The paperclip-style button that opens the camera or photo library.
 // Camera button: take a photo, record a video, or choose from the gallery.
 // (A plain file picker on Android only offers the gallery, so the camera options are separate.)
-export function AttachButton({ onFile, disabled }: { onFile: (f: File) => void; disabled?: boolean }) {
+export function AttachButton({ onFile, disabled, allowOnce = false }: { onFile: (f: File, once: boolean) => void; disabled?: boolean; allowOnce?: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const [once, setOnce] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -145,7 +244,7 @@ export function AttachButton({ onFile, disabled }: { onFile: (f: File) => void; 
           const f = e.target.files?.[0];
           e.target.value = '';
           setOpen(false);
-          if (f) onFile(f);
+          if (f) onFile(f, allowOnce && once);
         }}
       />
     </label>
@@ -168,6 +267,15 @@ export function AttachButton({ onFile, disabled }: { onFile: (f: File) => void; 
         <>
           <div className="attach-scrim" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="attach-menu" role="menu">
+            {allowOnce && (
+              <label className="attach-option attach-once">
+                <input type="checkbox" checked={once} onChange={(e) => setOnce(e.target.checked)} />
+                <span className="col" style={{ gap: 0 }}>
+                  <span>{t('View once')}</span>
+                  <span className="small" style={{ fontWeight: 400 }}>{t('They can open it once. No saving.')}</span>
+                </span>
+              </label>
+            )}
             {pick('image/*', true, t('Take a photo'))}
             {pick('video/*', true, t('Record a video'))}
             {pick('image/*,video/*', false, t('Choose from gallery'))}

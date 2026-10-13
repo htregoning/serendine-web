@@ -17,6 +17,7 @@ import TableOrders from './orders';
 import { DrinksPanel } from '@/components/drinks';
 import { useT } from '@/components/lang';
 import VenueMark from '@/components/venue-mark';
+import PrivacyShield from '@/components/privacy-shield';
 import { MODE_LABELS, REQUEST_BUTTONS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
@@ -300,10 +301,12 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
   if (active) {
     return (
       <div style={style}>
+        <PrivacyShield />
         <Chat
           supabase={supabase}
           conv={active}
           myVisitId={visit.id}
+          myAlias={visit.alias}
           myTable={venue.table_label}
           isEvent={venue.kind === 'event'}
           drinksEnabled={venue.drinks_enabled !== false}
@@ -334,6 +337,7 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
 
   return (
     <main className="shell room" style={style}>
+      <PrivacyShield />
       <header className="row room-head">
         <VenueMark venue={venue} size={40} />
         <div className="col grow" style={{ gap: 1, minWidth: 0 }}>
