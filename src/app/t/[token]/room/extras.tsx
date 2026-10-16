@@ -5,6 +5,7 @@ import type { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/avatar';
 import { LangToggle, useLang, useT } from '@/components/lang';
 import { hideOnSwitch, setHideOnSwitch } from '@/components/privacy-shield';
+import InstallApp from '@/components/install-app';
 import { monthNames } from '@/lib/i18n';
 import { GENDER_LABELS, MODE_LABELS, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 
@@ -212,6 +213,8 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
           />
           <span>{t('Notifications from {venue}', { venue: venue.venue_name })}</span>
         </label>
+
+        <InstallApp compact />
 
         {error && <p className="error" role="status" style={{ margin: 0 }}>{error}</p>}
         <div className="row" style={{ gap: 10 }}>

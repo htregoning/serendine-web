@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { STATUS_TEXT, when } from '@/lib/gatherings';
 import type { MyPlan } from '@/app/plan/plan-screen';
+import InstallApp from '@/components/install-app';
 
 export type MyPlace = {
   visit_id: string;
@@ -98,6 +99,8 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
           </span>
         )}
       </section>
+
+      <InstallApp />
 
       <div className="row" style={{ gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <a className="btn btn-ghost btn-sm" href="/connections" style={{ textDecoration: 'none' }}>Your connections</a>

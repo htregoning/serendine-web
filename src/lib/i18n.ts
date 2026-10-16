@@ -192,6 +192,18 @@ const AR: Record<string, string> = {
   'Send by text instead': 'أرسل برسالة نصية بدلًا من ذلك',
   'Send by WhatsApp instead': 'أرسل عبر واتساب بدلًا من ذلك',
   'Change number': 'تغيير الرقم',
+  // Install the app
+  'Put Serendine on your home screen': 'أضف Serendine إلى شاشتك الرئيسية',
+  'Opens like an app: your table, chats, places and plans in one tap.': 'يفتح كتطبيق: طاولتك ومحادثاتك وأماكنك وخططك بلمسة واحدة.',
+  'On iPhone it also lets Serendine send you notifications.': 'على iPhone يتيح أيضًا لـ Serendine إرسال الإشعارات إليك.',
+  'Install app': 'ثبّت التطبيق',
+  'Tap the Share button': 'اضغط زر المشاركة',
+  'at the bottom of Safari, or at the top on iPad.': 'أسفل Safari، أو في الأعلى على iPad.',
+  'Scroll down and tap “Add to Home Screen”.': 'مرّر للأسفل واضغط «إضافة إلى الشاشة الرئيسية».',
+  'Tap “Add”. Serendine appears with your other apps.': 'اضغط «إضافة». سيظهر Serendine مع تطبيقاتك الأخرى.',
+  'Open your browser’s menu (⋮ or ⋯).': 'افتح قائمة المتصفح (⋮ أو ⋯).',
+  'Tap “Install app” or “Add to Home screen”.': 'اضغط «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».',
+  'Confirm, and Serendine appears with your other apps.': 'أكّد، وسيظهر Serendine مع تطبيقاتك الأخرى.',
   // Coming back
   'Tonight at {venue}': 'الليلة في {venue}',
   'People here tonight': 'الموجودون الليلة',

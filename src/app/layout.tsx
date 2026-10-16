@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { IBM_Plex_Sans_Arabic, Jost, Manrope, Playfair_Display } from 'next/font/google';
 import { LangProvider } from '@/components/lang';
+import { InstallCapture } from '@/components/install-app';
 import { LANG_COOKIE, isLang, type Lang } from '@/lib/i18n';
 import './globals.css';
 
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className={`${display.variable} ${body.variable} ${serif.variable} ${arabic.variable}`}>
       <body>
+        <InstallCapture />
         <LangProvider lang={lang}>{children}</LangProvider>
       </body>
     </html>
