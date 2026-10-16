@@ -98,6 +98,7 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
   const [activeId, setActiveId] = useState<string | null>(null);
   const [unread, setUnread] = useState<Record<string, boolean>>({});
   const activeRef = useRef<string | null>(null);
+  const [play, setPlay] = useState<{ url: string; label: string | null } | null>(null);
   const statusRef = useRef<Record<string, RequestStatus>>({});
   const lastAtRef = useRef<Record<string, string>>({});
 
@@ -106,6 +107,14 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
     // Drop ?welcome=1 so a refresh doesn't reopen the sheet.
     if (firstVisit) window.history.replaceState(null, '', `/t/${token}/room`);
   }, [firstVisit, token]);
+
+  // A tournament or game linked to this event on On My Compass (update 0030).
+  useEffect(() => {
+    supabase.rpc('venue_play_link', { token }).then(({ data, error }) => {
+      const row = !error && Array.isArray(data) ? (data[0] as { url: string; label: string | null } | undefined) : undefined;
+      if (row?.url) setPlay(row);
+    });
+  }, [supabase, token]);
   activeRef.current = activeId;
 
   // Group bookings show "Plan a night here" (after update 0025, if the venue switched them on).
@@ -359,6 +368,12 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
           {/* 1. Tonight at the venue: their announcements and the welcome offer. */}
           <section className="col room-section" aria-label={t('Tonight at {venue}', { venue: venue.venue_name })}>
             <VenueNews supabase={supabase} venueId={venue.venue_id} visitId={visit.id} venueName={venue.venue_name} />
+            {play && (
+              <div className="offer-row">
+                <span className="grow small"><b style={{ color: 'var(--accent)' }}>{t('Playing today?')}</b> · {t('Enter, see the draw and follow the results.')}</span>
+                <a className="btn btn-primary btn-sm" href={play.url} target="_blank" rel="noopener">{play.label || t('Enter the tournament')}</a>
+              </div>
+            )}
             {venue.offer_enabled &&
               (me.optedIn ? (
                 <div className="offer-row" role="status">
