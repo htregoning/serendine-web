@@ -32,6 +32,8 @@ export default function VenueAdmin({ venue, me, isAdmin = false }: { venue: Admi
   const [starts, setStarts] = useState(localInput(venue.starts_at));
   const [ends, setEnds] = useState(localInput(venue.ends_at));
   const [place, setPlace] = useState(venue.place ?? '');
+  const [playUrl, setPlayUrl] = useState('');
+  const [playLabel, setPlayLabel] = useState('');
   const [newAreas, setNewAreas] = useState('');
   const [supabase] = useState(() => createClient());
   const [name, setName] = useState(venue.name);
@@ -52,6 +54,12 @@ export default function VenueAdmin({ venue, me, isAdmin = false }: { venue: Admi
       supabase.rpc('admin_team', { v: venue.id }),
     ]);
     setTables((t.data as Table[] | null) ?? []);
+    // Linked tournament or game (needs update 0030; ignored if it isn't run yet).
+    const pl = await supabase.from('venues').select('play_url, play_label').eq('id', venue.id).maybeSingle();
+    if (!pl.error && pl.data) {
+      setPlayUrl((pl.data as { play_url: string | null }).play_url ?? '');
+      setPlayLabel((pl.data as { play_label: string | null }).play_label ?? '');
+    }
     setTeam((m.data as Member[] | null) ?? []);
   }, [supabase, venue.id]);
 
@@ -137,6 +145,29 @@ export default function VenueAdmin({ venue, me, isAdmin = false }: { venue: Admi
           <button className="btn btn-ghost btn-sm" type="submit">Save event details</button>
         </form>
       )}
+
+      <form
+        className="card col"
+        style={{ gap: 12, maxWidth: 720 }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          run(supabase.rpc('admin_set_play_link', { v: venue.id, p_url: playUrl, p_label: playLabel }), playUrl ? 'Tournament linked. Guests see it in the room.' : 'Link removed.');
+        }}
+      >
+        <strong>{isEvent ? 'Tournament or game at this event' : 'Tournament or game here'}</strong>
+        <span className="small">Paste the link to an event on On My Compass (play.onmycompass.com, football.onmycompass.com or masters.onmycompass.com). Everyone checked in sees a button to enter it, follow the draw and see results.</span>
+        <div className="row" style={{ gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div className="col grow" style={{ minWidth: 240 }}>
+            <label className="label" htmlFor="play-url">Link</label>
+            <input id="play-url" className="input" type="url" inputMode="url" placeholder="https://play.onmycompass.com/…" value={playUrl} onChange={(e) => setPlayUrl(e.target.value)} />
+          </div>
+          <div className="col grow" style={{ minWidth: 180 }}>
+            <label className="label" htmlFor="play-label">Button text (optional)</label>
+            <input id="play-label" className="input" maxLength={60} placeholder="Enter the tournament" value={playLabel} onChange={(e) => setPlayLabel(e.target.value)} />
+          </div>
+        </div>
+        <button className="btn btn-ghost btn-sm" type="submit">Save link</button>
+      </form>
 
       <div className="admin-two">
         <section className="col" style={{ gap: 12 }}>
