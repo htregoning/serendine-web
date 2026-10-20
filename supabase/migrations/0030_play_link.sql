@@ -5,10 +5,11 @@
 
 alter table venues add column if not exists play_url text;
 alter table venues add column if not exists play_label text;
-do $$ begin
-  alter table venues add constraint venues_play_url_check
-    check (play_url is null or (play_url ~ '^https://[a-z0-9.-]*onmycompass\.com/' and char_length(play_url) <= 300));
-exception when duplicate_object then null; end $$;
+-- Only real onmycompass.com addresses (not look-alikes such as fakeonmycompass.com).
+-- Dropped and re-added so re-running this file also tightens an earlier, looser check.
+alter table venues drop constraint if exists venues_play_url_check;
+alter table venues add constraint venues_play_url_check
+  check (play_url is null or (play_url ~ '^https://([a-z0-9-]+\.)*onmycompass\.com/' and char_length(play_url) <= 300));
 do $$ begin
   alter table venues add constraint venues_play_label_check check (play_label is null or char_length(play_label) <= 60);
 exception when duplicate_object then null; end $$;
@@ -18,7 +19,7 @@ create or replace function admin_set_play_link(v uuid, p_url text, p_label text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if not can_manage_venue(v) then raise exception 'Not allowed'; end if;
-  if nullif(trim(p_url), '') is not null and trim(p_url) !~ '^https://[a-z0-9.-]*onmycompass\.com/' then
+  if nullif(trim(p_url), '') is not null and trim(p_url) !~ '^https://([a-z0-9-]+\.)*onmycompass\.com/' then
     raise exception 'Use a link from play.onmycompass.com (or football. / masters.onmycompass.com)';
   end if;
   update venues set play_url = nullif(trim(p_url), ''), play_label = nullif(trim(p_label), '') where id = v;
