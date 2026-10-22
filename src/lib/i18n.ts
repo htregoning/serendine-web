@@ -192,6 +192,11 @@ const AR: Record<string, string> = {
   'Send by text instead': 'أرسل برسالة نصية بدلًا من ذلك',
   'Send by WhatsApp instead': 'أرسل عبر واتساب بدلًا من ذلك',
   'Change number': 'تغيير الرقم',
+  // Loyalty
+  'Your rewards': 'مكافآتك',
+  'Reward ready: {reward}. Show this to your server.': 'المكافأة جاهزة: {reward}. أظهر هذا للنادل.',
+  '{n} more visits to: {reward}': '{n} زيارات أخرى للحصول على: {reward}',
+  '{n} more {item} to: {reward}': '{n} {item} أخرى للحصول على: {reward}',
   // Saved profile
   'A few details, just once': 'بعض التفاصيل، لمرة واحدة فقط',
   'Saved for next time, at any Serendine venue. Never shown to other guests.': 'تُحفظ للمرة القادمة في أي مكان يستخدم Serendine. لا تظهر أبدًا للضيوف الآخرين.',

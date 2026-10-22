@@ -18,6 +18,7 @@ import { DrinksPanel } from '@/components/drinks';
 import { useT } from '@/components/lang';
 import VenueMark from '@/components/venue-mark';
 import PrivacyShield from '@/components/privacy-shield';
+import LoyaltyCards from '@/components/loyalty-cards';
 import { MODE_LABELS, REQUEST_BUTTONS, genderTag, type ChatMode, type RequestKind, type RequestStatus, type VenueAtTable } from '@/lib/types';
 
 type Visit = { id: string; alias: string; mode: ChatMode; isOpen: boolean; optedIn: boolean; gender: string; hasPhoto: boolean };
@@ -376,6 +377,7 @@ export default function Room({ token, venue, visit, menuUrl, firstVisit = false,
                   <button className="btn btn-primary btn-sm" onClick={() => setExtrasOpen(true)}>{t('Get it')}</button>
                 </div>
               ))}
+            <LoyaltyCards supabase={supabase} venueId={venue.venue_id} live />
           </section>
 
           {/* 2. Service: ask the staff, the menu, and this table's orders. */}

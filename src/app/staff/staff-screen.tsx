@@ -16,6 +16,8 @@ import OrdersPanel from './orders-panel';
 import GroupRequests from './group-requests';
 import GroupOffers from './group-offers';
 import PlanBanner from './plan-banner';
+import LoyaltyPanel from './loyalty-panel';
+import LoyaltySettings from './loyalty-settings';
 import WorkTheme, { WorkThemeToggle } from '@/components/work-theme';
 import MediaSettings from './media-settings';
 import BrandSettings, { type BrandInitial } from './brand-settings';
@@ -349,10 +351,12 @@ export default function StaffScreen({ venue }: { venue: StaffVenue }) {
           </div>
 
           {venue.groups_enabled && <GroupRequests supabase={supabase} venueId={venue.id} />}
+          <LoyaltyPanel supabase={supabase} venueId={venue.id} />
 
           <StaffScript offer={venue.offer_enabled ? venue.offer_text : null} />
 
           {isManager && <ManagerTools venue={venue} onSaved={() => router.refresh()} />}
+          {isManager && <LoyaltySettings supabase={supabase} venueId={venue.id} />}
           {isManager && venue.weekly_report !== undefined && <GrowthSettings venue={venue} onSaved={() => router.refresh()} />}
           {isManager && venue.brand && (
             <BrandSettings

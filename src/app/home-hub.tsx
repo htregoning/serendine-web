@@ -6,6 +6,7 @@ import { STATUS_TEXT, when } from '@/lib/gatherings';
 import type { MyPlan } from '@/app/plan/plan-screen';
 import InstallApp from '@/components/install-app';
 import ProfileForm, { useMyProfile } from '@/components/profile-form';
+import LoyaltyCards from '@/components/loyalty-cards';
 
 export type MyPlace = {
   visit_id: string;
@@ -74,6 +75,8 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
           ))}
         </section>
       )}
+
+      <LoyaltyCards supabase={supabase} showVenue />
 
       <section className="col" style={{ gap: 0 }} aria-label="Places you've been">
         <span className="eyebrow" style={{ paddingBottom: 6 }}>Places you&apos;ve been</span>

@@ -606,3 +606,10 @@ html.privacy-hide body::after {
 .install-app { display: flex; flex-direction: column; gap: 12px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .install-app.compact { padding: 12px 0 0; border-bottom: none; gap: 10px; }
 .install-steps { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
+
+/* Loyalty cards */
+.loyalty-card { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); }
+.loyalty-card.ready { border: 2px solid var(--accent); }
+.loyalty-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.loyalty-dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line-strong); }
+.loyalty-dots span.on { background: var(--accent); border-color: var(--accent); }
