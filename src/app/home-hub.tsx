@@ -58,7 +58,10 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
         </div>
       )}
 
-      <a className="btn btn-primary" href="/plan" style={{ textDecoration: 'none' }}>Plan a night out</a>
+      <div className="row" style={{ gap: 10 }}>
+        <a className="btn btn-primary grow" href="/plan" style={{ textDecoration: 'none' }}>Plan a night out</a>
+        <a className="btn btn-ghost grow" href="/pass" style={{ textDecoration: 'none' }}>My pass</a>
+      </div>
 
       {upcoming.length > 0 && (
         <section className="col" style={{ gap: 0 }} aria-label="Your plans">

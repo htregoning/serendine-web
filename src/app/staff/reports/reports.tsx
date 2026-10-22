@@ -24,6 +24,7 @@ type Report = {
   loyalty: { stamps: number; rewards: number };
   top_tables: KN[];
   group_plans: number;
+  takeaway_visits?: number;
 };
 type GuestRow = Record<string, string | number | boolean | null>;
 
@@ -140,7 +141,7 @@ export default function Reports({ venue }: { venue: { id: string; slug: string; 
       {r && (
         <>
           <div className="report-tiles">
-            <Tile label="Check-ins" value={r.check_ins} />
+            <Tile label="Check-ins" value={r.check_ins} note={r.takeaway_visits ? `incl. ${r.takeaway_visits} takeaway (pass scans)` : undefined} />
             <Tile label="Guests" value={r.guests} note={`${r.new_guests} new · ${r.returning_guests} returning`} />
             <Tile label="Came back in this period" value={`${pct(r.came_twice_plus, r.guests)}%`} note={`${r.came_twice_plus} came 2+ times · avg ${r.avg_visits ?? 0} visits`} />
             <Tile label="Time checked in" value={r.avg_minutes ? `${r.avg_minutes} min` : '–'} note="average visit" />

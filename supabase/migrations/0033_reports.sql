@@ -14,7 +14,7 @@ begin
   if not can_manage_venue(v) then raise exception 'Managers only'; end if;
 
   with vis as (
-    select vi.*, t.label table_label,
+    select vi.*, t.label table_label, t.zone table_zone,
            least(extract(epoch from (coalesce(vi.ended_at, now()) - vi.started_at)) / 60, 480) mins,
            (vi.started_at at time zone 'Asia/Dubai') local_at
     from visits vi join venue_tables t on t.id = vi.table_id
@@ -44,7 +44,8 @@ begin
     'returning_guests', (select count(*) from g where not is_new),
     'came_twice_plus', (select count(*) from g where n >= 2),
     'avg_visits', (select round(avg(n)::numeric, 1) from g),
-    'avg_minutes', (select round(avg(mins))::int from vis where ended_at is not null),
+    'avg_minutes', (select round(avg(mins))::int from vis where ended_at is not null and table_zone <> 'Takeaway'),   -- counter visits have no length
+    'takeaway_visits', (select count(*) from vis where table_zone = 'Takeaway'),
     'opted_in', (select count(distinct user_id) from vis where ok_to_contact(v, user_id)),
     'by_weekday', (select coalesce(jsonb_agg(jsonb_build_object('k', d, 'n', coalesce(c, 0)) order by d), '[]')
                    from generate_series(1, 7) d
