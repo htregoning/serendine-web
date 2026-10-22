@@ -8,7 +8,7 @@ export default function Privacy() {
     <main className="legal">
       <Link href="/" className="small">← Serendine</Link>
       <h1 className="display">Privacy policy</h1>
-      <p className="small">Last updated 22 October 2026</p>
+      <p className="small">Last updated 23 October 2026</p>
 
       <p>
         Serendine lets guests in a venue say hello to other tables, ask staff for service and see the menu.
@@ -41,6 +41,7 @@ export default function Privacy() {
         <li><b>Photos and videos</b>: ones you send in a private chat are encrypted on your phone before upload, so only you and the person you sent them to can open them; they are deleted after 7 days. Ones you post to a group chat are checked by the venue&apos;s staff before anyone else sees them, and deleted the next day. Photos are resized on your phone, which also removes hidden details such as where they were taken. If you report someone, the photos in your recent messages are sent with the report.</li>
         <li><b>Plans for a night out</b>: if you plan one, the venue sees your name, email, the date, how many people and your note. Friends who say they&apos;re in show to the rest of the group by the name they choose; the venue sees how many are coming. Anyone with the invite link can see the plan&apos;s title, venue and time.</li>
         <li><b>Orders from the table</b>: what your table ordered, kept with the venue&apos;s records of your visit.</li>
+        <li><b>Neighbourhood rooms</b> (&quot;Chat nearby&quot;): the neighbourhood you join (for example Dubai Marina), your screen name there and the messages you post. If you use &quot;Use my location&quot;, your phone works out the neighbourhood itself: your exact location never leaves your phone and is never stored or shown to anyone. Room messages are not encrypted; people in your neighbourhood and the ones next to it can read them, and they disappear after 24 hours (removed from our systems within 2 days). Moderators (Serendine, and managers of venues in that neighbourhood) can hide messages, and reported messages are kept with the report.</li>
         <li><b>Group chat messages</b>: messages you post to a venue&apos;s group chat are not encrypted. Everyone open to chat at that venue can read them, and they are deleted after the night (within 12 hours).</li>
         <li><b>Service requests</b> such as &quot;bring the bill&quot;, with your table number, sent to the venue&apos;s staff.</li>
         <li><b>Marketing consent</b>: whether you agreed to hear from the venue, and when.</li>

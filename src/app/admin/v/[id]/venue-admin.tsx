@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import PlanPanel from './plan-panel';
+import AreaPicker from './area-picker';
 
 type Table = { id: string; label: string; zone: string; qr_token: string; guests_now: number };
 type Member = { user_id: string | null; invite_id: string | null; email: string; role: 'manager' | 'staff'; pending: boolean };
@@ -100,6 +101,7 @@ export default function VenueAdmin({ venue, me, isAdmin = false }: { venue: Admi
       {(msg || err) && <p className={err ? 'error' : 'card small'} role="status">{err ?? msg}</p>}
 
       {isAdmin && <PlanPanel supabase={supabase} venueId={venue.id} venueName={venue.name} />}
+      {!isEvent && <AreaPicker supabase={supabase} venueId={venue.id} />}
 
       {isEvent && (
         <form
