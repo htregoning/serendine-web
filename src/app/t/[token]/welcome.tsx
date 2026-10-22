@@ -10,6 +10,7 @@ import { LangToggle, useT } from '@/components/lang';
 import Buzz from '@/components/buzz';
 import VenueMark from '@/components/venue-mark';
 import PhoneSignIn, { phoneLoginOn } from '@/components/phone-sign-in';
+import ProfileForm, { useMyProfile } from '@/components/profile-form';
 
 type Props = { token: string; venue: VenueAtTable; signedIn: boolean };
 
@@ -192,10 +193,30 @@ function SignIn({ token, venue }: { token: string; venue: VenueAtTable }) {
 const ALIAS_IDEAS = ['Blue Jumper', 'Espresso Fan', 'Window Seat', 'Birthday Table', 'First Timer'];
 
 // Check-in is just a name and the 18+ promise. Everything else is optional and asked once inside the room.
+// Signed in: first the saved details (once), then tonight's screen name.
 function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
+  const t = useT();
+  const [profile, setProfile] = useMyProfile();
+  if (profile === null) return <div style={{ flex: 1 }} />;
+  if (profile && !profile.complete) {
+    return (
+      <ProfileForm
+        initial={profile}
+        onSaved={setProfile}
+        title={t('A few details, just once')}
+        lede={t('Saved for next time, at any Serendine venue. Never shown to other guests.')}
+        submitLabel={t('Continue')}
+      />
+    );
+  }
+  return <ScreenName token={token} venue={venue} lastAlias={profile?.last_alias ?? ''} knownAdult={!!profile?.birth_date} />;
+}
+
+// Tonight's screen name (last time's is offered again).
+function ScreenName({ token, venue, lastAlias, knownAdult }: { token: string; venue: VenueAtTable; lastAlias: string; knownAdult: boolean }) {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
-  const [alias, setAlias] = useState('');
+  const [alias, setAlias] = useState(lastAlias);
   const modes = (Object.keys(MODE_LABELS) as ChatMode[]).filter((m) => !venue.allowed_modes || venue.allowed_modes.includes(m));
   const [adult, setAdult] = useState(false);
   const t = useT();
@@ -205,7 +226,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
   async function enter(e: React.FormEvent) {
     e.preventDefault();
     if (!alias.trim()) return setError(t('Add a name or alias so people know who they are talking to.'));
-    if (!adult) return setError(t('Please confirm you are 18 or over.'));
+    if (!adult) return setError(knownAdult ? t('Please agree to the house rules.') : t('Please confirm you are 18 or over.'));
     setBusy(true);
     setError(null);
     try {
@@ -234,7 +255,7 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
     <form className="col" style={{ gap: 22, flex: 1 }} onSubmit={enter}>
       <div className="col" style={{ gap: 10, marginTop: 8 }}>
         <h1 className="display">{venue.kind === 'event' ? t('What should people call you today?') : t('What should people call you tonight?')}</h1>
-        <p className="lede">{t("A first name or a fun alias. It's all anyone sees.")}</p>
+        <p className="lede">{lastAlias ? t('Same as last time, or something new. It’s all anyone sees.') : t("A first name or a fun alias. It's all anyone sees.")}</p>
       </div>
       <div className="col">
         <label className="label" htmlFor="alias">{t('Name or alias')}</label>
@@ -255,13 +276,17 @@ function Profile({ token, venue }: { token: string; venue: VenueAtTable }) {
       </div>
       <label className="check">
         <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
-        <span>{t('I am 18 or over and agree to the house rules: be kind, take no for an answer.')}</span>
+        <span>
+          {knownAdult
+            ? t('I agree to the house rules: be kind, take no for an answer.')
+            : t('I am 18 or over and agree to the house rules: be kind, take no for an answer.')}
+        </span>
       </label>
       <div style={{ flex: 1 }} />
       <p className="small" style={{ margin: 0 }}>
         {venue.kind === 'event'
-          ? t("{venue} will see your name, email and when you checked in and which area you were in, so they can welcome you back. Your chats stay private: nobody but you and the person you're talking to can read them.", { venue: venue.venue_name })
-          : t("{venue} will see your name, email and when you visited and where you sat, so they can welcome you back. Your chats stay private: nobody but you and the person you're talking to can read them.", { venue: venue.venue_name })}{' '}
+          ? t("{venue} will see your name, contact details, when you checked in and which area you were in, so they can welcome you back. Your chats stay private: nobody but you and the person you're talking to can read them.", { venue: venue.venue_name })
+          : t("{venue} will see your name, contact details, when you visited and where you sat, so they can welcome you back. Your chats stay private: nobody but you and the person you're talking to can read them.", { venue: venue.venue_name })}{' '}
         <a href="/privacy" target="_blank" rel="noopener noreferrer">{t('Privacy policy')}</a>
       </p>
       <p className="small" style={{ margin: 0, textAlign: 'center' }}>{t("Chat style, a selfie and offers can wait. You'll be asked once you're in.")}</p>

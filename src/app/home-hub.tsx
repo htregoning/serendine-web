@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { STATUS_TEXT, when } from '@/lib/gatherings';
 import type { MyPlan } from '@/app/plan/plan-screen';
 import InstallApp from '@/components/install-app';
+import ProfileForm, { useMyProfile } from '@/components/profile-form';
 
 export type MyPlace = {
   visit_id: string;
@@ -28,12 +28,14 @@ function day(iso: string) {
 // A signed-in guest's own page: plans, places they've been, ratings, connections.
 export default function HomeHub({ name, plans, places, atTable = false }: { name: string; plans: MyPlan[]; places: MyPlace[]; atTable?: boolean }) {
   const [supabase] = useState(() => createClient());
-  const router = useRouter();
   const upcoming = plans.filter((p) => new Date(p.starts_at).getTime() > Date.now() - 6 * 3600000 && p.status !== 'cancelled');
 
+  const [profile, setProfile] = useMyProfile();
+
+  // Signing out always lands on the Serendine home page.
   async function signOut() {
     await supabase.auth.signOut();
-    router.refresh();
+    window.location.assign('/');
   }
 
   return (
@@ -42,6 +44,18 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
         <h1 className="display" style={{ fontSize: 30 }}>{name ? `Hello, ${name}` : 'Hello'}</h1>
         <p className="lede">At a restaurant? Scan the code on your table. Planning ahead? Start a night out and invite friends.</p>
       </div>
+
+      {profile && !profile.complete && (
+        <div className="card">
+          <ProfileForm
+            initial={profile}
+            onSaved={setProfile}
+            title="A few details, just once"
+            lede="Saved for every Serendine venue, so you never type them again. Never shown to other guests."
+            submitLabel="Save my details"
+          />
+        </div>
+      )}
 
       <a className="btn btn-primary" href="/plan" style={{ textDecoration: 'none' }}>Plan a night out</a>
 
@@ -104,6 +118,7 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
 
       <div className="row" style={{ gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <a className="btn btn-ghost btn-sm" href="/connections" style={{ textDecoration: 'none' }}>Your connections</a>
+        <a className="btn btn-ghost btn-sm" href="/me/details" style={{ textDecoration: 'none' }}>Your details</a>
         {!atTable && <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>}
       </div>
     </div>

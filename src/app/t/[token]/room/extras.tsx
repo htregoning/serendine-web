@@ -6,6 +6,7 @@ import Avatar from '@/components/avatar';
 import { LangToggle, useLang, useT } from '@/components/lang';
 import { hideOnSwitch, setHideOnSwitch } from '@/components/privacy-shield';
 import InstallApp from '@/components/install-app';
+import { useMyProfile } from '@/components/profile-form';
 import { monthNames } from '@/lib/i18n';
 import { GENDER_LABELS, MODE_LABELS, type ChatMode, type Gender, type VenueAtTable } from '@/lib/types';
 
@@ -40,6 +41,7 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
   const [bdayOffer, setBdayOffer] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [hide, setHide] = useState(true);
+  const [profile] = useMyProfile(); // a saved date of birth means no birthday question here
   useEffect(() => setHide(hideOnSwitch()), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +168,7 @@ export default function Extras({ supabase, venue, visitId, alias, current, hasPh
                 <span style={{ color: 'var(--muted)' }}>{t('Unsubscribe any time.')}</span>
               </span>
             </label>
-            {optIn && (
+            {optIn && !profile?.birth_date && (
               <div className="col" style={{ gap: 6 }}>
                 <span className="label">{t('Your birthday (optional)')}</span>
                 <div className="row" style={{ gap: 8 }}>
