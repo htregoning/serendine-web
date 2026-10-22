@@ -8,7 +8,7 @@ export default function Privacy() {
     <main className="legal">
       <Link href="/" className="small">← Serendine</Link>
       <h1 className="display">Privacy policy</h1>
-      <p className="small">Last updated 5 October 2026</p>
+      <p className="small">Last updated 22 October 2026</p>
 
       <p>
         Serendine lets guests in a venue say hello to other tables, ask staff for service and see the menu.
@@ -23,17 +23,18 @@ export default function Privacy() {
         <li>Your messages are end-to-end encrypted on your phone. We cannot read them, and nor can the venue.</li>
         <li>Your table number is only shown to another guest if you both agree.</li>
         <li>Chats are deleted when you leave, unless you and the other person both choose to keep in touch.</li>
-        <li>The venue you check in at sees your name, email address (if you signed in with one), and when and at which table you visited. It never sees your messages or who you talk to.</li>
-        <li>The venue may only send you offers and marketing if you tick the box to receive them.</li>
+        <li>The venue you check in at sees your name, contact details, age group and sex, and when and at which table you visited and which Serendine features you used. It never sees your messages or who you talk to.</li>
+        <li>The venue may only send you offers and marketing if you tick the box to receive them, and you can untick it any time.</li>
       </ul>
 
       <h2>What we collect</h2>
       <ul>
         <li><b>Account details</b> from the sign-in you choose (Google, email link, phone number, or Telegram): your name, email address or mobile number, profile picture where the provider supplies one, and a unique account ID. We never receive your password.</li>
-        <li><b>Your mobile number</b>, if you sign in with it. It is used only to send your sign-in code (through our messaging provider, by WhatsApp or text) and is never shown to other guests or to venues.</li>
+        <li><b>Your saved details</b>, asked once when you first sign in: your name, email address, mobile number, date of birth and sex. They save you entering them at every venue. They are never shown to other guests. Your date of birth confirms you are over 18; venues only ever see your age group, and your birthday (day and month, not the year) if you agreed to offers.</li>
+        <li><b>Sign-in codes</b>: if you sign in with your mobile number, it is used to send your code through our messaging provider, by WhatsApp or text.</li>
         <li><b>Optional details you add</b>: whether you identify as male, female or prefer not to say, and an optional selfie, shown only to other guests open to chat at the same venue and deleted when you leave.</li>
         <li><b>Ratings and comments</b> you give after a visit. They go to that venue&apos;s managers with your name and table.</li>
-        <li><b>Your birthday</b> (day and month only), if you add it. It is shared only with venues whose offers you agreed to receive.</li>
+        <li><b>Loyalty</b>: at venues that run a loyalty scheme, your visits there and the stamps staff add (for example, one per coffee), and the rewards you collect.</li>
         <li><b>Notification details</b>: if you turn notifications on, the address your browser or Telegram gives us for sending them.</li>
         <li><b>Visit details</b>: the venue and table you scanned, the name or alias you enter, what you&apos;re there for (friendly chat, networking or dating), whether you are open to chat, and when you arrived and left.</li>
         <li><b>Private messages</b>: stored only in encrypted form. The keys to read them are created and kept on your device.</li>
@@ -51,7 +52,7 @@ export default function Privacy() {
       <ul>
         <li>To provide the service you ask for: showing you who is open to chat, delivering messages and passing your requests to staff.</li>
         <li>To keep people safe: enforcing blocks, reviewing reports and removing people who break the house rules.</li>
-        <li>To give the venue you visit a record of your visit (your name, email, date, time and table), so it can look after returning guests and follow up on your visit.</li>
+        <li>To give the venue you visit a record of your visit (your name, contact details, date, time, table and how long you stayed), so it can look after returning guests, run its loyalty scheme, follow up on your visit and understand how its guests use Serendine.</li>
         <li>To let the venue send you offers and marketing, only where you have given consent.</li>
         <li>To meet legal obligations.</li>
       </ul>
@@ -90,12 +91,15 @@ export default function Privacy() {
 
       <h2>What the venue sees</h2>
       <p>
-        Venue staff see service requests with table numbers, and the name or alias and table of guests who opted in
-        to offers so they can redeem the welcome offer. Venue managers see a guest list of everyone who checked in
-        there: your name, email address, the name or alias you used, the dates and times of your visits, which table
-        you sat at, whether you used the welcome offer and whether you agreed to receive offers. They can download this
-        list and keep private notes about returning guests. Venues never see your messages, who you talk to, what you are
-        there for (friendly chat, networking or dating), your gender or your photo.
+        Venue staff see service requests with table numbers, the name or alias and table of guests checked in (to add
+        loyalty stamps and hand over rewards), and who opted in to offers so they can redeem the welcome offer. Venue
+        managers see a guest list and reports covering everyone who checked in there: your name, email address, mobile
+        number, age group, sex, the name or alias you used, the dates and times of your visits and how long you stayed,
+        which table you sat at, your ratings, your loyalty progress, whether you agreed to receive offers, and which
+        Serendine features you used (for example calling staff, ordering, sending a drink or chatting with another
+        table). They see your birthday (day and month) only if you agreed to offers, and never your full date of birth.
+        They can download this and keep private notes about returning guests. Venues never see your messages, who you
+        talk to, what you are there for (friendly chat, networking or dating) or your photo.
       </p>
 
       <h2>How long we keep it</h2>
