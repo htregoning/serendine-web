@@ -47,7 +47,8 @@ do $$ begin
 exception when duplicate_object then null; when undefined_object then null; end $$;
 
 -- Venues a guest can plan a night at (public: it's a list of places)
-create or replace function bookable_venues()
+drop function if exists bookable_venues();   -- update 0027 changes its columns; this makes re-running safe
+create function bookable_venues()
 returns table (id uuid, name text, slug text, kind text, place text, accent text, has_logo boolean, brand_version bigint)
 language sql stable security definer set search_path = public as $$
   select v.id, v.name, v.slug, v.kind, v.place, v.theme_accent, v.logo_data is not null,
@@ -85,7 +86,8 @@ $$;
 grant execute on function create_gathering(uuid, text, timestamptz, integer, text, text) to authenticated;
 
 -- 2. The invite page (anyone with the link sees the basics; members see who's coming)
-create or replace function gathering_by_code(p_code text)
+drop function if exists gathering_by_code(text);   -- update 0027 changes its columns; this makes re-running safe
+create function gathering_by_code(p_code text)
 returns table (id uuid, code text, title text, starts_at timestamptz, party_size integer, note text, status text,
                suggested_at timestamptz, venue_note text, venue_id uuid, venue_name text, venue_slug text, place text,
                organiser_name text, going integer, i_am_organiser boolean, my_rsvp text, members jsonb)
@@ -158,7 +160,8 @@ $$;
 grant execute on function my_gatherings() to authenticated;
 
 -- 5. The venue: upcoming group requests, and the answer
-create or replace function venue_gatherings(v uuid)
+drop function if exists venue_gatherings(uuid);   -- update 0027 changes its columns; this makes re-running safe
+create function venue_gatherings(v uuid)
 returns table (id uuid, code text, title text, starts_at timestamptz, party_size integer, note text, status text,
                suggested_at timestamptz, organiser_name text, organiser_email text, going integer, created_at timestamptz)
 language sql stable security definer set search_path = public as $$
