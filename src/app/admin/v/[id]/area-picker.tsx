@@ -7,18 +7,18 @@ type Client = ReturnType<typeof createClient>;
 
 // Which neighbourhood a venue is in, so it's featured in that neighbourhood's "chat nearby" room.
 export default function AreaPicker({ supabase, venueId }: { supabase: Client; venueId: string }) {
-  const [areas, setAreas] = useState<{ slug: string; name: string }[] | null>(null);
+  const [areas, setAreas] = useState<{ slug: string; name: string; city?: string }[] | null>(null);
   const [area, setArea] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const [a, v] = await Promise.all([
-        supabase.from('areas').select('slug, name').order('name'),
+        supabase.from('areas').select('slug, name, city').order('city').order('name'),
         supabase.from('venues').select('area').eq('id', venueId).maybeSingle(),
       ]);
       if (a.error || v.error) return setAreas(null);
-      setAreas((a.data as { slug: string; name: string }[]) ?? []);
+      setAreas((a.data as { slug: string; name: string; city?: string }[]) ?? []);
       setArea(((v.data as { area: string | null } | null)?.area) ?? '');
     })();
   }, [supabase, venueId]);
@@ -38,7 +38,7 @@ export default function AreaPicker({ supabase, venueId }: { supabase: Client; ve
       <select className="input" value={area} onChange={(e) => save(e.target.value)} aria-label="Neighbourhood">
         <option value="">Not set</option>
         {areas.map((a) => (
-          <option key={a.slug} value={a.slug}>{a.name}</option>
+          <option key={a.slug} value={a.slug}>{a.city && a.city !== 'Dubai' ? `${a.city} · ${a.name}` : a.name}</option>
         ))}
       </select>
       {msg && <span className="small" role="status">{msg}</span>}

@@ -639,3 +639,4 @@ html.privacy-hide body::after {
 .nearby-post.mine { align-self: flex-end; border-color: var(--accent); }
 .nearby-more { border: none; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; min-width: 32px; min-height: 28px; }
 .nearby-compose { position: sticky; bottom: 0; padding: 10px 0; background: var(--bg); }
+.nearby-scope { padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); }

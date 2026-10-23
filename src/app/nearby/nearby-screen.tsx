@@ -7,7 +7,8 @@ import ProfileForm, { useMyProfile } from '@/components/profile-form';
 import Linkify from '@/components/linkify';
 import PrivacyShield from '@/components/privacy-shield';
 
-type Area = { slug: string; name: string; lat: number; lng: number };
+type Area = { slug: string; name: string; city: string; lat: number; lng: number };
+type Scope = { scope: 'nearby' | 'wider' | 'city'; city: string; areas: number };
 type Me = { area: string | null; area_name: string | null; alias: string | null; suggested_alias: string | null; can_join: boolean };
 type Post = { id: number; area: string; area_name: string; alias: string; body: string; created_at: string; mine: boolean; can_hide: boolean };
 type Count = { area: string; area_name: string; people: number };
@@ -40,7 +41,7 @@ export default function NearbyScreen() {
 
   useEffect(() => {
     loadMe();
-    supabase.from('areas').select('slug, name, lat, lng').order('name').then(({ data }: { data: Area[] | null }) => setAreas(data ?? []));
+    supabase.from('areas').select('slug, name, city, lat, lng').order('city').order('name').then(({ data }: { data: Area[] | null }) => setAreas(data ?? []));
   }, [supabase, loadMe]);
 
   if (me === null || profile === null) return <main className="shell" />;
@@ -113,7 +114,7 @@ function Chooser({
           setArea(hit.slug);
           setNote(`You look to be in ${hit.name}. Change it below if not.`);
         } else {
-          setNote('We couldn’t place you in a Dubai neighbourhood yet. Pick the nearest one below.');
+          setNote('We don’t have neighbourhoods near you yet. Pick the nearest one below.');
         }
       },
       () => {
@@ -155,8 +156,12 @@ function Chooser({
           <label className="label" htmlFor="nb-area">Your area</label>
           <select id="nb-area" className="input" value={area} onChange={(e) => setArea(e.target.value)}>
             <option value="">Choose…</option>
-            {areas.map((a) => (
-              <option key={a.slug} value={a.slug}>{a.name}</option>
+            {Array.from(new Set(areas.map((a) => a.city ?? 'Dubai'))).map((city) => (
+              <optgroup key={city} label={city}>
+                {areas.filter((a) => (a.city ?? 'Dubai') === city).map((a) => (
+                  <option key={a.slug} value={a.slug}>{a.name}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -180,6 +185,7 @@ function Room({ supabase, me, onChange }: { supabase: ReturnType<typeof createCl
   const [posts, setPosts] = useState<Post[]>([]);
   const [counts, setCounts] = useState<Count[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [scope, setScope] = useState<Scope | null>(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -199,6 +205,10 @@ function Room({ supabase, me, onChange }: { supabase: ReturnType<typeof createCl
   useEffect(() => {
     load();
     supabase.rpc('area_counts').then(({ data }: { data: Count[] | null }) => setCounts(data ?? []));
+    // How wide the room is right now (it widens while the neighbourhood is quiet; after update 0036).
+    supabase.rpc('my_area_scope').then(({ data, error }: { data: Scope[] | null; error: unknown }) => {
+      if (!error) setScope((data ?? [])[0] ?? null);
+    });
     supabase.rpc('area_venues').then(({ data }: { data: Venue[] | null }) => setVenues(data ?? []));
     const poll = setInterval(load, 7000);
     return () => clearInterval(poll);
@@ -241,8 +251,20 @@ function Room({ supabase, me, onChange }: { supabase: ReturnType<typeof createCl
         </div>
         <h1 className="display" style={{ fontSize: 28, margin: 0 }}>{me.area_name}</h1>
         <span className="small">
-          {here} here{nearby.length ? ` · nearby: ${nearby.map((c) => c.area_name).join(', ')}` : ''} · you&apos;re <b>{me.alias}</b>
+          {here} here
+          {scope?.scope === 'city' || scope?.scope === 'wider'
+            ? ''
+            : nearby.length
+              ? ` · nearby: ${nearby.map((c) => c.area_name).join(', ')}`
+              : ''}{' '}
+          · you&apos;re <b>{me.alias}</b>
         </span>
+        {scope?.scope === 'wider' && (
+          <span className="small nearby-scope">It&apos;s quiet nearby, so you&apos;re also seeing areas within about 15 km. The room narrows as more people join.</span>
+        )}
+        {scope?.scope === 'city' && (
+          <span className="small nearby-scope">It&apos;s quiet nearby, so you&apos;re seeing all of {scope.city}. The room narrows to your neighbourhood as more people join.</span>
+        )}
       </header>
 
       {venues.length > 0 && (
