@@ -640,3 +640,16 @@ html.privacy-hide body::after {
 .nearby-more { border: none; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; min-width: 32px; min-height: 28px; }
 .nearby-compose { position: sticky; bottom: 0; padding: 10px 0; background: var(--bg); }
 .nearby-scope { padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); }
+
+/* Front page */
+.home h2.display { font-size: 26px; line-height: 1.15; margin: 0; color: var(--accent); }
+.home-pass { width: 100%; height: 60px; border-radius: 30px; font-size: 18px; text-decoration: none; }
+.home-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.home-tile { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px; color: var(--accent); }
+.home-tile strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 2px; }
+.home-tile .small { display: block; }
+.home-tile-wide { grid-column: 1 / -1; padding: 0; border-color: var(--line-strong); }
+.home-tile-wide a { display: flex; gap: 12px; align-items: flex-start; padding: 14px; text-decoration: none; color: var(--accent); border-radius: 16px; }
+.home-tile-wide a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.home-biz { margin: 14px -20px 0; padding: 28px 20px; background: #081430; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 340px) { .home-tiles { grid-template-columns: 1fr; } }
