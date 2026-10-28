@@ -33,6 +33,19 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
 
   const [profile, setProfile] = useMyProfile();
 
+  // One row per place, most recent first, however many times they've been.
+  const venues: { visits: MyPlace[] }[] = [];
+  const seen = new Map<string, { visits: MyPlace[] }>();
+  for (const p of places) {
+    const g = seen.get(p.venue_slug);
+    if (g) g.visits.push(p);
+    else {
+      const n = { visits: [p] };
+      seen.set(p.venue_slug, n);
+      venues.push(n);
+    }
+  }
+
   // Signing out always lands on the Serendine home page.
   async function signOut() {
     await supabase.auth.signOut();
@@ -87,33 +100,40 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
         {places.length === 0 && (
           <p className="small" style={{ margin: 0 }}>Nowhere yet. Scan a Serendine code at a restaurant, bar or event and it&apos;ll show here.</p>
         )}
-        {places.map((p) => (
-          <div key={p.visit_id} className="row person-row">
-            <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
-              <strong>{p.venue_name}</strong>
-              <span className="small">
-                {day(p.started_at)}
-                {p.place ? ` · ${p.place}` : ''}
-                {!p.ended_at ? ' · you’re here now' : ''}
-              </span>
-              {p.rating ? (
-                <span className="small" aria-label={`You rated it ${p.rating} out of 5`}>
-                  <span style={{ color: 'var(--accent)', letterSpacing: 1 }}>{'★'.repeat(p.rating)}</span>
-                  <span style={{ opacity: 0.35, letterSpacing: 1 }}>{'★'.repeat(5 - p.rating)}</span>
-                  {p.has_comment ? ' · note sent' : ''}
+        {venues.map((g) => {
+          const last = g.visits[0];
+          const rated = g.visits.find((p) => p.rating);
+          const toRate = g.visits.find((p) => p.can_rate && !p.rating && p.ended_at);
+          return (
+            <div key={last.venue_slug} className="row person-row">
+              <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
+                <strong>{last.venue_name}</strong>
+                <span className="small">
+                  {!last.ended_at ? 'You’re here now' : `Last visit ${day(last.started_at)}`}
+                  {last.place ? ` · ${last.place}` : ''}
                 </span>
-              ) : null}
+                <span className="small">
+                  {g.visits.length === 1 ? '1 visit' : `${g.visits.length} visits`}
+                  {rated?.rating ? (
+                    <span aria-label={` · you last rated it ${rated.rating} out of 5`}>
+                      {' · '}
+                      <span style={{ color: 'var(--accent)', letterSpacing: 1 }}>{'★'.repeat(rated.rating)}</span>
+                      <span style={{ opacity: 0.35, letterSpacing: 1 }}>{'★'.repeat(5 - rated.rating)}</span>
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+              <div className="col" style={{ gap: 6, alignItems: 'flex-end' }}>
+                {toRate && (
+                  <a className="btn btn-outline btn-sm" href={`/thanks/${toRate.visit_id}`} style={{ textDecoration: 'none' }}>Rate it</a>
+                )}
+                {last.groups_enabled && (
+                  <a className="small" href={`/plan?v=${encodeURIComponent(last.venue_slug)}`}>Plan a night here</a>
+                )}
+              </div>
             </div>
-            <div className="col" style={{ gap: 6, alignItems: 'flex-end' }}>
-              {p.can_rate && !p.rating && p.ended_at && (
-                <a className="btn btn-outline btn-sm" href={`/thanks/${p.visit_id}`} style={{ textDecoration: 'none' }}>Rate it</a>
-              )}
-              {p.groups_enabled && (
-                <a className="small" href={`/plan?v=${encodeURIComponent(p.venue_slug)}`}>Plan a night here</a>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {places.some((p) => p.can_rate && !p.rating) && (
           <span className="small" style={{ paddingTop: 8 }}>
             Ratings and notes go privately to the venue, so they can make the next visit better. You have two weeks after a visit.
