@@ -193,7 +193,8 @@ const AR: Record<string, string> = {
   'Send by WhatsApp instead': 'أرسل عبر واتساب بدلًا من ذلك',
   'Change number': 'تغيير الرقم',
   // Loyalty
-  'Your Serendine pass': 'بطاقة Serendine الخاصة بك',
+  'Your loyalty pass': 'بطاقة الولاء الخاصة بك',
+  'Loyalty pass': 'بطاقة الولاء',
   'Show this at the counter. Staff scan it to add your stamps and give you rewards.': 'أظهرها عند الكاونتر. يمسحها الموظفون لإضافة الأختام ومنحك المكافآت.',
   'Your pass QR code': 'رمز QR لبطاقتك',
   'Pass code': 'رمز البطاقة',

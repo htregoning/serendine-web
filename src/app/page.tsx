@@ -94,8 +94,9 @@ export default async function Home() {
           <strong>See it working</strong>
           <span className="small">We&apos;ll come and show you Serendine on your own tables, or answer any questions.</span>
           <a className="btn btn-primary" style={{ textDecoration: 'none', width: '100%' }}
-             href="mailto:serendiners@gmail.com?subject=Serendine%20demo%20for%20my%20venue&body=Venue%20name%3A%0AArea%3A%0ABest%20time%20to%20call%3A%0A">
-            Ask for a demo
+             href="https://wa.me/971553364111?text=Hi%2C%20I%27d%20like%20a%20demo%20of%20Serendine%20for%20my%20venue."
+             target="_blank" rel="noopener noreferrer">
+            Ask for a demo on WhatsApp
           </a>
           <div className="row" style={{ gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
             <a className="btn btn-ghost btn-sm" href="mailto:serendiners@gmail.com?subject=More%20information%20about%20Serendine">

@@ -60,7 +60,7 @@ export default function HomeHub({ name, plans, places, atTable = false }: { name
 
       <div className="row" style={{ gap: 10 }}>
         <a className="btn btn-primary grow" href="/plan" style={{ textDecoration: 'none' }}>Plan a night out</a>
-        <a className="btn btn-ghost grow" href="/pass" style={{ textDecoration: 'none' }}>My pass</a>
+        <a className="btn btn-ghost grow" href="/pass" style={{ textDecoration: 'none' }}>Loyalty pass</a>
       </div>
       <a className="btn btn-ghost" href="/nearby" style={{ textDecoration: 'none' }}>Chat nearby: your neighbourhood&apos;s room</a>
 

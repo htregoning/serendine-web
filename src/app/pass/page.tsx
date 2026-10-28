@@ -3,7 +3,7 @@ import SignInCard from '@/components/sign-in-card';
 import Logo from '@/components/logo';
 import PassScreen from './pass-screen';
 
-export const metadata = { title: 'My pass · Serendine' };
+export const metadata = { title: 'Loyalty pass · Serendine' };
 
 // The guest's Serendine pass: one QR for loyalty at any Serendine venue's counter.
 export default async function PassPage() {
@@ -18,7 +18,7 @@ export default async function PassPage() {
           <Logo size={64} />
           <span className="wordmark" style={{ fontSize: 20 }}>Serendine</span>
         </div>
-        <h1 className="display">Your Serendine pass</h1>
+        <h1 className="display">Your loyalty pass</h1>
         <p className="lede">One code for loyalty stamps and rewards at every Serendine venue. Show it at the counter.</p>
         <div style={{ flex: 1 }} />
         <SignInCard next="/pass" title="Sign in to see your pass" />

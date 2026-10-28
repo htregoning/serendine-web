@@ -36,7 +36,7 @@ export default function PassScreen() {
     <main className="shell">
       <a className="small" href="/me" style={{ alignSelf: 'flex-start' }}>‹ {t('Your places and plans')}</a>
       <div className="col" style={{ gap: 6 }}>
-        <h1 className="display" style={{ fontSize: 30, margin: 0 }}>{t('Your Serendine pass')}</h1>
+        <h1 className="display" style={{ fontSize: 30, margin: 0 }}>{t('Your loyalty pass')}</h1>
         <p className="small" style={{ margin: 0 }}>{t('Show this at the counter. Staff scan it to add your stamps and give you rewards.')}</p>
       </div>
       {problem && <p className="card small">{problem}</p>}
